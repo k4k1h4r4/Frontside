@@ -521,7 +521,7 @@ footer p {
   border-radius: 50%;
   font-family: 'Oswald', sans-serif;
   font-weight: 600;
-  font-size: clamp(0.65rem, 1.5vw, 0.9rem);
+  font-size: clamp(1.5rem, 1.5vw, 2.5rem);
   color: var(--text-muted);
   transition: all 0.3s ease;
   user-select: none;
@@ -533,7 +533,7 @@ footer p {
   color: rgba(19, 13, 9, 0.92);
   font-weight: 700;
   box-shadow: 0 0 10px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.15);
-  animation: ballIn 0.50s ease;
+  animation: ballIn 0.35s ease;
 }
 
 @keyframes ballIn {
@@ -757,9 +757,6 @@ footer a:hover { color: var(--accent); }
     gap: 5px;
   }
 
-  .keno-cell {
-    font-size: 0.7rem;
-  }
 
   .nav-logo {
     width: 160px;
@@ -770,8 +767,8 @@ footer a:hover { color: var(--accent); }
   .nav-links { gap: 1.1rem; }
   .about-grid { grid-template-columns: 1fr; gap: 2rem; }
   .keno-page-header { align-items: flex-start; }
-  .keno-cell { font-size: 0.6rem; }
-  .draw-ball { width: 26px; height: 26px; font-size: 0.62rem; }
+  .keno-cell { font-size: 1.2rem; }
+  .draw-ball { width: 26px; height: 26px; font-size: 1.3rem; }
   .hero-image { width: 96vw; }
   .recent-item {
     padding: 0.8rem 0.95rem;
