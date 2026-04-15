@@ -19,6 +19,8 @@
 
   <div class="keno-page">
 
+
+
     <!-- Game header -->
     <div class="keno-header">
       <div class="keno-game-info">
@@ -302,20 +304,18 @@
             hour: 'numeric', minute: '2-digit', hour12: true
           });
 
-          const ballStr = [...game.balls].sort((a, b) => a - b).join(' · ');
-
           item.innerHTML = `
-            <div>
+            <div class="recent-game-meta">
               <div class="recent-game-num">Game #${game.racenumber}</div>
-              <div class="recent-game-balls">${ballStr}</div>
-            </div>
-            <div style="text-align:right;">
               <div class="recent-game-time">${time}</div>
-              ${game.raceid === latestRaceId ? '<div style="font-family:Oswald,sans-serif; font-size:0.65rem; letter-spacing:0.2em; color:#3a8a3a; margin-top:3px;">LATEST</div>' : ''}
             </div>
+            ${game.raceid === latestRaceId ? '<div class="recent-game-latest">LATEST</div>' : ''}
           `;
 
-          item.addEventListener('click', () => displayGame(game));
+          item.addEventListener('click', () => {
+		  	displayGame(game);
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+		  });
           panel.appendChild(item);
         });
 
