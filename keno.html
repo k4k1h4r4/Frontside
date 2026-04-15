@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Keno &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
@@ -19,9 +19,6 @@
 
   <div class="keno-page">
 
-
-
-    <!-- Game header -->
     <div class="keno-header">
       <div class="keno-game-info">
         <div class="keno-game-number" id="game-number">——</div>
@@ -32,16 +29,19 @@
           <div class="keno-status-dot" id="status-dot"></div>
           <span id="status-text">Connecting</span>
         </div>
-        <button class="btn btn-secondary" id="refresh-btn" onclick="loadLatest()" style="font-size:0.75rem; padding: 0.4rem 1rem;">
-          ↺ &nbsp;Refresh
-        </button>
+        <div class="keno-action-stack">
+          <button class="btn btn-secondary" id="heatmap-btn" onclick="toggleHeatMap()" style="font-size:0.75rem; padding: 0.4rem 1rem;">
+            Heat Map
+          </button>
+          <button class="btn btn-secondary" id="refresh-btn" onclick="loadLatest()" style="font-size:0.75rem; padding: 0.4rem 1rem;">
+            ↺ &nbsp;Refresh
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Error display -->
     <div id="error-msg" class="error-msg" style="display:none; margin-bottom:1.5rem;"></div>
 
-    <!-- Keno board -->
     <div class="keno-board-wrap" id="board-wrap" style="display:none;">
       <div style="margin-bottom:1.2rem;">
         <p style="font-family:'Oswald',sans-serif; font-size:0.7rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;">Numbers 1 – 40</p>
@@ -53,13 +53,21 @@
       </div>
     </div>
 
-    <!-- Draw order strip -->
+    <div id="heatmap-legend" class="heatmap-legend" style="display:none;">
+      <div class="heatmap-legend-title">Last 20 Games Heat Map</div>
+      <div class="heatmap-legend-bar">
+        <span class="heatmap-chip heatmap-chip-zero">0 draws</span>
+        <span class="heatmap-chip heatmap-chip-cold">Cold</span>
+        <span class="heatmap-chip heatmap-chip-mid">Warm</span>
+        <span class="heatmap-chip heatmap-chip-hot">Hot</span>
+      </div>
+    </div>
+
     <div id="draw-order-wrap" style="display:none; margin-bottom: 2.5rem;">
       <p class="draw-order-label">Draw Order</p>
       <div class="draw-order-strip" id="draw-order"></div>
     </div>
 
-    <!-- Recent games -->
     <div class="recent-toggle-row">
       <div>
         <p class="section-label" style="margin-bottom:0.2rem;">History</p>
@@ -81,16 +89,18 @@
   <script>
     const BASE = 'https://kenocloud.com/kenocloud/casino/41/game/1/balldraw';
 
-    let latestRaceId     = null;
+    let latestRaceId = null;
     let latestRaceNumber = null;
-    let currentRaceId    = null;
-    let recentLoaded     = false;
-    let recentOpen       = false;
-    let pollTimer        = null;
+    let currentRaceId = null;
+    let recentLoaded = false;
+    let recentOpen = false;
+    let pollTimer = null;
     let drawAnimationTimer = null;
     let drawAnimationToken = 0;
+    let recentGamesCache = [];
+    let heatMapCounts = {};
+    let heatMapEnabled = false;
 
-    // ── FETCH HELPERS ─────────────────────────────────────
     async function fetchDraw(idOrLatest) {
       const url = `${BASE}/${idOrLatest}`;
       const res = await fetch(url);
@@ -98,21 +108,19 @@
       return res.json();
     }
 
-    // ── FORMAT TIMESTAMP ──────────────────────────────────
     function formatTimestamp(ts) {
       const d = new Date(ts);
       return d.toLocaleString('en-US', {
         weekday: 'short',
-        month:   'short',
-        day:     'numeric',
-        year:    'numeric',
-        hour:    'numeric',
-        minute:  '2-digit',
-        hour12:  true
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
       });
     }
 
-    // ── RENDER BOARD ──────────────────────────────────────
     function renderBoard() {
       function buildSection(containerId, start, end) {
         const el = document.getElementById(containerId);
@@ -126,12 +134,11 @@
         }
       }
 
-      buildSection('section-low',  1,  40);
+      buildSection('section-low', 1, 40);
       buildSection('section-high', 41, 80);
       document.getElementById('board-wrap').style.display = 'block';
     }
 
-    // ── RENDER DRAW ORDER STRIP ───────────────────────────
     function renderDrawOrder(balls) {
       const strip = document.getElementById('draw-order');
       strip.innerHTML = '';
@@ -143,6 +150,93 @@
         strip.appendChild(ball);
       });
       document.getElementById('draw-order-wrap').style.display = 'block';
+    }
+
+    function buildHeatMapCounts(games) {
+      const counts = Object.fromEntries(Array.from({ length: 80 }, (_, i) => [i + 1, 0]));
+      games.forEach(game => {
+        (game.balls || []).forEach(num => {
+          if (counts[num] !== undefined) counts[num] += 1;
+        });
+      });
+      return counts;
+    }
+
+    function getHeatMapStyle(count) {
+      if (count === 0) {
+        return {
+          background: 'linear-gradient(180deg, #171717 0%, #000000 100%)',
+          borderColor: '#5a5a5a',
+          color: '#ffffff',
+          boxShadow: '0 0 14px rgba(255,255,255,0.10)'
+        };
+      }
+
+      const maxCount = Math.max(...Object.values(heatMapCounts), 1);
+      const ratio = count / maxCount;
+
+      if (ratio <= 0.34) {
+        return {
+          background: 'linear-gradient(180deg, #1f86ff 0%, #0048b8 100%)',
+          borderColor: '#6cb8ff',
+          color: '#ffffff',
+          boxShadow: '0 0 14px rgba(31,134,255,0.42)'
+        };
+      }
+
+      if (ratio <= 0.67) {
+        return {
+          background: 'linear-gradient(180deg, #32d74b 0%, #118c2f 100%)',
+          borderColor: '#78ff8f',
+          color: '#ffffff',
+          boxShadow: '0 0 14px rgba(50,215,75,0.42)'
+        };
+      }
+
+      return {
+        background: 'linear-gradient(180deg, #ff4b4b 0%, #b10000 100%)',
+        borderColor: '#ff9b9b',
+        color: '#ffffff',
+        boxShadow: '0 0 14px rgba(255,75,75,0.44)'
+      };
+    }
+
+    function applyHeatMap() {
+      document.querySelectorAll('.keno-cell').forEach(cell => {
+        const num = Number(cell.dataset.num);
+        const count = heatMapCounts[num] ?? 0;
+
+        cell.classList.toggle('heatmap-active', heatMapEnabled);
+        cell.classList.toggle('heatmap-zero', heatMapEnabled && count === 0);
+
+        if (!heatMapEnabled) {
+          cell.style.background = '';
+          cell.style.borderColor = '';
+          cell.style.color = '';
+          cell.style.boxShadow = '';
+          cell.removeAttribute('title');
+          return;
+        }
+
+        const style = getHeatMapStyle(count);
+        cell.style.background = style.background;
+        cell.style.borderColor = style.borderColor;
+        cell.style.color = style.color;
+        cell.style.boxShadow = style.boxShadow;
+        cell.title = count === 0
+          ? `Ball ${num}: not drawn in the last 20 games`
+          : `Ball ${num}: drawn ${count} time${count === 1 ? '' : 's'} in the last 20 games`;
+      });
+    }
+
+    function updateHeatMapButton() {
+      const btn = document.getElementById('heatmap-btn');
+      btn.classList.toggle('active', heatMapEnabled);
+      btn.textContent = heatMapEnabled ? 'Hide Heat Map' : 'Heat Map';
+    }
+
+    function updateHeatMapLegend() {
+      document.getElementById('heatmap-legend').style.display = heatMapEnabled ? 'block' : 'none';
     }
 
     function animateDraw(balls) {
@@ -170,41 +264,38 @@
               if (token === drawAnimationToken) {
                 cell.classList.remove('just-drawn');
               }
-            }, 400);
+            }, 260);
           }
 
           if (ball) {
             ball.classList.add('active');
           }
-        }, index * 140);
+        }, index * 85);
       });
     }
 
-    // ── DISPLAY A GAME ────────────────────────────────────
     function displayGame(data) {
       currentRaceId = data.raceid;
-      document.getElementById('game-number').textContent    = `Game #${data.racenumber}`;
+      document.getElementById('game-number').textContent = `Game #${data.racenumber}`;
       document.getElementById('game-timestamp').textContent = formatTimestamp(data.timestamp);
       renderBoard();
       renderDrawOrder(data.balls);
+      applyHeatMap();
       animateDraw(data.balls);
       setStatus('live', data.raceid === latestRaceId ? 'Live' : `Race ${data.raceid}`);
 
-      // Highlight selected row in recent panel if open
       document.querySelectorAll('.recent-item').forEach(el => {
         el.classList.toggle('selected', el.dataset.raceid == data.raceid);
       });
     }
 
-    // ── STATUS DOT ────────────────────────────────────────
     function setStatus(state, label) {
-      const dot  = document.getElementById('status-dot');
+      const dot = document.getElementById('status-dot');
       const text = document.getElementById('status-text');
-      dot.className  = 'keno-status-dot' + (state === 'live' ? ' live' : '');
+      dot.className = 'keno-status-dot' + (state === 'live' ? ' live' : '');
       text.textContent = label;
     }
 
-    // ── SHOW / HIDE ERROR ─────────────────────────────────
     function showError(msg) {
       const el = document.getElementById('error-msg');
       el.style.display = 'block';
@@ -216,51 +307,42 @@
       document.getElementById('error-msg').style.display = 'none';
     }
 
-    // ── LOAD LATEST ───────────────────────────────────────
     async function loadLatest() {
       clearError();
       setStatus('', 'Loading…');
       try {
         const data = await fetchDraw('latest');
-        latestRaceId     = data.raceid;
+        latestRaceId = data.raceid;
         latestRaceNumber = data.racenumber;
-        displayGame(data);
 
-        // If recent panel is open, refresh it too
-        if (recentOpen) {
-          recentLoaded = false;
-          await loadRecent(false);
-        }
+        recentLoaded = false;
+        await loadRecent(false);
+        displayGame(data);
       } catch (err) {
         showError(`Unable to load results. ${err.message}. Check that this page is served with cross-origin access to kenocloud.com.`);
       }
     }
 
-    // ── AUTO-POLL (every 90s) ─────────────────────────────
     function startPolling() {
       clearInterval(pollTimer);
       pollTimer = setInterval(async () => {
-        if (document.hidden) return; // don't poll when tab is hidden
+        if (document.hidden) return;
         try {
           const data = await fetchDraw('latest');
           if (data.raceid !== latestRaceId) {
-            // New game drawn — update everything
-            latestRaceId     = data.raceid;
+            latestRaceId = data.raceid;
             latestRaceNumber = data.racenumber;
+            recentLoaded = false;
+            await loadRecent(false);
             displayGame(data);
-            if (recentOpen) {
-              recentLoaded = false;
-              await loadRecent(false);
-            }
           }
-        } catch (_) { /* silent on poll fail */ }
+        } catch (_) {}
       }, 90000);
     }
 
-    // ── RECENT GAMES PANEL ────────────────────────────────
     async function toggleRecent() {
       const panel = document.getElementById('recent-panel');
-      const btn   = document.getElementById('recent-btn');
+      const btn = document.getElementById('recent-btn');
 
       if (recentOpen) {
         recentOpen = false;
@@ -288,9 +370,10 @@
       }
 
       try {
-        // Fetch 20 games: latest + 9 previous
         const ids = Array.from({ length: 20 }, (_, i) => latestRaceId - i);
         const results = await Promise.all(ids.map(id => fetchDraw(id)));
+        recentGamesCache = results;
+        heatMapCounts = buildHeatMapCounts(results);
 
         panel.innerHTML = '';
 
@@ -313,21 +396,34 @@
           `;
 
           item.addEventListener('click', () => {
-		  	displayGame(game);
-			window.scrollTo({ top: 0, behavior: 'smooth' });
-		  });
+            displayGame(game);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
           panel.appendChild(item);
         });
 
+        applyHeatMap();
         recentLoaded = true;
-
       } catch (err) {
         panel.innerHTML = `<div class="error-msg" style="margin:1rem;">Could not load recent games. ${err.message}</div>`;
       }
     }
 
-    // ── INIT ──────────────────────────────────────────────
+    function toggleHeatMap() {
+      heatMapEnabled = !heatMapEnabled;
+      updateHeatMapButton();
+      updateHeatMapLegend();
+      applyHeatMap();
+
+      if (!heatMapEnabled) {
+        const currentGame = recentGamesCache.find(game => game.raceid === currentRaceId);
+        if (currentGame) animateDraw(currentGame.balls);
+      }
+    }
+
     (async function init() {
+      updateHeatMapButton();
+      updateHeatMapLegend();
       await loadLatest();
       startPolling();
     })();
