@@ -385,7 +385,7 @@ nav {
 .keno-page {
   max-width: 980px;
   margin: 0 auto;
-  padding: 3rem 1.5rem 5rem;
+  padding: 1.5rem 1rem 5rem;
 }
 
 .keno-page-header {
@@ -533,7 +533,7 @@ footer p {
   color: rgba(19, 13, 9, 0.92);
   font-weight: 700;
   box-shadow: 0 0 10px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.15);
-  animation: ballIn 0.35s ease;
+  animation: ballIn 0.50s ease;
 }
 
 @keyframes ballIn {
@@ -735,6 +735,30 @@ footer a:hover { color: var(--accent); }
     justify-content: center;
     padding-top: 0.8rem;
     padding-bottom: 0.8rem;
+  }
+  .keno-page {
+    max-width: 100%;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+	padding-top: 0.75rem;
+  }
+  .keno-header {
+    margin-bottom: 1.2rem;
+    padding-bottom: 1rem;
+  }
+
+  .keno-board-wrap {
+    width: 100%;
+    margin: 0;
+    padding: 1rem;
+  }
+
+  .keno-section {
+    gap: 5px;
+  }
+
+  .keno-cell {
+    font-size: 0.7rem;
   }
 
   .nav-logo {
