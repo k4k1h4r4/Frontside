@@ -141,8 +141,8 @@ nav {
 .hero {
   position: relative;
   width: 100%;
-  height: 55vh;
-  min-height: 320px;
+  height: 42vh;
+  min-height: 260px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -244,7 +244,7 @@ nav {
 .section {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 5rem 2rem;
+  padding: 2.5rem 2rem;
 }
 
 .section-label {
@@ -261,14 +261,14 @@ nav {
   font-size: clamp(2rem, 5vw, 3.5rem);
   letter-spacing: 0.06em;
   color: var(--text);
-  margin-bottom: 2rem;
+  margin-bottom: 1.2rem;
 }
 
 .divider {
   width: 60px;
   height: 2px;
   background: var(--accent);
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.4rem;
   box-shadow: 0 0 8px var(--accent-glow);
 }
 
@@ -281,14 +281,14 @@ nav {
 .features-grid {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 4.5rem 2rem;
+  padding: 2rem 2rem;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 14px;
 }
 
 .feature-card {
-  padding: 2.5rem 2rem;
+  padding: 1.5rem 2rem;
   border: 1px solid var(--border);
   background: linear-gradient(180deg, rgba(26,19,14,0.96), rgba(18,13,9,0.98));
   position: relative;
@@ -416,7 +416,7 @@ nav {
 
 .keno-game-number {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 2rem;
+  font-size: 3rem;
   letter-spacing: 0.08em;
   color: var(--accent-bright);
   text-shadow: 0 0 18px var(--accent-glow);
@@ -435,7 +435,7 @@ footer p {
 
 .keno-timestamp {
   font-weight: 300;
-  font-size: 0.6rem;
+  font-size: 0.85rem;
   letter-spacing: 0.15em;
   color: var(--text-dim);
   margin-top: 0.4rem;
@@ -662,8 +662,8 @@ footer p {
 }
 
 .atm-hero {
-  height: 60vh;
-  min-height: 320px;
+  height: 45vh;
+  min-height: 260px;
 }
 
 footer {
@@ -735,9 +735,6 @@ footer a:hover { color: var(--accent); }
   border-color: var(--accent-bright);
   color: var(--accent-bright);
   box-shadow: 0 0 14px rgba(178,122,70,0.18);
-  min-width: 80px;
-  max-width: 100px;
-  text-align: center;
 }
 
 .heatmap-legend {
@@ -759,8 +756,8 @@ footer a:hover { color: var(--accent); }
 
 .heatmap-legend-bar {
   display: flex;
-  gap: 0.55rem;
-  flex-wrap: wrap;
+  gap: 0.rem;
+  flex-wrap: nowrap;
 }
 
 .heatmap-chip {
@@ -768,11 +765,11 @@ footer a:hover { color: var(--accent); }
   align-items: center;
   justify-content: center;
   min-width: 78px;
-  padding: 0.4rem 0.6rem;
+  padding: 0.45rem 0.7rem;
   border-radius: 999px;
   border: 1px solid transparent;
   font-family: 'Oswald', sans-serif;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -834,6 +831,17 @@ footer a:hover { color: var(--accent); }
   .keno-section {
     gap: 5px;
   }
+  
+ .heatmap-chip {
+    min-width: 50px;            /* remove forced width */
+    padding: 0.35rem 0.5rem; /* tighter padding */
+    font-size: 0.65rem;      /* slightly smaller text */
+  }
+
+  .heatmap-legend-bar {
+    gap: 0.3rem;
+  }
+}
 
   .nav-logo {
     width: 160px;
