@@ -71,7 +71,7 @@
         <p class="section-label" style="margin-bottom:0.2rem;">History</p>
         <h3 style="font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:0.08em; color:var(--text);">Recent Games</h3>
       </div>
-      <button class="btn btn-secondary" id="recent-btn" onclick="toggleRecent()">Show Last 10</button>
+      <button class="btn btn-secondary" id="recent-btn" onclick="toggleRecent()">Show Last 20</button>
     </div>
 
     <div id="recent-panel" class="recent-panel">
@@ -233,7 +233,7 @@
       if (recentOpen) {
         recentOpen = false;
         panel.classList.remove('open');
-        btn.textContent = 'Show Last 10';
+        btn.textContent = 'Show Last 20';
         return;
       }
 
@@ -256,8 +256,8 @@
       }
 
       try {
-        // Fetch 10 games: latest + 9 previous
-        const ids = Array.from({ length: 10 }, (_, i) => latestRaceId - i);
+        // Fetch 20 games: latest + 19 previous
+        const ids = Array.from({ length: 20 }, (_, i) => latestRaceId - i);
         const results = await Promise.all(ids.map(id => fetchDraw(id)));
 
         panel.innerHTML = '';
