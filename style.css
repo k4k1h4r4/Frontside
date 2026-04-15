@@ -562,11 +562,12 @@ footer p {
   font-weight: 600;
   color: var(--accent-bright);
   position: relative;
+  margin-bottom: 18px; 
 }
 
 .draw-ball-num {
   position: absolute;
-  bottom: -14px;
+  bottom: -15px;
   left: 50%;
   transform: translateX(-50%);
   font-size: 0.55rem;
