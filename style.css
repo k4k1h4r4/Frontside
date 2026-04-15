@@ -489,6 +489,14 @@ footer p {
 .keno-board-wrap {
   padding: 1.5rem;
   margin-bottom: 2rem;
+
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(26,19,14,0.65), rgba(18,13,9,0.7)),
+    url("images/LuckyKeno.png") center / 100% no-repeat; /* bigger logo */
+
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-heavy);
 }
 
 .keno-section {
@@ -508,7 +516,7 @@ footer p {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #100c09;
+  background: transparent;
   border: 1px solid #2a2018;
   border-radius: 50%;
   font-family: 'Oswald', sans-serif;
