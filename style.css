@@ -1,0 +1,647 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Special+Elite&family=Oswald:wght@300;400;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #09070400;
+  --bg-dark:     #060503;
+  --bg-card:     #121008;
+  --bg-card2:    #1a160d;
+  --amber:       #c07c08;
+  --amber-bright:#f0a010;
+  --amber-dim:   #6b450a;
+  --amber-glow:  rgba(200, 130, 8, 0.35);
+  --red:         #7a1818;
+  --text:        #d0c4a8;
+  --text-dim:    #6a5e48;
+  --text-muted:  #3a3228;
+  --border:      #252018;
+  --border-amber:#3a2c10;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: #09070400;
+  background-color: #0a0804;
+  color: var(--text);
+  font-family: 'Special Elite', serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Grain texture */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── NAV ─────────────────────────────────────────── */
+nav {
+  background: var(--bg-dark);
+  border-bottom: 1px solid var(--amber-dim);
+  padding: 0 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 500;
+}
+
+.nav-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.9rem;
+  letter-spacing: 0.12em;
+  color: var(--amber-bright);
+  text-decoration: none;
+  text-shadow: 0 0 18px var(--amber-glow), 0 0 40px rgba(200,130,8,0.15);
+}
+
+.nav-links {
+  display: flex;
+  gap: 2.5rem;
+  list-style: none;
+}
+
+.nav-links a {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 400;
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.2s;
+  position: relative;
+  padding-bottom: 3px;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--amber);
+  transform: scaleX(0);
+  transition: transform 0.25s;
+  transform-origin: left;
+}
+
+.nav-links a:hover { color: var(--text); }
+.nav-links a.active { color: var(--amber-bright); }
+.nav-links a:hover::after,
+.nav-links a.active::after { transform: scaleX(1); }
+
+/* ── HERO (shared) ───────────────────────────────── */
+.hero {
+  position: relative;
+  width: 100%;
+  height: 88vh;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.38) saturate(0.7);
+  transform: scale(1.04);
+  transition: transform 8s ease;
+}
+
+.hero:hover .hero-bg { transform: scale(1.0); }
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(6,4,2,0.3) 0%,
+    rgba(6,4,2,0.1) 40%,
+    rgba(6,4,2,0.7) 100%
+  );
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 0 2rem;
+}
+
+.hero-eyebrow {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 300;
+  font-size: 0.8rem;
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 1rem;
+}
+
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(4.5rem, 14vw, 10rem);
+  letter-spacing: 0.06em;
+  line-height: 0.9;
+  color: #fff;
+  text-shadow:
+    0 0 60px rgba(200,130,8,0.25),
+    0 2px 4px rgba(0,0,0,0.8);
+}
+
+.hero-sub {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 300;
+  font-size: clamp(0.85rem, 2vw, 1.05rem);
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: 1.2rem;
+}
+
+.hero-catchphrase {
+  font-family: 'Special Elite', serif;
+  font-size: clamp(1.2rem, 3.5vw, 2rem);
+  color: var(--text);
+  margin-top: 1.5rem;
+  font-style: italic;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.9);
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+/* ── SECTION WRAPPER ─────────────────────────────── */
+.section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 5rem 2rem;
+}
+
+.section-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--amber-dim);
+  margin-bottom: 0.75rem;
+}
+
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  letter-spacing: 0.06em;
+  color: var(--text);
+  margin-bottom: 2rem;
+}
+
+.divider {
+  width: 60px;
+  height: 2px;
+  background: var(--amber);
+  margin-bottom: 2.5rem;
+  box-shadow: 0 0 8px var(--amber-glow);
+}
+
+/* ── FEATURE CARDS (home) ────────────────────────── */
+.features {
+  background: var(--bg-dark);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.features-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 4.5rem 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2px;
+}
+
+.feature-card {
+  padding: 2.5rem 2rem;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  position: relative;
+  transition: border-color 0.25s, background 0.25s;
+}
+
+.feature-card:hover {
+  border-color: var(--amber-dim);
+  background: var(--bg-card2);
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--amber), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.feature-card:hover::before { opacity: 1; }
+
+.feature-icon {
+  font-size: 2rem;
+  margin-bottom: 1.2rem;
+  filter: grayscale(0.5);
+}
+
+.feature-card h3 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8rem;
+  letter-spacing: 0.1em;
+  color: var(--amber-bright);
+  margin-bottom: 0.75rem;
+}
+
+.feature-card p {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+}
+
+/* ── BUTTON ──────────────────────────────────────── */
+.btn {
+  display: inline-block;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber-bright);
+  border: 1px solid var(--amber-dim);
+  padding: 0.6rem 1.4rem;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  background: transparent;
+}
+
+.btn:hover {
+  background: var(--amber);
+  color: #0a0804;
+  border-color: var(--amber);
+  box-shadow: 0 0 16px var(--amber-glow);
+}
+
+.btn-secondary {
+  color: var(--text-dim);
+  border-color: var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-card2);
+  color: var(--text);
+  border-color: var(--text-dim);
+  box-shadow: none;
+}
+
+/* ── KENO BOARD ──────────────────────────────────── */
+.keno-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+.keno-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.keno-game-info {}
+
+.keno-game-number {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 3rem;
+  letter-spacing: 0.08em;
+  color: var(--amber-bright);
+  text-shadow: 0 0 20px var(--amber-glow);
+  line-height: 1;
+}
+
+.keno-timestamp {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 300;
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+  margin-top: 0.4rem;
+}
+
+.keno-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.keno-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #444;
+}
+
+.keno-status-dot.live {
+  background: #3a8a3a;
+  box-shadow: 0 0 6px rgba(58, 138, 58, 0.7);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Board */
+.keno-board-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.keno-section {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 5px;
+}
+
+.keno-section + .keno-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-amber);
+}
+
+.keno-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f0c08;
+  border: 1px solid #1e1a12;
+  border-radius: 50%;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: clamp(0.65rem, 1.5vw, 0.9rem);
+  color: var(--text-muted);
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.keno-cell.drawn {
+  background: var(--amber);
+  border-color: var(--amber-bright);
+  color: #08060200;
+  color: rgba(8, 6, 2, 0.9);
+  font-weight: 700;
+  box-shadow: 0 0 10px var(--amber-glow), inset 0 1px 0 rgba(255,255,255,0.15);
+  animation: ballIn 0.35s ease;
+}
+
+@keyframes ballIn {
+  from { transform: scale(0.7); opacity: 0.3; }
+  to   { transform: scale(1);   opacity: 1;   }
+}
+
+/* Ball draw order strip */
+.draw-order-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+}
+
+.draw-order-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 2rem;
+}
+
+.draw-ball {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-card2);
+  border: 1px solid var(--border-amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--amber-bright);
+  position: relative;
+}
+
+.draw-ball-num {
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Recent games panel */
+.recent-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.recent-panel {
+  display: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.recent-panel.open { display: block; }
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.recent-item:last-child { border-bottom: none; }
+
+.recent-item:hover { background: var(--bg-card2); }
+
+.recent-item.selected {
+  background: var(--bg-card2);
+  border-left: 2px solid var(--amber);
+}
+
+.recent-game-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 0.08em;
+  color: var(--amber-bright);
+}
+
+.recent-game-time {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 300;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+
+.recent-game-balls {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.loading-msg {
+  padding: 2rem;
+  text-align: center;
+  font-family: 'Oswald', sans-serif;
+  letter-spacing: 0.2em;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.error-msg {
+  padding: 1.5rem;
+  border: 1px solid var(--red);
+  background: rgba(122,24,24,0.1);
+  color: #c06060;
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+}
+
+/* ── ATMOSPHERE ──────────────────────────────────── */
+.atm-hero {
+  height: 100vh;
+  min-height: 600px;
+}
+
+.atm-catchphrase {
+  font-family: 'Special Elite', serif;
+  font-size: clamp(1.4rem, 4vw, 2.4rem);
+  color: var(--text);
+  margin-top: 1.5rem;
+  font-style: italic;
+  text-shadow: 0 2px 30px rgba(0,0,0,0.95);
+  line-height: 1.5;
+}
+
+/* ── FOOTER ──────────────────────────────────────── */
+footer {
+  background: var(--bg-dark);
+  border-top: 1px solid var(--border);
+  text-align: center;
+  padding: 2.5rem 2rem;
+}
+
+footer p {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 300;
+  font-size: 0.8rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+footer a {
+  color: var(--amber-dim);
+  text-decoration: none;
+}
+
+footer a:hover { color: var(--amber); }
+
+/* ── HOME ABOUT BLURB ────────────────────────────── */
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .about-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .nav-links { gap: 1.2rem; }
+  .keno-cell { font-size: 0.6rem; }
+  .draw-ball { width: 26px; height: 26px; font-size: 0.62rem; }
+}
+
+.about-text p {
+  color: var(--text-dim);
+  line-height: 1.9;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.about-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  padding: 2.5rem;
+  text-align: center;
+}
+
+.about-stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 4rem;
+  color: var(--amber);
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.about-stat-label {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 300;
+  font-size: 0.8rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
