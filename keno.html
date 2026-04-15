@@ -20,11 +20,8 @@
   <div class="keno-page">
 
     <!-- Page heading -->
-    <div class="keno-page-header">
-      <div class="keno-logo-block">
-        <p class="section-label">Live Results</p>
-        <img src="images/LuckyKeno.png" alt="Lucky Keno" class="keno-logo">
-      </div>
+    <div class="keno-page-header board-intro">
+      <p class="section-label">Live Results</p>
     </div>
 
     <!-- Game header -->
@@ -93,6 +90,8 @@
     let recentLoaded     = false;
     let recentOpen       = false;
     let pollTimer        = null;
+    let drawAnimationTimer = null;
+    let drawAnimationToken = 0;
 
     // ── FETCH HELPERS ─────────────────────────────────────
     async function fetchDraw(idOrLatest) {
@@ -117,16 +116,15 @@
     }
 
     // ── RENDER BOARD ──────────────────────────────────────
-    function renderBoard(balls) {
-      const drawnSet = new Set(balls);
-
+    function renderBoard() {
       function buildSection(containerId, start, end) {
         const el = document.getElementById(containerId);
         el.innerHTML = '';
         for (let n = start; n <= end; n++) {
           const cell = document.createElement('div');
-          cell.className = 'keno-cell' + (drawnSet.has(n) ? ' drawn' : '');
+          cell.className = 'keno-cell';
           cell.textContent = n;
+          cell.dataset.num = n;
           el.appendChild(cell);
         }
       }
@@ -143,10 +141,46 @@
       balls.forEach((num, i) => {
         const ball = document.createElement('div');
         ball.className = 'draw-ball';
+        ball.dataset.num = num;
         ball.innerHTML = `${num}<span class="draw-ball-num">#${i + 1}</span>`;
         strip.appendChild(ball);
       });
       document.getElementById('draw-order-wrap').style.display = 'block';
+    }
+
+    function animateDraw(balls) {
+      drawAnimationToken += 1;
+      const token = drawAnimationToken;
+      clearTimeout(drawAnimationTimer);
+
+      document.querySelectorAll('.keno-cell.drawn, .keno-cell.just-drawn').forEach(el => {
+        el.classList.remove('drawn', 'just-drawn');
+      });
+      document.querySelectorAll('.draw-ball.active').forEach(el => {
+        el.classList.remove('active');
+      });
+
+      balls.forEach((num, index) => {
+        drawAnimationTimer = setTimeout(() => {
+          if (token !== drawAnimationToken) return;
+
+          const cell = document.querySelector(`.keno-cell[data-num="${num}"]`);
+          const ball = document.querySelector(`.draw-ball[data-num="${num}"]`);
+
+          if (cell) {
+            cell.classList.add('drawn', 'just-drawn');
+            setTimeout(() => {
+              if (token === drawAnimationToken) {
+                cell.classList.remove('just-drawn');
+              }
+            }, 260);
+          }
+
+          if (ball) {
+            ball.classList.add('active');
+          }
+        }, index * 85);
+      });
     }
 
     // ── DISPLAY A GAME ────────────────────────────────────
@@ -154,8 +188,9 @@
       currentRaceId = data.raceid;
       document.getElementById('game-number').textContent    = `Game #${data.racenumber}`;
       document.getElementById('game-timestamp').textContent = formatTimestamp(data.timestamp);
-      renderBoard(data.balls);
+      renderBoard();
       renderDrawOrder(data.balls);
+      animateDraw(data.balls);
       setStatus('live', data.raceid === latestRaceId ? 'Live' : `Race ${data.raceid}`);
 
       // Highlight selected row in recent panel if open
@@ -256,7 +291,7 @@
       }
 
       try {
-        // Fetch 20 games: latest + 19 previous
+        // Fetch 20 games: latest + 9 previous
         const ids = Array.from({ length: 20 }, (_, i) => latestRaceId - i);
         const results = await Promise.all(ids.map(id => fetchDraw(id)));
 
