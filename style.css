@@ -735,6 +735,8 @@ footer a:hover { color: var(--accent); }
   border-color: var(--accent-bright);
   color: var(--accent-bright);
   box-shadow: 0 0 14px rgba(178,122,70,0.18);
+  min-width: 80px;
+  text-align: center;
 }
 
 .heatmap-legend {
@@ -765,11 +767,11 @@ footer a:hover { color: var(--accent); }
   align-items: center;
   justify-content: center;
   min-width: 78px;
-  padding: 0.45rem 0.7rem;
+  padding: 0.4rem 0.6rem;
   border-radius: 999px;
   border: 1px solid transparent;
   font-family: 'Oswald', sans-serif;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
