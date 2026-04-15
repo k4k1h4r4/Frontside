@@ -736,6 +736,7 @@ footer a:hover { color: var(--accent); }
   color: var(--accent-bright);
   box-shadow: 0 0 14px rgba(178,122,70,0.18);
   min-width: 80px;
+  max-width: 100px;
   text-align: center;
 }
 
