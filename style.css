@@ -607,6 +607,23 @@ footer p {
   cursor: pointer;
   transition: background 0.15s;
 }
+.recent-game-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.recent-game-latest {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: #3a8a3a;
+  text-align: right;
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
 
 .recent-item:last-child { border-bottom: none; }
 .recent-item:hover,
@@ -627,15 +644,6 @@ footer p {
   color: var(--text-dim);
 }
 
-.recent-game-balls {
-  font-family: 'Oswald', sans-serif;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  max-width: 300px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 .loading-msg {
   padding: 2rem;
@@ -741,4 +749,19 @@ footer a:hover { color: var(--accent); }
   .keno-cell { font-size: 0.6rem; }
   .draw-ball { width: 26px; height: 26px; font-size: 0.62rem; }
   .hero-image { width: 96vw; }
+  .recent-item {
+    padding: 0.8rem 0.95rem;
+    align-items: flex-start;
+  }
+  .recent-game-num {
+    font-size: 1.15rem;
+  }
+  .recent-game-time {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+  }
+  .recent-game-latest {
+    margin-left: 0.75rem;
+    font-size: 0.58rem;
+  }
 }
