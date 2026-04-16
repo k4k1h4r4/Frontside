@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=28">
+  <link rel="stylesheet" href="style.css?v=29">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -577,7 +577,7 @@
     <div class="camera-overlay-ui">
       <div class="camera-overlay-topbar">
         <button id="camera-close-btn" type="button" class="btn btn-secondary">Close</button>
-        <button id="camera-switch-btn" type="button" class="btn btn-secondary">Flip Camera</button>
+        <button id="camera-torch-btn" type="button" class="btn btn-secondary">Torch On</button>
       </div>
 
       <div class="camera-frame">
@@ -622,13 +622,12 @@
     const cameraOverlay = document.getElementById('camera-overlay');
     const cameraVideo = document.getElementById('camera-video');
     const cameraCloseBtn = document.getElementById('camera-close-btn');
-    const cameraSwitchBtn = document.getElementById('camera-switch-btn');
+    const cameraTorchBtn = document.getElementById('camera-torch-btn');
     const cameraScanBtn = document.getElementById('camera-scan-btn');
 
     let loadedImage = null;
     let loadedImageUrl = '';
     let cameraStream = null;
-    let cameraFacingMode = 'environment';
     let cameraTorchEnabled = false;
 
     function centsToCurrency(value) {
@@ -717,12 +716,23 @@
       const label = String(track?.label || '').toLowerCase();
       const facingMode = String(settings.facingMode || '').toLowerCase();
       return (
-        cameraFacingMode === 'environment' ||
         facingMode === 'environment' ||
         label.includes('back') ||
         label.includes('rear') ||
         label.includes('environment')
       );
+    }
+
+    function updateTorchButton({ supported = false } = {}) {
+      cameraTorchBtn.textContent = cameraTorchEnabled ? 'Torch Off' : 'Torch On';
+      cameraTorchBtn.disabled = !supported;
+      cameraTorchBtn.style.opacity = supported ? '1' : '0.65';
+    }
+
+    function torchIsSupported() {
+      const videoTrack = getPrimaryVideoTrack();
+      if (!videoTrack || !isRearCameraTrack(videoTrack)) return false;
+      return Boolean(videoTrack.getCapabilities?.().torch);
     }
 
     async function waitForCameraVideoReady() {
@@ -753,29 +763,55 @@
       const videoTrack = getPrimaryVideoTrack();
       if (!videoTrack || !isRearCameraTrack(videoTrack)) {
         cameraTorchEnabled = false;
+        updateTorchButton({ supported: false });
         return false;
       }
 
       const capabilities = videoTrack.getCapabilities?.() || {};
       if (!capabilities.torch) {
         cameraTorchEnabled = false;
+        updateTorchButton({ supported: false });
         return false;
       }
 
       try {
         await videoTrack.applyConstraints({ advanced: [{ torch: enabled }] });
         cameraTorchEnabled = enabled;
+        updateTorchButton({ supported: true });
         return true;
       } catch (_) {
         try {
           await videoTrack.applyConstraints({ torch: enabled });
           cameraTorchEnabled = enabled;
+          updateTorchButton({ supported: true });
           return true;
         } catch (_) {
           cameraTorchEnabled = false;
+          updateTorchButton({ supported: true });
           return false;
         }
       }
+    }
+
+    async function toggleTorch() {
+      if (!cameraStream) {
+        setOcrStatus('Start the camera before using the torch.', 'warn');
+        return;
+      }
+
+      if (!torchIsSupported()) {
+        updateTorchButton({ supported: false });
+        setOcrStatus('Torch control is not supported on this phone or browser.', 'warn');
+        return;
+      }
+
+      const enabled = await setTorchState(!cameraTorchEnabled);
+      setOcrStatus(
+        enabled
+          ? 'Torch is on. Align the ticket inside the frame, then tap Scan Ticket.'
+          : 'Torch is off. Align the ticket inside the frame, then tap Scan Ticket.',
+        enabled ? 'good' : 'warn'
+      );
     }
 
     async function startCamera() {
@@ -789,7 +825,7 @@
 
         cameraStream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: { ideal: cameraFacingMode },
+            facingMode: { ideal: 'environment' },
             width: { ideal: 1920 },
             height: { ideal: 1080 },
             aspectRatio: { ideal: 16 / 9 }
@@ -809,12 +845,11 @@
         document.body.style.overflow = 'hidden';
         await cameraVideo.play().catch(() => {});
         await waitForCameraVideoReady();
-
-        const torchEnabled = await setTorchState(true);
+        updateTorchButton({ supported: torchIsSupported() });
 
         setOcrStatus(
-          torchEnabled
-            ? 'Camera started and torch is on. Hold phone landscape, align ticket inside frame, then tap Scan Ticket.'
+          torchIsSupported()
+            ? 'Camera started. Tap Torch On to turn the light on, then scan the ticket.'
             : 'Camera started. Hold phone landscape, align ticket inside frame, then tap Scan Ticket.',
           'good'
         );
@@ -831,6 +866,7 @@
       }
       cameraTorchEnabled = false;
       cameraVideo.srcObject = null;
+      updateTorchButton({ supported: false });
     }
 
     async function closeCameraOverlay() {
@@ -838,11 +874,6 @@
       cameraOverlay.classList.remove('open');
       document.body.style.overflow = '';
       try { screen.orientation?.unlock?.(); } catch (_) {}
-    }
-
-    async function switchCamera() {
-      cameraFacingMode = cameraFacingMode === 'environment' ? 'user' : 'environment';
-      await startCamera();
     }
 
     function showImageFromDataUrl(dataUrl) {
@@ -1100,8 +1131,9 @@
     startCameraBtn.addEventListener('click', startCamera);
     clearTicketBtn.addEventListener('click', clearLoadedImage);
     cameraCloseBtn.addEventListener('click', closeCameraOverlay);
-    cameraSwitchBtn.addEventListener('click', switchCamera);
+    cameraTorchBtn.addEventListener('click', toggleTorch);
     cameraScanBtn.addEventListener('click', captureAndScanFromCamera);
+    updateTorchButton({ supported: false });
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
