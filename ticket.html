@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=22">
+  <link rel="stylesheet" href="style.css?v=23">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -512,7 +512,7 @@
       </div>
     </div>
 
-    <div class="ticket-ocr-debug">
+    <div class="ticket-ocr-debug" style="display:none;">
       <div class="ticket-debug-title">OCR crop preview</div>
       <div class="ticket-debug-copy">These previews show the exact regions being read for SERIAL and PIN extraction.</div>
       <div class="ticket-ocr-crop-grid">
@@ -785,42 +785,56 @@
       return true;
     }
 
-    function drawCropToCanvas(sourceImage, region, targetCanvas, options = {}) {
-      const { scale = 4, threshold = 175 } = options;
-      const sx = Math.max(0, Math.round(sourceImage.naturalWidth * region.x));
-      const sy = Math.max(0, Math.round(sourceImage.naturalHeight * region.y));
-      const sw = Math.max(1, Math.round(sourceImage.naturalWidth * region.w));
-      const sh = Math.max(1, Math.round(sourceImage.naturalHeight * region.h));
+    
+    function preprocessToCanvas(sourceImage, region, targetCanvas, options = {}) {
+      const { scale = 4 } = options;
+
+      const sx = Math.round(sourceImage.naturalWidth * region.x);
+      const sy = Math.round(sourceImage.naturalHeight * region.y);
+      const sw = Math.round(sourceImage.naturalWidth * region.w);
+      const sh = Math.round(sourceImage.naturalHeight * region.h);
 
       const workCanvas = document.createElement('canvas');
       workCanvas.width = sw * scale;
       workCanvas.height = sh * scale;
 
-      const workCtx = workCanvas.getContext('2d', { willReadFrequently: true });
-      workCtx.imageSmoothingEnabled = false;
-      workCtx.drawImage(sourceImage, sx, sy, sw, sh, 0, 0, workCanvas.width, workCanvas.height);
+      const ctx = workCanvas.getContext('2d', { willReadFrequently: true });
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(sourceImage, sx, sy, sw, sh, 0, 0, workCanvas.width, workCanvas.height);
 
-      const imageData = workCtx.getImageData(0, 0, workCanvas.width, workCanvas.height);
+      const imageData = ctx.getImageData(0, 0, workCanvas.width, workCanvas.height);
       const data = imageData.data;
 
+      // grayscale + contrast boost
       for (let i = 0; i < data.length; i += 4) {
-        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        const value = avg > threshold ? 255 : 0;
-        data[i] = value;
-        data[i + 1] = value;
-        data[i + 2] = value;
+        let gray = (data[i] * 0.3 + data[i+1] * 0.59 + data[i+2] * 0.11);
+
+        // increase contrast
+        gray = (gray - 128) * 1.4 + 128;
+
+        data[i] = data[i+1] = data[i+2] = gray;
       }
 
-      workCtx.putImageData(imageData, 0, 0);
+      ctx.putImageData(imageData, 0, 0);
+
+      // light threshold AFTER contrast (less aggressive)
+      const imageData2 = ctx.getImageData(0, 0, workCanvas.width, workCanvas.height);
+      const d2 = imageData2.data;
+
+      for (let i = 0; i < d2.length; i += 4) {
+        const v = d2[i] > 160 ? 255 : 0;
+        d2[i] = d2[i+1] = d2[i+2] = v;
+      }
+
+      ctx.putImageData(imageData2, 0, 0);
 
       targetCanvas.width = workCanvas.width;
       targetCanvas.height = workCanvas.height;
-      const outCtx = targetCanvas.getContext('2d');
-      outCtx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
-      outCtx.drawImage(workCanvas, 0, 0);
+      targetCanvas.getContext('2d').drawImage(workCanvas, 0, 0);
 
       return targetCanvas;
     }
+
 
     function extractSerial(text) {
       const cleaned = text.replace(/[—–−]/g, '-').replace(/\s+/g, ' ').trim();
@@ -867,12 +881,12 @@
       setOcrStatus('Scanning ticket image…', 'warn');
 
       try {
-        const serialCanvas = drawCropToCanvas(loadedImage, OCR_REGIONS.serial, serialCropCanvas, {
+        const serialCanvas = preprocessToCanvas(loadedImage, OCR_REGIONS.serial, serialCropCanvas, {
           scale: 5,
           threshold: 172
         });
 
-        const pinLineCanvas = drawCropToCanvas(loadedImage, OCR_REGIONS.pinLine, pinLineCropCanvas, {
+        const pinLineCanvas = preprocessToCanvas(loadedImage, OCR_REGIONS.pinLine, pinLineCropCanvas, {
           scale: 6,
           threshold: 180
         });
@@ -913,7 +927,8 @@
         }
 
         setOcrStatus('Picture captured. Scanning ticket image…', 'warn');
-        await scanLoadedImage();
+        document.querySelector('.ticket-ocr-debug').style.display = 'block';
+      await scanLoadedImage();
       } catch (error) {
         setOcrStatus(`Unable to capture image: ${error.message}`, 'bad');
       } finally {
