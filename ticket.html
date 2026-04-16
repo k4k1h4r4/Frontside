@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=25">
+  <link rel="stylesheet" href="style.css?v=26">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -77,7 +77,7 @@
     .ticket-ocr-title,
     .ticket-debug-title {
       font-family: 'Oswald', sans-serif;
-      font-size: 0.74rem;
+      font-size: 0.9rem;
       letter-spacing: 0.22em;
       text-transform: uppercase;
       color: var(--text-dim);
@@ -467,67 +467,8 @@
         <div class="ticket-subtitle">Ticket lookup and payout summary</div>
       </div>
     </div>
-
-    <div id="error-msg" class="error-msg" style="display:none; margin-bottom:1.5rem;"></div>
-    <div id="loading-msg" class="loading-msg" style="display:none;">Searching ticket&hellip;</div>
-
-    <div class="ticket-form-wrap">
-      <form id="ticket-form" class="ticket-form">
-        <div class="ticket-field">
-          <label for="serial">Serial</label>
-          <input id="serial" name="serial" type="text" autocomplete="off" placeholder="26105-5-251" required>
-        </div>
-
-        <div class="ticket-field">
-          <label for="pin">PIN</label>
-          <input id="pin" name="pin" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="9918" required>
-        </div>
-
-        <button type="submit" class="btn ticket-submit">Search</button>
-      </form>
-
-      <div class="ticket-hint">Search stays at the top so a scan can be reviewed and submitted immediately.</div>
-    </div>
-
-    <div class="ticket-ocr-wrap">
-      <div class="ticket-ocr-title">Scan ticket with camera or image upload</div>
-      <div class="ticket-ocr-grid">
-        <div>
-          <div class="ticket-ocr-actions">
-            <button id="start-camera-btn" type="button" class="btn ticket-scan-btn">Start Camera</button>
-            <button id="clear-ticket-btn" type="button" class="btn btn-secondary ticket-scan-btn">Clear Image</button>
-          </div>
-
-          <div class="ticket-ocr-copy">
-            Start Camera opens a full-screen live preview. Align the full ticket inside the frame, then tap Scan Ticket inside the camera preview to capture and scan in one step.
-          </div>
-
-          <div id="ticket-ocr-status" class="ticket-ocr-status">Waiting for image or camera.</div>
-        </div>
-
-        <div class="ticket-ocr-preview-wrap">
-          <img id="ticket-preview" class="ticket-ocr-preview" alt="Ticket preview">
-          <div class="ticket-hint">Tip: best results come from a straight-on image with the full ticket visible.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="ticket-ocr-debug" style="display:none;">
-      <div class="ticket-debug-title">OCR crop preview</div>
-      <div class="ticket-debug-copy">These previews show the exact regions being read for SERIAL and PIN extraction.</div>
-      <div class="ticket-ocr-crop-grid">
-        <div class="ticket-ocr-crop">
-          <div class="ticket-ocr-crop-label">Serial crop</div>
-          <canvas id="serial-crop-canvas"></canvas>
-        </div>
-        <div class="ticket-ocr-crop">
-          <div class="ticket-ocr-crop-label">PIN line crop</div>
-          <canvas id="pin-line-crop-canvas"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <section id="ticket-results" class="ticket-results" aria-live="polite">
+	
+	<section id="ticket-results" class="ticket-results" aria-live="polite">
       <div class="ticket-topline">
         <div>
           <div class="ticket-id" id="result-ticket-id">Ticket</div>
@@ -569,6 +510,66 @@
         </div>
       </div>
     </section>
+
+    <div id="error-msg" class="error-msg" style="display:none; margin-bottom:1.5rem;"></div>
+    <div id="loading-msg" class="loading-msg" style="display:none;">Searching ticket&hellip;</div>
+
+    <div class="ticket-form-wrap">
+      <form id="ticket-form" class="ticket-form">
+        <div class="ticket-field">
+          <label for="serial">Serial</label>
+          <input id="serial" name="serial" type="text" autocomplete="off" placeholder="26105-5-251" required>
+        </div>
+
+        <div class="ticket-field">
+          <label for="pin">PIN</label>
+          <input id="pin" name="pin" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="9918" required>
+        </div>
+
+        <button type="submit" class="btn ticket-submit">Search</button>
+      </form>
+
+      <div class="ticket-hint">Search stays at the top so a scan can be reviewed and submitted immediately.</div>
+    </div>
+
+    <div class="ticket-ocr-wrap">
+      <div class="ticket-ocr-title">Scan ticket with Camera</div>
+      <div class="ticket-ocr-grid">
+        <div>
+          <div class="ticket-ocr-actions">
+            <button id="start-camera-btn" type="button" class="btn ticket-scan-btn">Start Camera</button>
+            <button id="clear-ticket-btn" type="button" class="btn btn-secondary ticket-scan-btn">Clear Image</button>
+          </div>
+
+          <div class="ticket-ocr-copy">
+            Start Camera opens a full-screen live preview. Align the full ticket inside the frame, then tap Scan Ticket inside the camera preview to capture and scan in one step.
+          </div>
+
+        </div>
+
+        <div class="ticket-ocr-preview-wrap">
+          <img id="ticket-preview" class="ticket-ocr-preview" alt="Ticket preview">
+          <div class="ticket-hint">Tip: Best results come from Landscape-mode.  Be sure camera is straight-on with the full ticket visible.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ticket-ocr-debug" style="display:none;">
+      <div class="ticket-debug-title">OCR crop preview</div>
+      <div class="ticket-debug-copy">These previews show the exact regions being read for SERIAL and PIN extraction.</div>
+      <div class="ticket-ocr-crop-grid">
+        <div class="ticket-ocr-crop">
+          <div class="ticket-ocr-crop-label">Serial crop</div>
+          <canvas id="serial-crop-canvas"></canvas>
+        </div>
+        <div class="ticket-ocr-crop">
+          <div class="ticket-ocr-crop-label">PIN line crop</div>
+          <canvas id="pin-line-crop-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+
   </div>
 
   <div id="camera-overlay" class="camera-overlay" aria-hidden="true">
@@ -735,22 +736,40 @@
         cameraVideo.srcObject = cameraStream;
         cameraOverlay.classList.add('open');
         document.body.style.overflow = 'hidden';
+
+        // Turn on torch/flashlight if supported (rear camera only)
+        try {
+          const videoTrack = cameraStream.getVideoTracks()[0];
+          const capabilities = videoTrack?.getCapabilities?.();
+          if (capabilities?.torch) {
+            await videoTrack.applyConstraints({ advanced: [{ torch: true }] });
+          }
+        } catch (_) { /* torch not supported on this device/browser */ }
+
         setOcrStatus('Camera started. Hold phone landscape, align ticket inside frame, then tap Scan Ticket.', 'good');
       } catch (error) {
         setOcrStatus(`Unable to start camera: ${error.message}`, 'bad');
       }
     }
 
-    function stopCameraStreamOnly() {
+    async function stopCameraStreamOnly() {
       if (cameraStream) {
+        // Turn off torch before stopping the track
+        try {
+          const videoTrack = cameraStream.getVideoTracks()[0];
+          const capabilities = videoTrack?.getCapabilities?.();
+          if (capabilities?.torch) {
+            await videoTrack.applyConstraints({ advanced: [{ torch: false }] });
+          }
+        } catch (_) {}
         cameraStream.getTracks().forEach(track => track.stop());
         cameraStream = null;
       }
       cameraVideo.srcObject = null;
     }
 
-    function closeCameraOverlay() {
-      stopCameraStreamOnly();
+    async function closeCameraOverlay() {
+      await stopCameraStreamOnly();
       cameraOverlay.classList.remove('open');
       document.body.style.overflow = '';
       try { screen.orientation?.unlock?.(); } catch (_) {}
