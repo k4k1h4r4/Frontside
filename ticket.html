@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=29">
+  <link rel="stylesheet" href="style.css?v=30">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -580,7 +580,7 @@
         <button id="camera-torch-btn" type="button" class="btn btn-secondary">Torch On</button>
       </div>
 
-      <div class="camera-frame">
+      <div id="camera-frame" class="camera-frame">
         <div class="camera-frame-grid"></div>
       </div>
 
@@ -621,6 +621,7 @@
     const clearTicketBtn = document.getElementById('clear-ticket-btn');
     const cameraOverlay = document.getElementById('camera-overlay');
     const cameraVideo = document.getElementById('camera-video');
+    const cameraFrame = document.getElementById('camera-frame');
     const cameraCloseBtn = document.getElementById('camera-close-btn');
     const cameraTorchBtn = document.getElementById('camera-torch-btn');
     const cameraScanBtn = document.getElementById('camera-scan-btn');
@@ -901,51 +902,44 @@
       const vw = cameraVideo.videoWidth;
       const vh = cameraVideo.videoHeight;
 
-      // ── Replicate exactly how the CSS positions .camera-frame ──────────────
-      // The frame has aspect-ratio 1.55/1 and is constrained to the viewport.
-      // In landscape the video fills the screen (object-fit: contain), so the
-      // rendered video area may have letterbox bars. We need to find the actual
-      // rendered rect of the video inside the overlay, then find the frame rect
-      // inside that, and finally map those pixel coordinates back to the raw
-      // video resolution.
-
-      const overlayEl = document.getElementById('camera-overlay');
-      const screenW = overlayEl.clientWidth;
-      const screenH = overlayEl.clientHeight;
-
-      // Rendered video rect (object-fit: contain — may have letterboxing)
+      const videoRect = cameraVideo.getBoundingClientRect();
+      const frameRect = cameraFrame.getBoundingClientRect();
       const videoAspect = vw / vh;
-      const screenAspect = screenW / screenH;
-      let renderW, renderH, renderX, renderY;
-      if (videoAspect > screenAspect) {
-        renderW = screenW;
-        renderH = screenW / videoAspect;
-        renderX = 0;
-        renderY = (screenH - renderH) / 2;
+      const elementAspect = videoRect.width / videoRect.height;
+
+      // Find the actual displayed video content inside the fullscreen video
+      // element after object-fit: contain letterboxing is applied.
+      let renderW;
+      let renderH;
+      let renderX;
+      let renderY;
+
+      if (videoAspect > elementAspect) {
+        renderW = videoRect.width;
+        renderH = renderW / videoAspect;
+        renderX = videoRect.left;
+        renderY = videoRect.top + ((videoRect.height - renderH) / 2);
       } else {
-        renderH = screenH;
-        renderW = screenH * videoAspect;
-        renderX = (screenW - renderW) / 2;
-        renderY = 0;
+        renderH = videoRect.height;
+        renderW = renderH * videoAspect;
+        renderX = videoRect.left + ((videoRect.width - renderW) / 2);
+        renderY = videoRect.top;
       }
 
-      // Frame CSS: width = min(92vw, 92vh * 1.55), aspect-ratio 1.55/1,
-      // centred in the overlay. Portrait media query widens to 94vw but we
-      // default to landscape, so use the base rule.
-      const FRAME_ASPECT = 1.55;
-      const frameCssW = Math.min(0.92 * screenW, 0.92 * screenH * FRAME_ASPECT);
-      const frameCssH = frameCssW / FRAME_ASPECT;
-      const frameCssX = (screenW - frameCssW) / 2;
-      const frameCssY = (screenH - frameCssH) / 2;
-
-      // Convert CSS frame coords → rendered video coords → raw video pixels
       const scaleX = vw / renderW;
       const scaleY = vh / renderH;
 
-      const cropX = Math.max(0, Math.round((frameCssX - renderX) * scaleX));
-      const cropY = Math.max(0, Math.round((frameCssY - renderY) * scaleY));
-      const cropW = Math.min(vw - cropX, Math.round(frameCssW * scaleX));
-      const cropH = Math.min(vh - cropY, Math.round(frameCssH * scaleY));
+      const rawCropLeft = (frameRect.left - renderX) * scaleX;
+      const rawCropTop = (frameRect.top - renderY) * scaleY;
+      const rawCropRight = (frameRect.right - renderX) * scaleX;
+      const rawCropBottom = (frameRect.bottom - renderY) * scaleY;
+
+      const cropX = Math.max(0, Math.round(rawCropLeft));
+      const cropY = Math.max(0, Math.round(rawCropTop));
+      const cropRight = Math.min(vw, Math.round(rawCropRight));
+      const cropBottom = Math.min(vh, Math.round(rawCropBottom));
+      const cropW = Math.max(1, cropRight - cropX);
+      const cropH = Math.max(1, cropBottom - cropY);
 
       // Draw only the frame region into the output canvas
       const canvas = document.createElement('canvas');
