@@ -292,35 +292,53 @@ footer p {
   background: #000;
 }
 
-#overlay {
+/* Two named scan zones */
+.scan-zone {
   position: absolute;
-  /* Target the top header band: Serial is in the top ~22% of the ticket */
-  top: 5%;
-  left: 3%;
-  width: 94%;
-  height: 28%;
-  border: 2px dashed rgba(211,154,99,0.85);
-  border-radius: 6px;
-  box-shadow: 0 0 0 9999px rgba(0,0,0,0.28);
+  border: 2px solid rgba(211,154,99,0.9);
+  border-radius: 4px;
   pointer-events: none;
 }
 
-#overlay-label {
+.scan-zone-label {
   position: absolute;
-  top: calc(5% + 28% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: calc(100% + 4px);
+  left: 0;
   font-family: 'Oswald', sans-serif;
-  font-size: 0.7rem;
+  font-size: 0.62rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(211,154,99,0.9);
-  pointer-events: none;
+  color: rgba(211,154,99,1);
   white-space: nowrap;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.95);
+  background: rgba(0,0,0,0.55);
+  padding: 1px 5px;
 }
 
-/* scan lines removed — label used instead */
+/* SERIAL box: header strip, left-center portion */
+#zone-serial {
+  top:    8%;
+  left:   28%;
+  width:  40%;
+  height: 14%;
+  border-color: rgba(211,154,99,0.95);
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.22);
+}
+
+/* PIN area: right of the number board */
+#zone-pin {
+  top:    22%;
+  left:   62%;
+  width:  36%;
+  height: 50%;
+  border-color: rgba(120,190,100,0.95);
+  box-shadow: none;
+  border-style: dashed;
+}
+
+#zone-pin .scan-zone-label {
+  color: rgba(140,210,110,1);
+}
 
 canvas { display: none; }
 
@@ -631,8 +649,12 @@ footer p {
 
         <div id="video-shell">
           <video id="video" autoplay playsinline muted></video>
-          <div id="overlay"></div>
-          <div id="overlay-label">Align header strip here · Serial &amp; PIN</div>
+          <div id="zone-serial" class="scan-zone">
+            <span class="scan-zone-label">Serial Number</span>
+          </div>
+          <div id="zone-pin" class="scan-zone">
+            <span class="scan-zone-label">PIN Area</span>
+          </div>
         </div>
         <canvas id="canvas"></canvas>
 
@@ -756,6 +778,39 @@ footer p {
       ctx.drawImage(video, 0, 0);
     }
 
+    // Preprocess a canvas region: grayscale + contrast boost, return data URL
+    function preprocessCrop(srcCanvas, x, y, w, h, scale = 3) {
+      const out = document.createElement('canvas');
+      out.width  = Math.round(w * scale);
+      out.height = Math.round(h * scale);
+      const c = out.getContext('2d');
+      c.imageSmoothingEnabled = true;
+      c.imageSmoothingQuality = 'high';
+      // White background first (helps Tesseract on light tickets)
+      c.fillStyle = '#ffffff';
+      c.fillRect(0, 0, out.width, out.height);
+      c.drawImage(srcCanvas, x, y, w, h, 0, 0, out.width, out.height);
+      // Grayscale + contrast
+      const img = c.getImageData(0, 0, out.width, out.height);
+      const d = img.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+        const adj = Math.min(255, Math.max(0, 2.2 * (gray - 128) + 128));
+        d[i] = d[i+1] = d[i+2] = adj;
+      }
+      c.putImageData(img, 0, 0);
+      return out.toDataURL('image/png');
+    }
+
+    async function ocrRegion(dataUrl, charWhitelist, psmMode = '6') {
+      const result = await Tesseract.recognize(dataUrl, 'eng', {
+        logger: () => {},
+        tessedit_pageseg_mode: psmMode,
+        tessedit_char_whitelist: charWhitelist
+      });
+      return result.data.text.trim();
+    }
+
     async function scanOCR() {
       if (!stream) {
         setStatus('Start the camera first.', 'error');
@@ -765,61 +820,39 @@ footer p {
       setStatus('Capturing frame…', 'working');
       setMethodLabel('OCR In Progress');
 
-      // 1. Capture full frame
+      // Capture full frame
       canvas.width  = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
+      const W = canvas.width, H = canvas.height;
 
-      // 2. Crop to the overlay region (top 5%–33% of height, 3%–97% of width)
-      const cropX = Math.round(canvas.width  * 0.03);
-      const cropY = Math.round(canvas.height * 0.05);
-      const cropW = Math.round(canvas.width  * 0.94);
-      const cropH = Math.round(canvas.height * 0.28);
+      // --- Zone coordinates (match CSS percentages) ---
+      // SERIAL zone: top 8–22%, left 28–68%
+      const sz = {
+        x: Math.round(W * 0.28), y: Math.round(H * 0.08),
+        w: Math.round(W * 0.40), h: Math.round(H * 0.14)
+      };
+      // PIN zone: top 22–72%, left 62–98%
+      const pz = {
+        x: Math.round(W * 0.62), y: Math.round(H * 0.22),
+        w: Math.round(W * 0.36), h: Math.round(H * 0.50)
+      };
 
-      const cropCanvas = document.createElement('canvas');
-      // Upscale 2× for better OCR accuracy
-      cropCanvas.width  = cropW * 2;
-      cropCanvas.height = cropH * 2;
-      const cropCtx = cropCanvas.getContext('2d');
-      cropCtx.imageSmoothingEnabled = true;
-      cropCtx.imageSmoothingQuality = 'high';
-      cropCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropCanvas.width, cropCanvas.height);
+      setStatus('OCR: reading Serial…', 'working');
+      const serialImg = preprocessCrop(canvas, sz.x, sz.y, sz.w, sz.h, 3);
+      // Serial: digits and dashes only
+      const serialRaw = await ocrRegion(serialImg, '0123456789-', '7');
 
-      // 3. Grayscale + contrast boost via pixel manipulation
-      const imgData = cropCtx.getImageData(0, 0, cropCanvas.width, cropCanvas.height);
-      const d = imgData.data;
-      for (let i = 0; i < d.length; i += 4) {
-        // Luminance
-        const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-        // Contrast stretch: mid-point 128, factor 1.8
-        const contrast = 1.8;
-        const adj = Math.min(255, Math.max(0, contrast * (gray - 128) + 128));
-        d[i] = d[i+1] = d[i+2] = adj;
-      }
-      cropCtx.putImageData(imgData, 0, 0);
+      setStatus('OCR: reading PIN…', 'working');
+      const pinImg = preprocessCrop(canvas, pz.x, pz.y, pz.w, pz.h, 3);
+      // PIN area: allow letters so "Cloud PIN 4138" is readable
+      const pinRaw = await ocrRegion(pinImg, '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz :', '6');
 
-      const dataUrl = cropCanvas.toDataURL('image/png');
+      console.log('[OCR serial raw]', serialRaw);
+      console.log('[OCR pin raw]', pinRaw);
 
-      try {
-        const result = await Tesseract.recognize(dataUrl, 'eng', {
-          logger: m => {
-            if (m.status === 'recognizing text') {
-              setStatus(`OCR progress: ${Math.round(m.progress * 100)}%`, 'working');
-            }
-          },
-          // Hint Tesseract: single column of text, digits + punctuation expected
-          tessedit_pageseg_mode: '6',
-          tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz -:/'
-        });
-
-        const text = result.data.text;
-        console.log('[OCR raw]', text);
-        setStatus('OCR complete. Parsing ticket values…', 'ok');
-        parseAndDisplay(text, 'OCR');
-      } catch (err) {
-        setStatus('OCR failed: ' + err.message, 'error');
-        setMethodLabel('OCR Failed');
-      }
+      setStatus('OCR complete. Parsing values…', 'ok');
+      parseAndDisplay(serialRaw, pinRaw);
     }
 
     function clearPreview(selector, cardSelector) {
@@ -846,29 +879,18 @@ footer p {
 
     function normalizeTicketId(raw) {
       if (!raw) return null;
-      // Normalize common OCR confusions
-      let s = raw
-        .replace(/[|lI]/g, '1')   // pipe/l/I → 1
-        .replace(/[Oo]/g, '0')    // O/o → 0
-        .replace(/[Ss]/g, '5')    // S/s → 5 (in digit context)
-        .replace(/[Gg]/g, '6');   // G/g → 6 (in digit context)
+      // OCR confusions even in digit-only mode
+      let s = raw.replace(/[|lIiL]/g, '1').replace(/[Oo]/g, '0').replace(/[Ss]/g, '5');
 
-      // Primary: exact NNNNN-N-NNN pattern
-      const exact = s.match(/\b(\d{5}[-–]\d[-–]\d{3})\b/);
-      if (exact) return exact[1].replace(/[–]/g, '-');
+      // Best case: already formatted NNNNN-N-NNN
+      const exact = s.match(/(\d{5}[-–]\d[-–]\d{3})/);
+      if (exact) return exact[1].replace('–', '-');
 
-      // Secondary: look near "SERIAL" label
-      const serialBlock = s.match(/SERIAL[^\n]*\n([^\n]{6,18})/i);
-      if (serialBlock) {
-        const digits = serialBlock[1].replace(/[^\d]/g, '');
-        if (digits.length === 9) return `${digits.slice(0,5)}-${digits[5]}-${digits.slice(6)}`;
-      }
-
-      // Fallback: 9 consecutive digits anywhere
-      const compact = s.replace(/[^\d]/g, '');
-      if (compact.length >= 9) {
-        const maybe = compact.slice(0, 9);
-        return `${maybe.slice(0,5)}-${maybe.slice(5,6)}-${maybe.slice(6,9)}`;
+      // Strip to digits only and reformat as 5-1-3
+      const digits = s.replace(/[^\d]/g, '');
+      if (digits.length >= 9) {
+        const d = digits.slice(0, 9);
+        return `${d.slice(0,5)}-${d[5]}-${d.slice(6,9)}`;
       }
       return null;
     }
@@ -901,9 +923,9 @@ footer p {
       window.setTimeout(() => scanTicket(true), 450);
     }
 
-    function parseAndDisplay(text, method) {
-      const ticketId = normalizeTicketId(text);
-      const pin = normalizePin(text, ticketId);
+    function parseAndDisplay(serialRaw, pinRaw) {
+      const ticketId = normalizeTicketId(serialRaw);
+      const pin = normalizePin(pinRaw, ticketId);
 
       clearPreview('out-serial', 'preview-serial-card');
       clearPreview('out-pin', 'preview-pin-card');
@@ -921,12 +943,12 @@ footer p {
       }
 
       if (!ticketId && !pin) {
-        setStatus('Could not extract Ticket ID or PIN. Try again with better lighting or alignment.', 'error');
-        setMethodLabel(method + ' Unreadable');
+        setStatus('Could not extract Serial or PIN. Check alignment and lighting, then try again.', 'error');
+        setMethodLabel('OCR Unreadable');
       } else {
-        const found = [ticketId && 'Ticket ID', pin && 'PIN'].filter(Boolean).join(' and ');
-        setStatus(`Found ${found} via ${method}. Fields have been auto-filled.`, 'ok');
-        setMethodLabel(method + ' Success');
+        const found = [ticketId && 'Serial', pin && 'PIN'].filter(Boolean).join(' and ');
+        setStatus(`Found ${found}. Fields auto-filled.`, 'ok');
+        setMethodLabel('OCR Success');
         maybeAutoSubmit(ticketId, pin);
       }
     }
