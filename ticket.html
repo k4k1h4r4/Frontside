@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=24">
+  <link rel="stylesheet" href="style.css?v=25">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -719,15 +719,23 @@
           video: {
             facingMode: { ideal: cameraFacingMode },
             width: { ideal: 1920 },
-            height: { ideal: 1080 }
+            height: { ideal: 1080 },
+            aspectRatio: { ideal: 16 / 9 }
           },
           audio: false
         });
 
+        // Try to lock to landscape so the ticket frame stays wide
+        try {
+          if (screen.orientation?.lock) {
+            await screen.orientation.lock('landscape');
+          }
+        } catch (_) { /* silently ignore — not all browsers support this */ }
+
         cameraVideo.srcObject = cameraStream;
         cameraOverlay.classList.add('open');
         document.body.style.overflow = 'hidden';
-        setOcrStatus('Camera started. Align the full ticket, then tap Scan Ticket in the camera preview.', 'good');
+        setOcrStatus('Camera started. Hold phone landscape, align ticket inside frame, then tap Scan Ticket.', 'good');
       } catch (error) {
         setOcrStatus(`Unable to start camera: ${error.message}`, 'bad');
       }
@@ -745,6 +753,7 @@
       stopCameraStreamOnly();
       cameraOverlay.classList.remove('open');
       document.body.style.overflow = '';
+      try { screen.orientation?.unlock?.(); } catch (_) {}
     }
 
     async function switchCamera() {
@@ -774,12 +783,63 @@
         return false;
       }
 
+      const vw = cameraVideo.videoWidth;
+      const vh = cameraVideo.videoHeight;
+
+      // ── Replicate exactly how the CSS positions .camera-frame ──────────────
+      // The frame has aspect-ratio 1.55/1 and is constrained to the viewport.
+      // In landscape the video fills the screen (object-fit: contain), so the
+      // rendered video area may have letterbox bars. We need to find the actual
+      // rendered rect of the video inside the overlay, then find the frame rect
+      // inside that, and finally map those pixel coordinates back to the raw
+      // video resolution.
+
+      const overlayEl = document.getElementById('camera-overlay');
+      const screenW = overlayEl.clientWidth;
+      const screenH = overlayEl.clientHeight;
+
+      // Rendered video rect (object-fit: contain — may have letterboxing)
+      const videoAspect = vw / vh;
+      const screenAspect = screenW / screenH;
+      let renderW, renderH, renderX, renderY;
+      if (videoAspect > screenAspect) {
+        renderW = screenW;
+        renderH = screenW / videoAspect;
+        renderX = 0;
+        renderY = (screenH - renderH) / 2;
+      } else {
+        renderH = screenH;
+        renderW = screenH * videoAspect;
+        renderX = (screenW - renderW) / 2;
+        renderY = 0;
+      }
+
+      // Frame CSS: width = min(92vw, 92vh * 1.55), aspect-ratio 1.55/1,
+      // centred in the overlay. Portrait media query widens to 94vw but we
+      // default to landscape, so use the base rule.
+      const FRAME_ASPECT = 1.55;
+      const frameCssW = Math.min(0.92 * screenW, 0.92 * screenH * FRAME_ASPECT);
+      const frameCssH = frameCssW / FRAME_ASPECT;
+      const frameCssX = (screenW - frameCssW) / 2;
+      const frameCssY = (screenH - frameCssH) / 2;
+
+      // Convert CSS frame coords → rendered video coords → raw video pixels
+      const scaleX = vw / renderW;
+      const scaleY = vh / renderH;
+
+      const cropX = Math.max(0, Math.round((frameCssX - renderX) * scaleX));
+      const cropY = Math.max(0, Math.round((frameCssY - renderY) * scaleY));
+      const cropW = Math.min(vw - cropX, Math.round(frameCssW * scaleX));
+      const cropH = Math.min(vh - cropY, Math.round(frameCssH * scaleY));
+
+      // Draw only the frame region into the output canvas
       const canvas = document.createElement('canvas');
-      canvas.width = cameraVideo.videoWidth;
-      canvas.height = cameraVideo.videoHeight;
+      canvas.width = cropW;
+      canvas.height = cropH;
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      ctx.drawImage(cameraVideo, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.97);
       await showImageFromDataUrl(dataUrl);
       closeCameraOverlay();
       return true;
