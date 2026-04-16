@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=27">
+  <link rel="stylesheet" href="style.css?v=28">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -629,6 +629,7 @@
     let loadedImageUrl = '';
     let cameraStream = null;
     let cameraFacingMode = 'environment';
+    let cameraTorchEnabled = false;
 
     function centsToCurrency(value) {
       const amount = Number(value || 0) / 100;
@@ -707,6 +708,76 @@
       loadedImageUrl = '';
     }
 
+    function getPrimaryVideoTrack() {
+      return cameraStream?.getVideoTracks?.()[0] || null;
+    }
+
+    function isRearCameraTrack(track) {
+      const settings = track?.getSettings?.() || {};
+      const label = String(track?.label || '').toLowerCase();
+      const facingMode = String(settings.facingMode || '').toLowerCase();
+      return (
+        cameraFacingMode === 'environment' ||
+        facingMode === 'environment' ||
+        label.includes('back') ||
+        label.includes('rear') ||
+        label.includes('environment')
+      );
+    }
+
+    async function waitForCameraVideoReady() {
+      if (cameraVideo.readyState >= 2) return;
+
+      await new Promise((resolve, reject) => {
+        const onReady = () => {
+          cleanup();
+          resolve();
+        };
+        const onError = () => {
+          cleanup();
+          reject(new Error('Video preview did not become ready.'));
+        };
+        const cleanup = () => {
+          cameraVideo.removeEventListener('loadedmetadata', onReady);
+          cameraVideo.removeEventListener('canplay', onReady);
+          cameraVideo.removeEventListener('error', onError);
+        };
+
+        cameraVideo.addEventListener('loadedmetadata', onReady, { once: true });
+        cameraVideo.addEventListener('canplay', onReady, { once: true });
+        cameraVideo.addEventListener('error', onError, { once: true });
+      });
+    }
+
+    async function setTorchState(enabled) {
+      const videoTrack = getPrimaryVideoTrack();
+      if (!videoTrack || !isRearCameraTrack(videoTrack)) {
+        cameraTorchEnabled = false;
+        return false;
+      }
+
+      const capabilities = videoTrack.getCapabilities?.() || {};
+      if (!capabilities.torch) {
+        cameraTorchEnabled = false;
+        return false;
+      }
+
+      try {
+        await videoTrack.applyConstraints({ advanced: [{ torch: enabled }] });
+        cameraTorchEnabled = enabled;
+        return true;
+      } catch (_) {
+        try {
+          await videoTrack.applyConstraints({ torch: enabled });
+          cameraTorchEnabled = enabled;
+          return true;
+        } catch (_) {
+          cameraTorchEnabled = false;
+          return false;
+        }
+      }
+    }
+
     async function startCamera() {
       if (!navigator.mediaDevices?.getUserMedia) {
         setOcrStatus('Camera is not supported in this browser.', 'bad');
@@ -714,7 +785,7 @@
       }
 
       try {
-        stopCameraStreamOnly();
+        await stopCameraStreamOnly();
 
         cameraStream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -736,17 +807,17 @@
         cameraVideo.srcObject = cameraStream;
         cameraOverlay.classList.add('open');
         document.body.style.overflow = 'hidden';
+        await cameraVideo.play().catch(() => {});
+        await waitForCameraVideoReady();
 
-        // Turn on torch/flashlight if supported (rear camera only)
-        try {
-          const videoTrack = cameraStream.getVideoTracks()[0];
-          const capabilities = videoTrack?.getCapabilities?.();
-          if (capabilities?.torch) {
-            await videoTrack.applyConstraints({ advanced: [{ torch: true }] });
-          }
-        } catch (_) { /* torch not supported on this device/browser */ }
+        const torchEnabled = await setTorchState(true);
 
-        setOcrStatus('Camera started. Hold phone landscape, align ticket inside frame, then tap Scan Ticket.', 'good');
+        setOcrStatus(
+          torchEnabled
+            ? 'Camera started and torch is on. Hold phone landscape, align ticket inside frame, then tap Scan Ticket.'
+            : 'Camera started. Hold phone landscape, align ticket inside frame, then tap Scan Ticket.',
+          'good'
+        );
       } catch (error) {
         setOcrStatus(`Unable to start camera: ${error.message}`, 'bad');
       }
@@ -754,17 +825,11 @@
 
     async function stopCameraStreamOnly() {
       if (cameraStream) {
-        // Turn off torch before stopping the track
-        try {
-          const videoTrack = cameraStream.getVideoTracks()[0];
-          const capabilities = videoTrack?.getCapabilities?.();
-          if (capabilities?.torch) {
-            await videoTrack.applyConstraints({ advanced: [{ torch: false }] });
-          }
-        } catch (_) {}
+        await setTorchState(false).catch(() => {});
         cameraStream.getTracks().forEach(track => track.stop());
         cameraStream = null;
       }
+      cameraTorchEnabled = false;
       cameraVideo.srcObject = null;
     }
 
