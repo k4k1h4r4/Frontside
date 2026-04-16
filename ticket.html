@@ -498,10 +498,6 @@
             <button id="clear-ticket-btn" type="button" class="btn btn-secondary ticket-scan-btn">Clear Image</button>
           </div>
 
-          <div class="ticket-ocr-actions">
-            <input id="ticket-image-input" class="ticket-file-input" type="file" accept="image/*" capture="environment">
-          </div>
-
           <div class="ticket-ocr-copy">
             Start Camera opens a full-screen live preview. Align the full ticket inside the frame, then tap Scan Ticket inside the camera preview to capture and scan in one step.
           </div>
@@ -613,7 +609,6 @@
     const errorEl = document.getElementById('error-msg');
     const loadingEl = document.getElementById('loading-msg');
 
-    const imageInput = document.getElementById('ticket-image-input');
     const ticketPreview = document.getElementById('ticket-preview');
     const ocrStatus = document.getElementById('ticket-ocr-status');
     const serialInput = document.getElementById('serial');
@@ -758,19 +753,23 @@
     }
 
     function showImageFromDataUrl(dataUrl) {
-      revokeLoadedUrl();
-      loadedImageUrl = dataUrl;
+      return new Promise((resolve, reject) => {
+        revokeLoadedUrl();
+        loadedImageUrl = dataUrl;
 
-      const img = new Image();
-      img.onload = () => {
-        loadedImage = img;
-        ticketPreview.src = dataUrl;
-        ticketPreview.classList.add('visible');
-      };
-      img.src = dataUrl;
+        const img = new Image();
+        img.onload = () => {
+          loadedImage = img;
+          ticketPreview.src = dataUrl;
+          ticketPreview.classList.add('visible');
+          resolve();
+        };
+        img.onerror = reject;
+        img.src = dataUrl;
+      });
     }
 
-    function captureCurrentCameraFrame() {
+    async function captureCurrentCameraFrame() {
       if (!cameraStream || !cameraVideo.videoWidth || !cameraVideo.videoHeight) {
         return false;
       }
@@ -781,7 +780,7 @@
       const ctx = canvas.getContext('2d');
       ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-      showImageFromDataUrl(dataUrl);
+      await showImageFromDataUrl(dataUrl);
       closeCameraOverlay();
       return true;
     }
@@ -866,7 +865,6 @@
       }
 
       setOcrStatus('Scanning ticket image…', 'warn');
-      cameraScanBtn.disabled = true;
 
       try {
         const serialCanvas = drawCropToCanvas(loadedImage, OCR_REGIONS.serial, serialCropCanvas, {
@@ -901,24 +899,31 @@
       } catch (error) {
         setOcrStatus(`OCR failed: ${error.message}`, 'bad');
       } finally {
-        cameraScanBtn.disabled = false;
       }
     }
 
     async function captureAndScanFromCamera() {
-      const captured = captureCurrentCameraFrame();
-      if (!captured) {
-        setOcrStatus('Camera is not ready yet. Give it a moment and try again.', 'warn');
-        return;
+      cameraScanBtn.textContent = 'Capturing…';
+
+      try {
+        const captured = await captureCurrentCameraFrame();
+        if (!captured) {
+          setOcrStatus('Camera is not ready yet. Give it a moment and try again.', 'warn');
+          return;
+        }
+
+        setOcrStatus('Picture captured. Scanning ticket image…', 'warn');
+        await scanLoadedImage();
+      } catch (error) {
+        setOcrStatus(`Unable to capture image: ${error.message}`, 'bad');
+      } finally {
+        cameraScanBtn.textContent = 'Scan Ticket';
       }
-      setOcrStatus('Picture captured. Scanning ticket image…', 'warn');
-      await scanLoadedImage();
     }
 
     function clearLoadedImage() {
       closeCameraOverlay();
       loadedImage = null;
-      imageInput.value = '';
       ticketPreview.src = '';
       ticketPreview.classList.remove('visible');
       serialCropCanvas.width = 0;
@@ -928,34 +933,6 @@
       revokeLoadedUrl();
       setOcrStatus('Waiting for image or camera.');
     }
-
-    imageInput.addEventListener('change', async (event) => {
-      const file = event.target.files?.[0];
-      if (!file) {
-        loadedImage = null;
-        revokeLoadedUrl();
-        ticketPreview.src = '';
-        ticketPreview.classList.remove('visible');
-        return;
-      }
-
-      closeCameraOverlay();
-      revokeLoadedUrl();
-      loadedImageUrl = URL.createObjectURL(file);
-
-      const img = new Image();
-      img.onload = () => {
-        loadedImage = img;
-        ticketPreview.src = loadedImageUrl;
-        ticketPreview.classList.add('visible');
-        setOcrStatus('Image loaded. Ready to search or rescan.', 'good');
-      };
-      img.onerror = () => {
-        clearLoadedImage();
-        setOcrStatus('Unable to load that image.', 'bad');
-      };
-      img.src = loadedImageUrl;
-    });
 
     startCameraBtn.addEventListener('click', startCamera);
     clearTicketBtn.addEventListener('click', clearLoadedImage);
