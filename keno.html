@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Keno &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=15">
+  <link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
 
@@ -33,8 +33,8 @@
           <button class="btn btn-secondary" id="heatmap-btn" onclick="toggleHeatMap()" style="font-size:0.75rem; padding: 0.2rem 0.6rem;min-width:125px;">
             Heat Map
           </button>
-          <button class="btn btn-secondary" id="refresh-btn" onclick="loadLatest()" style="font-size:1.5rem; padding: 0.2rem 0.6rem;min-width:20px;">
-            ↺
+          <button class="btn btn-secondary" id="refresh-btn" onclick="handleSecondaryAction()" style="font-size:1.5rem; padding: 0.2rem 0.6rem;min-width:20px;">
+            &#8634;
           </button>
         </div>
       </div>
@@ -58,7 +58,8 @@
       <div class="heatmap-legend-bar">
         <span class="heatmap-chip heatmap-chip-zero">0 draws</span>
         <span class="heatmap-chip heatmap-chip-cold">Cold</span>
-        <span class="heatmap-chip heatmap-chip-mid">Warm</span>
+        <span class="heatmap-chip heatmap-chip-tepid">Tepid</span>
+        <span class="heatmap-chip heatmap-chip-warm">Warm</span>
         <span class="heatmap-chip heatmap-chip-hot">Hot</span>
       </div>
     </div>
@@ -88,10 +89,15 @@
 
   <script>
     const BASE = 'https://kenocloud.com/kenocloud/casino/41/game/1/balldraw';
+    const DEFAULT_HEAT_MAP_GAMES = 20;
+    const MIN_HEAT_MAP_GAMES = 2;
+    const MAX_HEAT_MAP_GAMES = 25;
+    const RECENT_PANEL_GAMES = 20;
 
     let latestRaceId = null;
     let latestRaceNumber = null;
     let currentRaceId = null;
+    let currentGameData = null;
     let recentLoaded = false;
     let recentOpen = false;
     let pollTimer = null;
@@ -100,6 +106,8 @@
     let recentGamesCache = [];
     let heatMapCounts = {};
     let heatMapEnabled = false;
+    let heatMapFrequencyMode = false;
+    let heatMapGames = DEFAULT_HEAT_MAP_GAMES;
 
     async function fetchDraw(idOrLatest) {
       const url = `${BASE}/${idOrLatest}`;
@@ -136,6 +144,7 @@
       buildSection('section-low', 1, 40);
       buildSection('section-high', 41, 80);
       document.getElementById('board-wrap').style.display = 'block';
+      updateCellDisplay();
     }
 
     function renderDrawOrder(balls) {
@@ -161,6 +170,66 @@
       return counts;
     }
 
+    function getHeatMapGamesInput() {
+      return document.getElementById('heatmap-games-input');
+    }
+
+    function clampHeatMapGames(value) {
+      return Math.min(MAX_HEAT_MAP_GAMES, Math.max(MIN_HEAT_MAP_GAMES, value));
+    }
+
+    function syncHeatMapGamesInput() {
+      const input = getHeatMapGamesInput();
+      if (input) input.value = heatMapGames;
+    }
+
+    function recalculateHeatMapCounts() {
+      const games = recentGamesCache.slice(0, heatMapGames);
+      heatMapCounts = buildHeatMapCounts(games);
+      applyHeatMap();
+      updateHeatMapLegend();
+      updateHeaderDisplay();
+    }
+
+    function setHeatMapGames(value) {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) {
+        syncHeatMapGamesInput();
+        return;
+      }
+
+      const nextValue = clampHeatMapGames(Math.round(parsed));
+      if (nextValue === heatMapGames) {
+        syncHeatMapGamesInput();
+        return;
+      }
+
+      heatMapGames = nextValue;
+      syncHeatMapGamesInput();
+      recalculateHeatMapCounts();
+    }
+
+    function handleHeatMapGamesInput(event) {
+      const rawValue = event.target.value.trim();
+      if (rawValue === '') return;
+
+      const parsed = Number(rawValue);
+      if (!Number.isFinite(parsed)) return;
+      if (parsed < MIN_HEAT_MAP_GAMES || parsed > MAX_HEAT_MAP_GAMES) return;
+
+      setHeatMapGames(rawValue);
+    }
+
+    function finalizeHeatMapGamesInput(event) {
+      const rawValue = event.target.value.trim();
+      if (rawValue === '') {
+        syncHeatMapGamesInput();
+        return;
+      }
+
+      setHeatMapGames(rawValue);
+    }
+
     function getHeatMapStyle(count) {
       if (count === 0) {
         return {
@@ -174,7 +243,7 @@
       const maxCount = Math.max(...Object.values(heatMapCounts), 1);
       const ratio = count / maxCount;
 
-      if (ratio <= 0.34) {
+      if (ratio <= 0.25) {
         return {
           background: 'linear-gradient(180deg, #1f86ff 0%, #0048b8 100%)',
           borderColor: '#6cb8ff',
@@ -183,12 +252,21 @@
         };
       }
 
-      if (ratio <= 0.67) {
+      if (ratio <= 0.5) {
         return {
           background: 'linear-gradient(180deg, #32d74b 0%, #118c2f 100%)',
           borderColor: '#78ff8f',
           color: '#ffffff',
           boxShadow: '0 0 14px rgba(50,215,75,0.42)'
+        };
+      }
+
+      if (ratio <= 0.75) {
+        return {
+          background: 'linear-gradient(180deg, #ffad42 0%, #d96a00 100%)',
+          borderColor: '#ffd08a',
+          color: '#ffffff',
+          boxShadow: '0 0 14px rgba(255,173,66,0.44)'
         };
       }
 
@@ -198,6 +276,37 @@
         color: '#ffffff',
         boxShadow: '0 0 14px rgba(255,75,75,0.44)'
       };
+    }
+
+    function updateCellDisplay() {
+      document.querySelectorAll('.keno-cell').forEach(cell => {
+        const num = Number(cell.dataset.num);
+        const count = heatMapCounts[num] ?? 0;
+        cell.textContent = heatMapEnabled && heatMapFrequencyMode ? count : num;
+      });
+    }
+
+    function updateHeaderDisplay() {
+      const gameNumber = document.getElementById('game-number');
+      const gameTimestamp = document.getElementById('game-timestamp');
+
+      if (heatMapEnabled) {
+        gameNumber.innerHTML = `Last <input type="number" id="heatmap-games-input" class="heatmap-games-input" min="${MIN_HEAT_MAP_GAMES}" max="${MAX_HEAT_MAP_GAMES}" value="${heatMapGames}" inputmode="numeric" /> Games`;
+        gameTimestamp.textContent = 'Can input 2 - 25 games';
+
+        const input = getHeatMapGamesInput();
+        if (input) {
+          input.addEventListener('input', handleHeatMapGamesInput);
+          input.addEventListener('change', finalizeHeatMapGamesInput);
+          input.addEventListener('blur', finalizeHeatMapGamesInput);
+        }
+        return;
+      }
+
+      if (!currentGameData) return;
+
+      gameNumber.textContent = `Game #${currentGameData.racenumber}`;
+      gameTimestamp.textContent = formatTimestamp(currentGameData.timestamp);
     }
 
     function applyHeatMap() {
@@ -223,9 +332,11 @@
         cell.style.color = style.color;
         cell.style.boxShadow = style.boxShadow;
         cell.title = count === 0
-          ? `Ball ${num}: not drawn in the last 20 games`
-          : `Ball ${num}: drawn ${count} time${count === 1 ? '' : 's'} in the last 20 games`;
+          ? `Ball ${num}: not drawn in the last ${heatMapGames} games`
+          : `Ball ${num}: drawn ${count} time${count === 1 ? '' : 's'} in the last ${heatMapGames} games`;
       });
+
+      updateCellDisplay();
     }
 
     function updateHeatMapButton() {
@@ -234,8 +345,41 @@
       btn.textContent = heatMapEnabled ? 'Hide Heat Map' : 'Heat Map';
     }
 
+    function updateSecondaryButton() {
+      const btn = document.getElementById('refresh-btn');
+      btn.classList.toggle('active', heatMapEnabled && heatMapFrequencyMode);
+
+      if (heatMapEnabled) {
+        btn.textContent = heatMapFrequencyMode ? 'Balls' : 'Freq';
+        btn.style.fontSize = '0.75rem';
+        btn.style.minWidth = '70px';
+        btn.title = heatMapFrequencyMode ? 'Show ball numbers' : 'Show draw frequencies';
+        return;
+      }
+
+      btn.innerHTML = '&#8634;';
+      btn.style.fontSize = '1.5rem';
+      btn.style.minWidth = '20px';
+      btn.title = 'Refresh latest results';
+    }
+
     function updateHeatMapLegend() {
+      const title = document.querySelector('#heatmap-legend .heatmap-legend-title');
+      if (title) {
+        title.textContent = `Last ${heatMapGames} Games Heat Map`;
+      }
       document.getElementById('heatmap-legend').style.display = heatMapEnabled ? 'block' : 'none';
+    }
+
+    function handleSecondaryAction() {
+      if (!heatMapEnabled) {
+        loadLatest();
+        return;
+      }
+
+      heatMapFrequencyMode = !heatMapFrequencyMode;
+      updateSecondaryButton();
+      updateCellDisplay();
     }
 
     function animateDraw(balls) {
@@ -274,9 +418,9 @@
     }
 
     function displayGame(data) {
+      currentGameData = data;
       currentRaceId = data.raceid;
-      document.getElementById('game-number').textContent = `Game #${data.racenumber}`;
-      document.getElementById('game-timestamp').textContent = formatTimestamp(data.timestamp);
+      updateHeaderDisplay();
       renderBoard();
       renderDrawOrder(data.balls);
       applyHeatMap();
@@ -369,14 +513,14 @@
       }
 
       try {
-        const ids = Array.from({ length: 20 }, (_, i) => latestRaceId - i);
+        const ids = Array.from({ length: MAX_HEAT_MAP_GAMES }, (_, i) => latestRaceId - i);
         const results = await Promise.all(ids.map(id => fetchDraw(id)));
         recentGamesCache = results;
-        heatMapCounts = buildHeatMapCounts(results);
+        heatMapCounts = buildHeatMapCounts(results.slice(0, heatMapGames));
 
         panel.innerHTML = '';
 
-        results.forEach(game => {
+        results.slice(0, RECENT_PANEL_GAMES).forEach(game => {
           const item = document.createElement('div');
           item.className = 'recent-item' + (game.raceid === currentRaceId ? ' selected' : '');
           item.dataset.raceid = game.raceid;
@@ -410,7 +554,12 @@
 
     function toggleHeatMap() {
       heatMapEnabled = !heatMapEnabled;
+      if (!heatMapEnabled) {
+        heatMapFrequencyMode = false;
+      }
+      updateHeaderDisplay();
       updateHeatMapButton();
+      updateSecondaryButton();
       updateHeatMapLegend();
       applyHeatMap();
 
@@ -422,6 +571,7 @@
 
     (async function init() {
       updateHeatMapButton();
+      updateSecondaryButton();
       updateHeatMapLegend();
       await loadLatest();
       startPolling();
