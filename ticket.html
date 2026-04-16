@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=20">
+  <link rel="stylesheet" href="style.css?v=21">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -146,92 +146,15 @@
       margin-top: 1rem;
     }
 
-    .ticket-ocr-preview,
-    .ticket-camera-frame {
+    .ticket-ocr-preview {
       width: 100%;
       display: none;
       border: 1px solid var(--border-accent);
       background: rgba(0,0,0,0.25);
     }
 
-    .ticket-ocr-preview.visible,
-    .ticket-camera-frame.visible {
+    .ticket-ocr-preview.visible {
       display: block;
-    }
-
-    .camera-stage {
-      position: relative;
-      display: none;
-      width: 100%;
-      background: #000;
-      border: 1px solid var(--border-accent);
-      overflow: hidden;
-    }
-
-    .camera-stage.visible {
-      display: block;
-    }
-
-    .camera-stage video,
-    .camera-stage img {
-      width: 100%;
-      display: block;
-      aspect-ratio: 1.55 / 1;
-      object-fit: contain;
-      background: #000;
-    }
-
-    .camera-guide {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .camera-guide-box {
-      width: 88%;
-      aspect-ratio: 1.55 / 1;
-      border: 3px solid rgba(255,255,255,0.88);
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.34);
-      position: relative;
-    }
-
-    .camera-guide-box::before,
-    .camera-guide-box::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-left: 1px dashed rgba(255,255,255,0.45);
-      border-right: 1px dashed rgba(255,255,255,0.45);
-      width: 33.333%;
-      left: 33.333%;
-    }
-
-    .camera-guide-box span {
-      position: absolute;
-      inset: 0;
-      border-top: 1px dashed rgba(255,255,255,0.45);
-      border-bottom: 1px dashed rgba(255,255,255,0.45);
-      height: 33.333%;
-      top: 33.333%;
-      display: block;
-    }
-
-    .camera-guide-label {
-      position: absolute;
-      bottom: 0.8rem;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.62);
-      color: #fff;
-      font-family: 'Oswald', sans-serif;
-      font-size: 0.72rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      padding: 0.35rem 0.65rem;
-      white-space: nowrap;
     }
 
     .ticket-ocr-crop-grid {
@@ -390,6 +313,109 @@
     .ticket-ocr-status.warn { color: #e9c38d; }
     .ticket-ocr-status.bad { color: #d18d7d; }
 
+    .camera-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: #000;
+      display: none;
+    }
+
+    .camera-overlay.open {
+      display: block;
+    }
+
+    .camera-overlay video {
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+      display: block;
+      background: #000;
+    }
+
+    .camera-overlay-ui {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .camera-frame {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(92vw, 92vh * 1.55);
+      aspect-ratio: 1.55 / 1;
+      transform: translate(-50%, -50%);
+      border: 3px solid rgba(255,255,255,0.92);
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.40);
+      pointer-events: none;
+    }
+
+    .camera-frame::before,
+    .camera-frame::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      width: 33.333%;
+      left: 33.333%;
+      border-left: 1px dashed rgba(255,255,255,0.5);
+      border-right: 1px dashed rgba(255,255,255,0.5);
+    }
+
+    .camera-frame-grid {
+      position: absolute;
+      inset: 0;
+      height: 33.333%;
+      top: 33.333%;
+      border-top: 1px dashed rgba(255,255,255,0.5);
+      border-bottom: 1px dashed rgba(255,255,255,0.5);
+    }
+
+    .camera-overlay-topbar,
+    .camera-overlay-bottombar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: max(16px, env(safe-area-inset-top)) 16px 16px;
+      pointer-events: none;
+    }
+
+    .camera-overlay-bottombar {
+      top: auto;
+      bottom: 0;
+      padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+      justify-content: center;
+    }
+
+    .camera-overlay-topbar .btn,
+    .camera-overlay-bottombar .btn {
+      pointer-events: auto;
+      min-width: 132px;
+      height: 52px;
+      background: rgba(18,13,9,0.92);
+      backdrop-filter: blur(6px);
+    }
+
+    .camera-overlay-label {
+      position: absolute;
+      left: 50%;
+      bottom: calc(max(86px, env(safe-area-inset-bottom) + 70px));
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.68);
+      color: #fff;
+      padding: 0.45rem 0.7rem;
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.74rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
     @media (max-width: 860px) {
       .ticket-form,
       .ticket-ocr-grid,
@@ -406,9 +432,18 @@
       .ticket-secondary-grid {
         grid-template-columns: 1fr;
       }
+    }
 
-      .camera-guide-box {
-        width: 94%;
+    @media (orientation: portrait) {
+      .camera-frame {
+        width: 94vw;
+      }
+    }
+
+    @media (orientation: landscape) {
+      .camera-frame {
+        height: 78vh;
+        width: auto;
       }
     }
   </style>
@@ -460,7 +495,7 @@
         <div>
           <div class="ticket-ocr-actions">
             <button id="start-camera-btn" type="button" class="btn ticket-scan-btn">Start Camera</button>
-            <button id="stop-camera-btn" type="button" class="btn btn-secondary ticket-scan-btn">Stop Camera</button>
+            <button id="clear-ticket-btn" type="button" class="btn btn-secondary ticket-scan-btn">Clear Image</button>
           </div>
 
           <div class="ticket-ocr-actions">
@@ -468,28 +503,13 @@
           </div>
 
           <div class="ticket-ocr-copy">
-            Use the camera or upload an image to auto-fill Serial and PIN. Frame the entire ticket inside the guide box. When the camera is live, the Scan Ticket button will capture and scan in one step.
-          </div>
-
-          <div class="ticket-ocr-actions">
-            <button id="scan-ticket-btn" type="button" class="btn ticket-scan-btn">Scan Ticket</button>
-            <button id="clear-ticket-btn" type="button" class="btn btn-secondary ticket-scan-btn">Clear Image</button>
+            Start Camera opens a full-screen live preview. Align the full ticket inside the frame, then tap Scan Ticket inside the camera preview to capture and scan in one step.
           </div>
 
           <div id="ticket-ocr-status" class="ticket-ocr-status">Waiting for image or camera.</div>
         </div>
 
         <div class="ticket-ocr-preview-wrap">
-          <div id="camera-stage" class="camera-stage">
-            <video id="camera-video" playsinline autoplay muted></video>
-            <div class="camera-guide">
-              <div class="camera-guide-box">
-                <span></span>
-              </div>
-              <div class="camera-guide-label">Fit entire ticket inside frame</div>
-            </div>
-          </div>
-
           <img id="ticket-preview" class="ticket-ocr-preview" alt="Ticket preview">
           <div class="ticket-hint">Tip: best results come from a straight-on image with the full ticket visible.</div>
         </div>
@@ -555,6 +575,26 @@
     </section>
   </div>
 
+  <div id="camera-overlay" class="camera-overlay" aria-hidden="true">
+    <video id="camera-video" playsinline autoplay muted></video>
+    <div class="camera-overlay-ui">
+      <div class="camera-overlay-topbar">
+        <button id="camera-close-btn" type="button" class="btn btn-secondary">Close</button>
+        <button id="camera-switch-btn" type="button" class="btn btn-secondary">Flip Camera</button>
+      </div>
+
+      <div class="camera-frame">
+        <div class="camera-frame-grid"></div>
+      </div>
+
+      <div class="camera-overlay-label">Fit entire ticket inside frame</div>
+
+      <div class="camera-overlay-bottombar">
+        <button id="camera-scan-btn" type="button" class="btn">Scan Ticket</button>
+      </div>
+    </div>
+  </div>
+
   <footer>
     <p>FRONTSIDE &nbsp;&mdash;&nbsp; Ticket details via <a href="https://kenocloud.com" target="_blank" rel="noopener noreferrer">KenoCloud</a></p>
   </footer>
@@ -565,7 +605,7 @@
 
     const OCR_REGIONS = {
       serial: { x: 0.318, y: 0.121, w: 0.235, h: 0.095 },
-      pinLine: { x: 0.665, y: 0.343, w: 0.250, h: 0.102 }
+      pinLine: { x: 0.658, y: 0.340, w: 0.275, h: 0.112 }
     };
 
     const form = document.getElementById('ticket-form');
@@ -574,8 +614,6 @@
     const loadingEl = document.getElementById('loading-msg');
 
     const imageInput = document.getElementById('ticket-image-input');
-    const scanTicketBtn = document.getElementById('scan-ticket-btn');
-    const clearTicketBtn = document.getElementById('clear-ticket-btn');
     const ticketPreview = document.getElementById('ticket-preview');
     const ocrStatus = document.getElementById('ticket-ocr-status');
     const serialInput = document.getElementById('serial');
@@ -584,13 +622,17 @@
     const pinLineCropCanvas = document.getElementById('pin-line-crop-canvas');
 
     const startCameraBtn = document.getElementById('start-camera-btn');
-    const stopCameraBtn = document.getElementById('stop-camera-btn');
-    const cameraStage = document.getElementById('camera-stage');
+    const clearTicketBtn = document.getElementById('clear-ticket-btn');
+    const cameraOverlay = document.getElementById('camera-overlay');
     const cameraVideo = document.getElementById('camera-video');
+    const cameraCloseBtn = document.getElementById('camera-close-btn');
+    const cameraSwitchBtn = document.getElementById('camera-switch-btn');
+    const cameraScanBtn = document.getElementById('camera-scan-btn');
 
     let loadedImage = null;
     let loadedImageUrl = '';
     let cameraStream = null;
+    let cameraFacingMode = 'environment';
 
     function centsToCurrency(value) {
       const amount = Number(value || 0) / 100;
@@ -676,27 +718,43 @@
       }
 
       try {
-        stopCamera();
+        stopCameraStreamOnly();
+
         cameraStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' } },
+          video: {
+            facingMode: { ideal: cameraFacingMode },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          },
           audio: false
         });
+
         cameraVideo.srcObject = cameraStream;
-        cameraStage.classList.add('visible');
-        ticketPreview.classList.remove('visible');
-        setOcrStatus('Camera started. Fit the full ticket inside the guide box, then press Scan Ticket.', 'good');
+        cameraOverlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        setOcrStatus('Camera started. Align the full ticket, then tap Scan Ticket in the camera preview.', 'good');
       } catch (error) {
         setOcrStatus(`Unable to start camera: ${error.message}`, 'bad');
       }
     }
 
-    function stopCamera() {
+    function stopCameraStreamOnly() {
       if (cameraStream) {
         cameraStream.getTracks().forEach(track => track.stop());
         cameraStream = null;
       }
       cameraVideo.srcObject = null;
-      cameraStage.classList.remove('visible');
+    }
+
+    function closeCameraOverlay() {
+      stopCameraStreamOnly();
+      cameraOverlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    async function switchCamera() {
+      cameraFacingMode = cameraFacingMode === 'environment' ? 'user' : 'environment';
+      await startCamera();
     }
 
     function showImageFromDataUrl(dataUrl) {
@@ -724,7 +782,7 @@
       ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
       showImageFromDataUrl(dataUrl);
-      stopCamera();
+      closeCameraOverlay();
       return true;
     }
 
@@ -799,13 +857,8 @@
       });
     }
 
-    async function scanTicketImage() {
+    async function scanLoadedImage() {
       clearError();
-
-      const usedCamera = captureCurrentCameraFrame();
-      if (usedCamera) {
-        setOcrStatus('Picture captured. Scanning ticket image…', 'warn');
-      }
 
       if (!loadedImage) {
         setOcrStatus('Choose an image or start the camera before scanning.', 'warn');
@@ -813,8 +866,7 @@
       }
 
       setOcrStatus('Scanning ticket image…', 'warn');
-      scanTicketBtn.disabled = true;
-      scanTicketBtn.textContent = 'Scanning…';
+      cameraScanBtn.disabled = true;
 
       try {
         const serialCanvas = drawCropToCanvas(loadedImage, OCR_REGIONS.serial, serialCropCanvas, {
@@ -849,13 +901,22 @@
       } catch (error) {
         setOcrStatus(`OCR failed: ${error.message}`, 'bad');
       } finally {
-        scanTicketBtn.disabled = false;
-        scanTicketBtn.textContent = 'Scan Ticket';
+        cameraScanBtn.disabled = false;
       }
     }
 
+    async function captureAndScanFromCamera() {
+      const captured = captureCurrentCameraFrame();
+      if (!captured) {
+        setOcrStatus('Camera is not ready yet. Give it a moment and try again.', 'warn');
+        return;
+      }
+      setOcrStatus('Picture captured. Scanning ticket image…', 'warn');
+      await scanLoadedImage();
+    }
+
     function clearLoadedImage() {
-      stopCamera();
+      closeCameraOverlay();
       loadedImage = null;
       imageInput.value = '';
       ticketPreview.src = '';
@@ -878,7 +939,7 @@
         return;
       }
 
-      stopCamera();
+      closeCameraOverlay();
       revokeLoadedUrl();
       loadedImageUrl = URL.createObjectURL(file);
 
@@ -887,7 +948,7 @@
         loadedImage = img;
         ticketPreview.src = loadedImageUrl;
         ticketPreview.classList.add('visible');
-        setOcrStatus('Image loaded. Ready to scan.', 'good');
+        setOcrStatus('Image loaded. Ready to search or rescan.', 'good');
       };
       img.onerror = () => {
         clearLoadedImage();
@@ -897,9 +958,10 @@
     });
 
     startCameraBtn.addEventListener('click', startCamera);
-    stopCameraBtn.addEventListener('click', stopCamera);
-    scanTicketBtn.addEventListener('click', scanTicketImage);
     clearTicketBtn.addEventListener('click', clearLoadedImage);
+    cameraCloseBtn.addEventListener('click', closeCameraOverlay);
+    cameraSwitchBtn.addEventListener('click', switchCamera);
+    cameraScanBtn.addEventListener('click', captureAndScanFromCamera);
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
