@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keno Ticket Scanner</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Special+Elite&family=Oswald:wght@300;400;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:           #120d09;
+  --bg-dark:      #0b0705;
+  --bg-card:      #1a130e;
+  --bg-card2:     #231912;
+  --brown:        #6f4b34;
+  --brown-deep:   #4f3525;
+  --brown-light:  #9b7253;
+  --sand:         #d8c1a1;
+  --sand-dim:     #9a8166;
+  --sand-muted:   #6f5d4b;
+  --accent:       #b27a46;
+  --accent-bright:#d39a63;
+  --accent-dim:   #6a4526;
+  --accent-glow:  rgba(178, 122, 70, 0.28);
+  --red:          #7a2a20;
+  --green:        #7d9b55;
+  --yellow:       #d0a844;
+  --text:         var(--sand);
+  --text-dim:     var(--sand-dim);
+  --text-muted:   var(--sand-muted);
+  --border:       #35271d;
+  --border-accent:#4f3827;
+  --shadow-heavy: 0 18px 50px rgba(0,0,0,0.45);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(111,75,52,0.18), transparent 40%),
+    linear-gradient(180deg, #140e09 0%, #0b0705 45%, #090604 100%);
+  background-color: var(--bg-dark);
+  color: var(--text);
+  font-family: 'Special Elite', serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255,255,255,0.015), rgba(0,0,0,0.02)),
+    radial-gradient(circle at 20% 20%, rgba(210,154,99,0.05), transparent 25%),
+    radial-gradient(circle at 80% 0%, rgba(111,75,52,0.08), transparent 30%);
+  mix-blend-mode: soft-light;
+  z-index: 1;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.085;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hero,
+.keno-page,
+footer {
+  position: relative;
+  z-index: 3;
+}
+
+.hero {
+  position: relative;
+  width: 100%;
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  padding: 3rem 1.5rem;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(12,8,5,0.5) 0%, rgba(12,8,5,0.35) 36%, rgba(12,8,5,0.88) 100%),
+    linear-gradient(to right, rgba(0,0,0,0.18), rgba(111,75,52,0.08));
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 0 2rem;
+}
+
+.hero-eyebrow {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 300;
+  font-size: 0.8rem;
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
+  margin-bottom: 1rem;
+}
+
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(3.2rem, 10vw, 6.2rem);
+  letter-spacing: 0.08em;
+  line-height: 0.9;
+  color: #f4e3c7;
+  text-shadow: 0 0 50px rgba(178,122,70,0.18), 0 10px 24px rgba(0,0,0,0.82);
+}
+
+.hero-sub {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 300;
+  font-size: clamp(0.85rem, 2vw, 1.05rem);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: 1rem;
+}
+
+.keno-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 5rem;
+}
+
+.keno-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.keno-logo-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.section-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--accent-dim);
+  margin-bottom: 0.75rem;
+}
+
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  letter-spacing: 0.06em;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+}
+
+.keno-action-stack {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.btn {
+  display: inline-block;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
+  border: 1px solid var(--accent-dim);
+  padding: 0.85rem 1.4rem;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  background: rgba(178,122,70,0.05);
+}
+
+.btn:hover {
+  background: var(--accent);
+  color: #130d09;
+  border-color: var(--accent);
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn.loading {
+  pointer-events: none;
+  color: transparent;
+  position: relative;
+}
+
+.btn.loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='none' stroke='%23d39a63' stroke-width='2' stroke-dasharray='31.4' stroke-dashoffset='0'%3E%3CanimateTransform attributeName='transform' type='rotate' from='0 12 12' to='360 12 12' dur='0.8s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E") center/24px no-repeat;
+}
+
+.layout-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 1.25rem;
+}
+
+.panel {
+  background: linear-gradient(180deg, rgba(26,19,14,0.96), rgba(18,13,9,0.98));
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-heavy);
+  padding: 1.25rem;
+  position: relative;
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+.panel-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-bright);
+  margin-bottom: 0.35rem;
+}
+
+.panel-subtitle,
+.helper-text,
+.meta-row .mk,
+.status-text,
+.result-label,
+.field label,
+#scan-status,
+footer p {
+  font-family: 'Oswald', sans-serif;
+}
+
+.panel-subtitle {
+  color: var(--text-dim);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+#video-shell {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-accent);
+  background: #000;
+}
+
+#video {
+  width: 100%;
+  display: block;
+  aspect-ratio: 3081 / 2095; /* matches exampleTicketScan.jpg exactly */
+  object-fit: cover;
+  background: #000;
+}
+
+#overlay {
+  position: absolute;
+  /* Target the top header band: Serial is in the top ~22% of the ticket */
+  top: 5%;
+  left: 3%;
+  width: 94%;
+  height: 28%;
+  border: 2px dashed rgba(211,154,99,0.85);
+  border-radius: 6px;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.28);
+  pointer-events: none;
+}
+
+#overlay-label {
+  position: absolute;
+  top: calc(5% + 28% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(211,154,99,0.9);
+  pointer-events: none;
+  white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+}
+
+/* scan lines removed — label used instead */
+
+canvas { display: none; }
+
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.9rem;
+}
+
+#scan-status {
+  margin-top: 0.9rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+  min-height: 52px;
+  line-height: 1.5;
+}
+
+#scan-status.ok { color: #b7cf98; border-color: rgba(125,155,85,0.45); background: rgba(125,155,85,0.08); }
+#scan-status.error { color: #d18d7d; border-color: rgba(122,42,32,0.45); background: rgba(122,42,32,0.12); }
+#scan-status.working { color: #f0c17f; border-color: rgba(178,122,70,0.45); background: rgba(178,122,70,0.1); }
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.field label {
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
+}
+
+input {
+  background: #0d0f12;
+  border: 1px solid #272b33;
+  color: #fff;
+  font-family: 'Oswald', sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.14em;
+  padding: 0.95rem 1rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.25s, background 0.25s;
+  width: 100%;
+}
+
+input::placeholder { color: #5a4a3b; }
+
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(178,122,70,0.12), 0 0 18px rgba(178,122,70,0.08);
+}
+
+input.detected {
+  border-color: #d39a63;
+  background: rgba(178,122,70,0.18);
+  box-shadow: 0 0 0 2px rgba(178,122,70,0.18), 0 0 22px rgba(178,122,70,0.12);
+  transform: translateY(-1px);
+}
+
+.auto-fill-note {
+  margin-top: -0.15rem;
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.inline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--border-accent);
+  color: var(--accent-bright);
+  background: rgba(178,122,70,0.08);
+  font-family: 'Oswald', sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+}
+
+#parsed-preview {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0 1.15rem;
+}
+
+.preview-card,
+.result-row,
+.meta-block,
+#error-box {
+  background: #0d0f12;
+  border: 1px solid var(--border);
+}
+
+.preview-card {
+  padding: 0.85rem 1rem;
+}
+
+.preview-card.detected {
+  border-color: rgba(211,154,99,0.65);
+  box-shadow: 0 0 18px rgba(178,122,70,0.15);
+}
+
+.preview-label,
+.meta-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.preview-value {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.08em;
+  font-size: 1.4rem;
+  color: #f2dfc1;
+}
+
+.preview-value.empty { color: var(--text-muted); }
+
+#results {
+  margin-top: 1.2rem;
+  display: none;
+}
+
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin-bottom: 1rem;
+}
+
+.result-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.result-row::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  opacity: 0.6;
+}
+
+.result-row.highlight {
+  border-color: rgba(125,155,85,0.35);
+  background: rgba(125,155,85,0.06);
+}
+
+.result-row.highlight::before {
+  background: var(--green);
+  opacity: 1;
+  box-shadow: 0 0 10px var(--green);
+}
+
+.result-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.result-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 0.08em;
+  color: #fff;
+  text-align: right;
+}
+
+.result-row.highlight .result-value {
+  color: #d8ecc0;
+  font-size: 2rem;
+}
+
+.status-badge {
+  display: inline-block;
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  padding: 0.32rem 0.65rem;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+}
+.status-paid    { background: rgba(125,155,85,0.15); color: #b7cf98; border-color: rgba(125,155,85,0.35); }
+.status-unpaid  { background: rgba(208,168,68,0.14); color: #ebca78; border-color: rgba(208,168,68,0.35); }
+.status-expired { background: rgba(122,42,32,0.18); color: #d18d7d; border-color: rgba(122,42,32,0.35); }
+.status-default { background: rgba(255,255,255,0.04); color: var(--text-dim); }
+
+#error-box {
+  display: none;
+  margin-top: 1rem;
+  padding: 0.95rem 1rem;
+  color: #d18d7d;
+}
+
+.meta-block {
+  margin-top: 0.95rem;
+  padding: 0.95rem 1rem;
+}
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid #161820;
+  font-size: 0.92rem;
+}
+.meta-row:last-child { border-bottom: none; }
+.meta-row .mk { color: var(--text-muted); }
+.meta-row .mv {
+  color: var(--text);
+  font-family: 'Oswald', sans-serif;
+  letter-spacing: 0.05em;
+  text-align: right;
+}
+
+footer {
+  background: rgba(11,7,5,0.96);
+  border-top: 1px solid var(--border);
+  text-align: center;
+  padding: 2rem 1.25rem;
+}
+
+footer p {
+  font-weight: 300;
+  font-size: 0.8rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+@media (max-width: 900px) {
+  .layout-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 700px) {
+  .keno-page {
+    max-width: 100%;
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+    padding-top: 0.75rem;
+  }
+
+  .control-grid { grid-template-columns: 1fr; }
+  .keno-action-stack { width: 100%; justify-content: stretch; }
+  .keno-action-stack .btn { flex: 1 1 0; }
+  .panel { padding: 1rem; }
+  .result-row { align-items: flex-start; flex-direction: column; }
+  .meta-row { flex-direction: column; }
+  .meta-row .mv { text-align: left; }
+}
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">Casino 41 • Keno Cloud</div>
+      <h1 class="hero-title">Ticket Scanner</h1>
+      <div class="hero-sub">Scan ticket text to auto-fill Ticket ID and PIN</div>
+    </div>
+  </section>
+
+  <main class="keno-page">
+    <div class="keno-page-header">
+      <div class="keno-logo-block">
+        <div class="section-label">Scanner + Lookup</div>
+        <h2 class="section-title">One-page ticket scan</h2>
+      </div>
+      <div class="keno-action-stack">
+        <span class="inline-badge" id="scan-method">Awaiting scan</span>
+      </div>
+    </div>
+
+    <div class="layout-grid">
+      <section class="panel">
+        <h3 class="panel-title">Text Scan OCR</h3>
+        <p class="panel-subtitle">Use the camera to read the printed ticket. The scan fills the Ticket ID and PIN, highlights what was found, and auto-submits when both values are detected.</p>
+
+        <div id="video-shell">
+          <video id="video" autoplay playsinline muted></video>
+          <div id="overlay"></div>
+          <div id="overlay-label">Align header strip here · Serial &amp; PIN</div>
+        </div>
+        <canvas id="canvas"></canvas>
+
+        <div class="control-grid">
+          <button class="btn" id="btn-camera" onclick="startCamera()">Start Camera</button>
+          <button class="btn" id="btn-ocr" onclick="scanOCR()" disabled>Scan</button>
+        </div>
+
+        <div id="scan-status">Press “Start Camera” to begin.</div>
+
+        <div id="parsed-preview">
+          <div class="preview-card" id="preview-serial-card">
+            <div class="preview-label">Detected Ticket ID</div>
+            <div class="preview-value empty" id="out-serial">—</div>
+          </div>
+          <div class="preview-card" id="preview-pin-card">
+            <div class="preview-label">Detected PIN</div>
+            <div class="preview-value empty" id="out-pin">—</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3 class="panel-title">Ticket Lookup</h3>
+        <p class="panel-subtitle">Ticket ID and PIN can be entered manually or filled from the scan on the left.</p>
+
+        <div class="field-group">
+          <div class="field">
+            <label for="ticketid">Ticket ID</label>
+            <input id="ticketid" type="text" placeholder="e.g. 26105-5-251" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="field">
+            <label for="pin">PIN</label>
+            <input id="pin" type="text" placeholder="e.g. 4138" autocomplete="off" maxlength="10" />
+          </div>
+        </div>
+
+        <div class="auto-fill-note">After a successful scan, the values above are filled automatically, briefly highlighted, and submitted when both are found.</div>
+
+        <button class="btn" id="scan-btn" onclick="scanTicket()">Scan Ticket</button>
+
+        <div id="error-box"></div>
+
+        <div id="results">
+          <div class="divider"></div>
+          <div class="result-grid">
+            <div class="result-row" id="row-status">
+              <span class="result-label">Status</span>
+              <span class="result-value" id="val-status">—</span>
+            </div>
+
+            <div class="result-row" id="row-last-win">
+              <span class="result-label">Last Game Win</span>
+              <span class="result-value" id="val-last-win">—</span>
+            </div>
+
+            <div class="result-row highlight" id="row-total">
+              <span class="result-label">Total Win</span>
+              <span class="result-value" id="val-total">—</span>
+            </div>
+          </div>
+
+          <div class="meta-block">
+            <div class="meta-title">Ticket Details</div>
+            <div class="meta-row"><span class="mk">Races Booked</span><span class="mv" id="meta-booked">—</span></div>
+            <div class="meta-row"><span class="mk">Races Played</span><span class="mv" id="meta-played">—</span></div>
+            <div class="meta-row"><span class="mk">Ticket ID</span><span class="mv" id="meta-ticketid">—</span></div>
+            <div class="meta-row"><span class="mk">Vend Time</span><span class="mv" id="meta-vend">—</span></div>
+            <div class="meta-row"><span class="mk">Completed</span><span class="mv" id="meta-complete">—</span></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p>Keno Cloud ticket scanner</p>
+  </footer>
+
+  <script>
+    let stream = null;
+    let isSubmitting = false;
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const scanStatus = document.getElementById('scan-status');
+    const scanMethod = document.getElementById('scan-method');
+
+    const $ = id => document.getElementById(id);
+
+    function setStatus(msg, type = '') {
+      scanStatus.textContent = msg;
+      scanStatus.className = '';
+      if (type) scanStatus.classList.add(type);
+    }
+
+    function setMethodLabel(text) {
+      scanMethod.textContent = text;
+    }
+
+    async function startCamera() {
+      try {
+        setStatus('Requesting camera access…', 'working');
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }
+        });
+        video.srcObject = stream;
+        await video.play();
+        $('btn-ocr').disabled = false;
+        setStatus('Camera ready. Center the Ticket ID and PIN inside the scan box, then press Scan.', 'ok');
+        setMethodLabel('Camera Ready');
+      } catch (err) {
+        setStatus('Camera error: ' + err.message, 'error');
+        setMethodLabel('Camera Error');
+      }
+    }
+
+    function captureFrame() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+    }
+
+    async function scanOCR() {
+      if (!stream) {
+        setStatus('Start the camera first.', 'error');
+        return;
+      }
+
+      setStatus('Capturing frame…', 'working');
+      setMethodLabel('OCR In Progress');
+
+      // 1. Capture full frame
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+
+      // 2. Crop to the overlay region (top 5%–33% of height, 3%–97% of width)
+      const cropX = Math.round(canvas.width  * 0.03);
+      const cropY = Math.round(canvas.height * 0.05);
+      const cropW = Math.round(canvas.width  * 0.94);
+      const cropH = Math.round(canvas.height * 0.28);
+
+      const cropCanvas = document.createElement('canvas');
+      // Upscale 2× for better OCR accuracy
+      cropCanvas.width  = cropW * 2;
+      cropCanvas.height = cropH * 2;
+      const cropCtx = cropCanvas.getContext('2d');
+      cropCtx.imageSmoothingEnabled = true;
+      cropCtx.imageSmoothingQuality = 'high';
+      cropCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropCanvas.width, cropCanvas.height);
+
+      // 3. Grayscale + contrast boost via pixel manipulation
+      const imgData = cropCtx.getImageData(0, 0, cropCanvas.width, cropCanvas.height);
+      const d = imgData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        // Luminance
+        const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+        // Contrast stretch: mid-point 128, factor 1.8
+        const contrast = 1.8;
+        const adj = Math.min(255, Math.max(0, contrast * (gray - 128) + 128));
+        d[i] = d[i+1] = d[i+2] = adj;
+      }
+      cropCtx.putImageData(imgData, 0, 0);
+
+      const dataUrl = cropCanvas.toDataURL('image/png');
+
+      try {
+        const result = await Tesseract.recognize(dataUrl, 'eng', {
+          logger: m => {
+            if (m.status === 'recognizing text') {
+              setStatus(`OCR progress: ${Math.round(m.progress * 100)}%`, 'working');
+            }
+          },
+          // Hint Tesseract: single column of text, digits + punctuation expected
+          tessedit_pageseg_mode: '6',
+          tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz -:/'
+        });
+
+        const text = result.data.text;
+        console.log('[OCR raw]', text);
+        setStatus('OCR complete. Parsing ticket values…', 'ok');
+        parseAndDisplay(text, 'OCR');
+      } catch (err) {
+        setStatus('OCR failed: ' + err.message, 'error');
+        setMethodLabel('OCR Failed');
+      }
+    }
+
+    function clearPreview(selector, cardSelector) {
+      const el = $(selector);
+      el.textContent = '—';
+      el.classList.add('empty');
+      $(cardSelector).classList.remove('detected');
+    }
+
+    function fillPreview(selector, cardSelector, value) {
+      const el = $(selector);
+      el.textContent = value;
+      el.classList.remove('empty');
+      $(cardSelector).classList.add('detected');
+    }
+
+    function flashField(id) {
+      const el = $(id);
+      el.classList.remove('detected');
+      void el.offsetWidth;
+      el.classList.add('detected');
+      window.setTimeout(() => el.classList.remove('detected'), 1400);
+    }
+
+    function normalizeTicketId(raw) {
+      if (!raw) return null;
+      // Normalize common OCR confusions
+      let s = raw
+        .replace(/[|lI]/g, '1')   // pipe/l/I → 1
+        .replace(/[Oo]/g, '0')    // O/o → 0
+        .replace(/[Ss]/g, '5')    // S/s → 5 (in digit context)
+        .replace(/[Gg]/g, '6');   // G/g → 6 (in digit context)
+
+      // Primary: exact NNNNN-N-NNN pattern
+      const exact = s.match(/\b(\d{5}[-–]\d[-–]\d{3})\b/);
+      if (exact) return exact[1].replace(/[–]/g, '-');
+
+      // Secondary: look near "SERIAL" label
+      const serialBlock = s.match(/SERIAL[^\n]*\n([^\n]{6,18})/i);
+      if (serialBlock) {
+        const digits = serialBlock[1].replace(/[^\d]/g, '');
+        if (digits.length === 9) return `${digits.slice(0,5)}-${digits[5]}-${digits.slice(6)}`;
+      }
+
+      // Fallback: 9 consecutive digits anywhere
+      const compact = s.replace(/[^\d]/g, '');
+      if (compact.length >= 9) {
+        const maybe = compact.slice(0, 9);
+        return `${maybe.slice(0,5)}-${maybe.slice(5,6)}-${maybe.slice(6,9)}`;
+      }
+      return null;
+    }
+
+    function normalizePin(raw, ticketId) {
+      if (!raw) return null;
+      let s = raw.replace(/[|lI]/g, '1').replace(/[Oo]/g, '0');
+
+      // Primary: explicit "PIN NNNN" or "PIN: NNNN" on the ticket
+      const pinLabel = s.match(/PIN\s*[:#\s]\s*(\d{4,6})\b/i);
+      if (pinLabel) return pinLabel[1];
+
+      // Secondary: "Cloud PIN NNNN" (this ticket's specific format)
+      const cloudPin = s.match(/Cloud\s+PIN\s+(\d{4,6})\b/i);
+      if (cloudPin) return cloudPin[1];
+
+      // Tertiary: any standalone 4-digit number not part of the ticket ID
+      const ticketDigits = ticketId ? ticketId.replace(/\D/g, '') : '';
+      const allFour = [...s.matchAll(/\b(\d{4})\b/g)].map(m => m[1]);
+      const filtered = allFour.filter(v => !ticketDigits.includes(v));
+      if (filtered.length > 0) return filtered[0];
+
+      return null;
+    }
+
+    function maybeAutoSubmit(ticketId, pin) {
+      if (!ticketId || !pin || isSubmitting) return;
+      setStatus('Ticket ID and PIN found. Submitting automatically…', 'ok');
+      setMethodLabel('Auto Submit');
+      window.setTimeout(() => scanTicket(true), 450);
+    }
+
+    function parseAndDisplay(text, method) {
+      const ticketId = normalizeTicketId(text);
+      const pin = normalizePin(text, ticketId);
+
+      clearPreview('out-serial', 'preview-serial-card');
+      clearPreview('out-pin', 'preview-pin-card');
+
+      if (ticketId) {
+        fillPreview('out-serial', 'preview-serial-card', ticketId);
+        $('ticketid').value = ticketId;
+        flashField('ticketid');
+      }
+
+      if (pin) {
+        fillPreview('out-pin', 'preview-pin-card', pin);
+        $('pin').value = pin;
+        flashField('pin');
+      }
+
+      if (!ticketId && !pin) {
+        setStatus('Could not extract Ticket ID or PIN. Try again with better lighting or alignment.', 'error');
+        setMethodLabel(method + ' Unreadable');
+      } else {
+        const found = [ticketId && 'Ticket ID', pin && 'PIN'].filter(Boolean).join(' and ');
+        setStatus(`Found ${found} via ${method}. Fields have been auto-filled.`, 'ok');
+        setMethodLabel(method + ' Success');
+        maybeAutoSubmit(ticketId, pin);
+      }
+    }
+
+    function formatCents(cents) {
+      if (cents == null) return '—';
+      return '$' + (cents / 100).toFixed(2);
+    }
+
+    function formatDateTime(iso) {
+      if (!iso) return '—';
+      try {
+        return new Date(iso).toLocaleString('en-US', {
+          month: 'short', day: 'numeric', year: 'numeric',
+          hour: 'numeric', minute: '2-digit', hour12: true
+        });
+      } catch {
+        return iso;
+      }
+    }
+
+    function showError(msg) {
+      const box = $('error-box');
+      box.style.display = 'block';
+      box.textContent = '⚠ ' + msg;
+      $('results').style.display = 'none';
+    }
+
+    function clearError() {
+      $('error-box').style.display = 'none';
+    }
+
+    function statusBadge(status) {
+      const s = (status || '').toUpperCase();
+      const cls = s === 'PAID' ? 'status-paid'
+                : s === 'UNPAID' ? 'status-unpaid'
+                : s === 'EXPIRED' ? 'status-expired'
+                : 'status-default';
+      return `<span class="status-badge ${cls}">${s || '—'}</span>`;
+    }
+
+    async function scanTicket(fromAutoSubmit = false) {
+      const ticketid = $('ticketid').value.trim();
+      const pin = $('pin').value.trim();
+
+      clearError();
+
+      if (!ticketid || !pin) {
+        showError('Please enter both a Ticket ID and PIN.');
+        return;
+      }
+
+      const btn = $('scan-btn');
+      isSubmitting = true;
+      btn.classList.add('loading');
+      btn.textContent = '';
+      if (fromAutoSubmit) {
+        setStatus('Looking up ticket…', 'working');
+      }
+
+      try {
+        const res = await fetch('https://kenocloud.com/kenocloud/casino/41/game/1/ticket', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticketid, pin })
+        });
+
+        if (!res.ok) {
+          let msg = `Server returned ${res.status}`;
+          try {
+            const j = await res.json();
+            msg = j.message || j.error || msg;
+          } catch {}
+          showError(msg);
+          if (fromAutoSubmit) setStatus('Auto-submit reached the server but the lookup failed.', 'error');
+          return;
+        }
+
+        const data = await res.json();
+        $('val-status').innerHTML = statusBadge(data.status);
+        $('val-last-win').textContent = formatCents(data.last_race_win);
+        $('val-total').textContent = formatCents(data.total_win);
+        $('meta-booked').textContent = data.races_booked ?? '—';
+        $('meta-played').textContent = data.races_played ?? '—';
+        $('meta-ticketid').textContent = data.ticket_id ?? '—';
+        $('meta-vend').textContent = formatDateTime(data.vend_time);
+        $('meta-complete').textContent = formatDateTime(data.completion_time);
+        $('results').style.display = 'block';
+        setStatus(fromAutoSubmit ? 'Ticket found. Auto-submit complete.' : 'Ticket found.', 'ok');
+        setMethodLabel(fromAutoSubmit ? 'Lookup Complete' : 'Manual Lookup');
+      } catch (err) {
+        showError('Network error — could not reach server. ' + err.message);
+        if (fromAutoSubmit) setStatus('Auto-submit failed because the server could not be reached.', 'error');
+      } finally {
+        isSubmitting = false;
+        btn.classList.remove('loading');
+        btn.textContent = 'Scan Ticket';
+      }
+    }
+
+    ['ticketid', 'pin'].forEach(id => {
+      $(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') scanTicket(false);
+      });
+    });
+  </script>
+</body>
+</html>
