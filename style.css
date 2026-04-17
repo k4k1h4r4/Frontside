@@ -233,10 +233,10 @@ nav {
   font-family: 'Oswald', sans-serif;
   font-weight: 300;
   font-size: clamp(0.85rem, 2vw, 1.05rem);
-  letter-spacing: 0.4em;
+  letter-spacing: 0.32em;
   text-transform: uppercase;
   color: var(--text-dim);
-  margin-top: 1.2rem;
+  margin-top: 1rem;
 }
 
 .hero-sub-emphasis {
@@ -439,6 +439,15 @@ nav {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--border);
+}
+
+.keno-game-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.keno-header-controls {
+  flex: 0 0 auto;
 }
 
 .keno-game-number {
@@ -896,7 +905,7 @@ footer a:hover { color: var(--accent); }
   width: min(88%, 520px);
   text-align: center;
   font-size: clamp(1.2rem, 3vw, 2rem);
-  color: #fff;
+  color: #ffffff;
   font-style: italic;
   text-shadow: 0 2px 18px rgba(0,0,0,0.9);
   pointer-events: none;
@@ -951,9 +960,15 @@ footer a:hover { color: var(--accent); }
 }
 
 #heatmap-btn {
-  min-height: 31px;
+  width: 140px;
+  min-width: 140px;
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   white-space: nowrap;
-  line-height: 1;
+  line-height: 1.05;
 }
 
 .heatmap-legend {
@@ -1045,6 +1060,8 @@ footer a:hover { color: var(--accent); }
   .keno-header {
     margin-bottom: 1.2rem;
     padding-bottom: 1rem;
+    flex-wrap: nowrap;
+    align-items: flex-start;
   }
 
   .keno-board-wrap {
@@ -1082,7 +1099,15 @@ footer a:hover { color: var(--accent); }
   .button-row { flex-direction: column; align-items: flex-start; }
   .keno-page-header { align-items: flex-start; }
   .keno-cell { font-size: 1.2rem; }
-  .draw-ball { width: 26px; height: 26px; font-size: 1.3rem; }
+  .draw-order-strip {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    column-gap: 4px;
+    row-gap: 20px;
+    width: 100%;
+    justify-items: center;
+  }
+  .draw-ball { width: 26px; height: 26px; font-size: 1.3rem; margin-bottom: 0; }
   .hero-image { width: 96vw; }
 
   .recent-item {
@@ -1105,12 +1130,13 @@ footer a:hover { color: var(--accent); }
   }
 
   .keno-action-stack {
-    width: 100%;
-    justify-content: stretch;
+    width: auto;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
   }
 
   .keno-action-stack .btn {
-    flex: 1 1 0;
+    flex: 0 0 auto;
   }
 
   .hero {
