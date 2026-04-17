@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=30">
+  <link rel="stylesheet" href="style.css?v=31">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -454,9 +454,9 @@
     <a href="index.html" class="nav-logo">FRONTSIDE</a>
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
-      <li><a href="atmosphere.html">Atmosphere</a></li>
+      <li><a href="skill-games.html">Skill Games</a></li>
       <li><a href="keno.html">Keno</a></li>
-      <li><a href="ticket-scan.html" class="active">Ticket Scan</a></li>
+      <li><a href="ticket.html" class="active">Tickets</a></li>
     </ul>
   </nav>
 
@@ -529,7 +529,6 @@
         <button type="submit" class="btn ticket-submit">Search</button>
       </form>
 
-      <div class="ticket-hint">Search stays at the top so a scan can be reviewed and submitted immediately.</div>
     </div>
 
     <div class="ticket-ocr-wrap">
@@ -542,14 +541,14 @@
           </div>
 
           <div class="ticket-ocr-copy">
-            Start Camera opens a full-screen live preview. Align the full ticket inside the frame, then tap Scan Ticket inside the camera preview to capture and scan in one step.
+            Start Camera to scan. Align the full ticket inside the frame, then tap Scan Ticket capture and scan in one step.
           </div>
 		  <div id="ticket-ocr-status" class="ticket-ocr-status">Waiting for image or camera.</div>
         </div>
 
         <div class="ticket-ocr-preview-wrap">
           <img id="ticket-preview" class="ticket-ocr-preview" alt="Ticket preview">
-          <div class="ticket-hint">Tip: Best results come from Landscape-mode.  Be sure camera is straight-on with the full ticket visible.</div>
+          <div class="ticket-hint">Tip: Best results with camera in Landscape-mode, and your flashlight on.</div>
         </div>
       </div>
     </div>
@@ -593,7 +592,7 @@
   </div>
 
   <footer>
-    <p>FRONTSIDE &nbsp;&mdash;&nbsp; Ticket details via <a href="https://kenocloud.com" target="_blank" rel="noopener noreferrer">KenoCloud</a></p>
+    <p>This is a Frontside parody website, and in no way affiliated with any establishments named Frontside. <br>Ticket details via <a href="https://kenocloud.com" target="_blank" rel="noopener noreferrer">KenoCloud</a></p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
