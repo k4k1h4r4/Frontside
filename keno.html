@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Keno &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=23">
+  <link rel="stylesheet" href="style.css?v=24">
 </head>
 <body>
 
@@ -91,7 +91,7 @@
   <script>
     const BASE = 'https://kenocloud.com/kenocloud/casino/41/game/1/balldraw';
     const DEFAULT_HEAT_MAP_GAMES = 20;
-    const MIN_HEAT_MAP_GAMES = 2;
+    const MIN_HEAT_MAP_GAMES = 3;
     const MAX_HEAT_MAP_GAMES = 25;
     const RECENT_PANEL_GAMES = 20;
 
@@ -295,7 +295,7 @@
 
       if (heatMapEnabled) {
         gameNumber.innerHTML = `Last <input type="number" id="heatmap-games-input" class="heatmap-games-input" min="${MIN_HEAT_MAP_GAMES}" max="${MAX_HEAT_MAP_GAMES}" value="${heatMapGames}" inputmode="numeric" /> Games`;
-        gameTimestamp.textContent = 'Can input 2 - 25 games';
+        gameTimestamp.textContent = 'Input 3 - 25 Games';
 
         const input = getHeatMapGamesInput();
         if (input) {
