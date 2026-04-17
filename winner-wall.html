@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Winner Wall &mdash; Frontside</title>
+  <meta property="og:title" content="Winner Wall - Frontside">
+  <meta property="og:description" content="Track the biggest wins of the week at Frontside Table.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="images/Frontside.png">
+  <meta property="og:image:alt" content="Frontside logo">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Winner Wall - Frontside">
+  <meta name="twitter:description" content="Submit the big hits and browse the weekly Top 10 at Frontside Table.">
+  <meta name="twitter:image" content="images/Frontside.png">
+  <link rel="image_src" href="images/Frontside.png">
+  <link rel="stylesheet" href="style.css?v=26">
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">FRONTSIDE</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="skill-games.html">Games</a></li>
+      <li><a href="winner-wall.html" class="active">Winner Wall</a></li>
+      <li><a href="keno.html">Keno</a></li>
+      <li><a href="ticket.html">Tickets</a></li>
+    </ul>
+  </nav>
+
+  <section class="hero hero-simple hero-winner-wall">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <p class="hero-eyebrow">Chicken Dinner</p>
+      <h1 class="hero-title">Winner Wall</h1>
+      <p class="hero-sub">Sunday to Saturday. <span class="hero-sub-emphasis">Top 10.</span></p>
+    </div>
+  </section>
+
+  <main class="winner-wall-page">
+      <article class="winner-wall-card winner-wall-card-board">
+        <div class="winner-wall-card-head winner-wall-card-head-split">
+          <div>
+            <p class="section-label">Top 10</p>
+            <h2 class="section-title">Weekly leaderboard</h2>
+          </div>
+
+        </div>
+
+        <div class="winner-wall-board-meta">
+          <div class="winner-wall-week-display" id="selected-week-label">Loading leaderboard...</div>
+          <div class="winner-wall-week-caption">Weeks run Sunday through Saturday.</div>
+        </div>
+
+        <div class="winner-wall-alert winner-wall-alert-error" id="board-error" hidden></div>
+
+        <div class="winner-wall-board" id="leaderboard-board">
+          <div class="winner-wall-board-empty">Loading Top 10...</div>
+        </div>
+      </article>
+
+    <section class="winner-wall-grid">
+      <article class="winner-wall-card">
+        <div class="winner-wall-card-head">
+          <div>
+            <p class="section-label">Submit A Win</p>
+            <h2 class="section-title">Put it on the wall.</h2>
+          </div>
+        </div>
+
+        <div class="winner-wall-alert winner-wall-alert-info" id="config-banner">
+          Add your Supabase URL and anon key near the bottom of this file to make the page live.
+        </div>
+
+        <form class="winner-wall-form" id="winner-form">
+          <div class="winner-wall-field">
+            <label for="player-select">Player</label>
+            <select id="player-select" required disabled>
+              <option value="">Loading players...</option>
+            </select>
+          </div>
+
+          <div class="winner-wall-field">
+            <label for="game-select">Game</label>
+            <select id="game-select" required disabled>
+              <option value="">Loading games...</option>
+            </select>
+          </div>
+
+          <div class="winner-wall-field">
+            <label for="amount-input">Amount Won</label>
+            <div class="winner-wall-amount-wrap">
+              <span>$</span>
+              <input id="amount-input" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required>
+            </div>
+            <p class="winner-wall-field-note">Rounded to the nearest whole dollar on submit.</p>
+          </div>
+
+          <button class="btn winner-wall-submit" type="submit" id="submit-btn" disabled>Submit Win</button>
+        </form>
+
+        <div class="winner-wall-alert" id="form-status" hidden></div>
+      </article>
+
+
+
+      <article class="winner-wall-card winner-wall-card-archive">
+        <div class="winner-wall-card-head">
+          <div>
+            <p class="section-label">Previous Weeks</p>
+            <h2 class="section-title">Look back</h2>
+          </div>
+        </div>
+
+        <div class="winner-wall-week-picker">
+          <button class="btn btn-secondary" type="button" id="prev-week-btn">Previous</button>
+          <select id="week-select" disabled>
+            <option value="">Loading weeks...</option>
+          </select>
+          <button class="btn btn-secondary" type="button" id="next-week-btn">Next</button>
+        </div>
+
+        <div class="winner-wall-archive-list" id="week-list">
+          <div class="winner-wall-board-empty">Current week will appear here after setup.</div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    <p>This is a Frontside parody website, and in no way affiliated with any establishments named Frontside.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://znqnnaslskjewfxcswxw.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_0pVZp5JcAc9lSIClZD5eqQ_9Q33F7Uf';
+    const MOUNTAIN_TIME_ZONE = 'America/Denver';
+    const FALLBACK_GAMES = [
+      'KENO',
+      'Gold Fish Feeding',
+      'Great Train Robbery',
+      'Green Machine',
+      'Handsome Devil',
+      'College Rivals',
+      'King Kong',
+      'Offshore Angler',
+      "Piggy's Big Break",
+      "Pluderin' Pirates",
+      'Red Hot Buffalo',
+      'Terror Tavern',
+      'Top Shot Golf',
+      'Zeus'
+    ];
+
+    const playerSelect = document.getElementById('player-select');
+    const gameSelect = document.getElementById('game-select');
+    const amountInput = document.getElementById('amount-input');
+    const submitBtn = document.getElementById('submit-btn');
+    const form = document.getElementById('winner-form');
+    const formStatus = document.getElementById('form-status');
+    const configBanner = document.getElementById('config-banner');
+    const boardError = document.getElementById('board-error');
+    const boardEl = document.getElementById('leaderboard-board');
+    const selectedWeekLabel = document.getElementById('selected-week-label');
+    const currentWeekRange = document.getElementById('current-week-range');
+    const weekSelect = document.getElementById('week-select');
+    const weekList = document.getElementById('week-list');
+    const prevWeekBtn = document.getElementById('prev-week-btn');
+    const nextWeekBtn = document.getElementById('next-week-btn');
+    const refreshBoardBtn = document.getElementById('refresh-board-btn');
+
+    const isConfigured =
+      SUPABASE_URL &&
+      SUPABASE_ANON_KEY &&
+      !SUPABASE_URL.includes('YOUR_SUPABASE_URL') &&
+      !SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY');
+
+    const supabaseClient = isConfigured
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      : null;
+
+    let currentWeekStart = getCurrentWeekStartIso();
+    let availableWeeks = [];
+    let activeWeek = currentWeekStart;
+
+    setTextIfPresent(currentWeekRange, formatWeekRange(currentWeekStart));
+    renderFallbackGames();
+
+    if (!isConfigured) {
+      setFormMessage('Connect Supabase to load players, save submissions, and show live leaderboard data.', 'info');
+      renderWeekOptions([currentWeekStart]);
+      renderWeekList([currentWeekStart]);
+      renderEmptyBoard('Add your Supabase credentials to load this week\'s Top 10.');
+    } else {
+      if (configBanner) configBanner.hidden = true;
+      initWinnerWall();
+    }
+
+    if (amountInput) {
+      amountInput.addEventListener('blur', () => {
+        if (!amountInput.value) return;
+        amountInput.value = String(Math.round(Number(amountInput.value)));
+      });
+    }
+
+    if (form) {
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        if (!supabaseClient) return;
+
+        const playerId = Number(playerSelect?.value);
+        const gameId = Number(gameSelect?.value);
+        const amountWon = Math.round(Number(amountInput?.value));
+
+        if (!playerId || !gameId || !Number.isFinite(amountWon) || amountWon < 0) {
+          setFormMessage('Pick a player, pick a game, and enter a valid win amount.', 'error');
+          return;
+        }
+
+        if (submitBtn) submitBtn.disabled = true;
+        setFormMessage('Saving submission...', 'info');
+
+        const { error } = await supabaseClient
+          .from('FS_WinnerWallSubmissions')
+          .insert({
+            player_id: playerId,
+            game_id: gameId,
+            amount_won: amountWon
+          });
+
+        if (error) {
+          if (submitBtn) submitBtn.disabled = false;
+          setFormMessage(error.message || 'Submission failed. Please try again.', 'error');
+          return;
+        }
+
+        form.reset();
+        if (submitBtn) submitBtn.disabled = false;
+        setFormMessage('Win submitted. The leaderboard is refreshing now.', 'success');
+        activeWeek = currentWeekStart;
+        await refreshAllData();
+      });
+    }
+
+    if (weekSelect) {
+      weekSelect.addEventListener('change', async () => {
+        if (!weekSelect.value) return;
+        activeWeek = weekSelect.value;
+        syncWeekControls();
+        await loadLeaderboard(activeWeek);
+      });
+    }
+
+    if (prevWeekBtn) {
+      prevWeekBtn.addEventListener('click', async () => {
+        const index = availableWeeks.indexOf(activeWeek);
+        if (index === -1 || index === availableWeeks.length - 1) return;
+        activeWeek = availableWeeks[index + 1];
+        syncWeekControls();
+        await loadLeaderboard(activeWeek);
+      });
+    }
+
+    if (nextWeekBtn) {
+      nextWeekBtn.addEventListener('click', async () => {
+        const index = availableWeeks.indexOf(activeWeek);
+        if (index <= 0) return;
+        activeWeek = availableWeeks[index - 1];
+        syncWeekControls();
+        await loadLeaderboard(activeWeek);
+      });
+    }
+
+    if (refreshBoardBtn) {
+      refreshBoardBtn.addEventListener('click', async () => {
+        if (!supabaseClient) return;
+        await refreshAllData();
+      });
+    }
+
+    async function initWinnerWall() {
+      try {
+        await Promise.all([
+          loadPlayers(),
+          loadGames(),
+          refreshAllData()
+        ]);
+      } catch (error) {
+        renderEmptyBoard('The page loaded, but Supabase data could not be read.');
+        showBoardError(error.message || 'Unable to load Winner Wall data right now.');
+      }
+    }
+
+    async function refreshAllData() {
+      currentWeekStart = await loadCurrentWeek();
+      setTextIfPresent(currentWeekRange, formatWeekRange(currentWeekStart));
+      if (!availableWeeks.includes(currentWeekStart)) {
+        activeWeek = currentWeekStart;
+      }
+      await loadWeeks();
+      await loadLeaderboard(activeWeek);
+    }
+
+    async function loadCurrentWeek() {
+      const { data, error } = await supabaseClient
+        .from('FS_WinnerWallCurrentWeekView')
+        .select('week_start')
+        .single();
+
+      if (error || !data?.week_start) {
+        return getCurrentWeekStartIso();
+      }
+
+      return data.week_start;
+    }
+
+    async function loadPlayers() {
+      if (!playerSelect) return;
+
+      const { data, error } = await supabaseClient
+        .from('FS_Players')
+        .select('id, first_name, last_name')
+        .eq('is_active', true)
+        .order('first_name', { ascending: true })
+        .order('last_name', { ascending: true });
+
+      if (error) {
+        playerSelect.innerHTML = '<option value="">Unable to load players</option>';
+        throw error;
+      }
+
+      playerSelect.innerHTML = '<option value="">Choose a player</option>';
+      data.forEach((player) => {
+        const option = document.createElement('option');
+        option.value = String(player.id);
+        option.textContent = [player.first_name, player.last_name].filter(Boolean).join(' ').trim();
+        playerSelect.appendChild(option);
+      });
+
+      playerSelect.disabled = false;
+      enableFormIfReady();
+    }
+
+    async function loadGames() {
+      if (!gameSelect) return;
+
+      const { data, error } = await supabaseClient
+        .from('FS_Games')
+        .select('id, game_name')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+        .order('game_name', { ascending: true });
+
+      if (error) {
+        renderFallbackGames();
+        throw error;
+      }
+
+      gameSelect.innerHTML = '<option value="">Choose a game</option>';
+      data.forEach((game) => {
+        const option = document.createElement('option');
+        option.value = String(game.id);
+        option.textContent = game.game_name;
+        gameSelect.appendChild(option);
+      });
+
+      gameSelect.disabled = false;
+      enableFormIfReady();
+    }
+
+    async function loadWeeks() {
+      const { data, error } = await supabaseClient
+        .from('FS_WinnerWallWeeksView')
+        .select('week_start')
+        .order('week_start', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      const weekSet = new Set([currentWeekStart]);
+      (data || []).forEach((row) => {
+        if (row.week_start) weekSet.add(row.week_start);
+      });
+
+      availableWeeks = Array.from(weekSet).sort((left, right) => right.localeCompare(left));
+
+      if (!availableWeeks.includes(activeWeek)) {
+        activeWeek = availableWeeks[0] || currentWeekStart;
+      }
+
+      renderWeekOptions(availableWeeks);
+      renderWeekList(availableWeeks);
+      syncWeekControls();
+    }
+
+    async function loadLeaderboard(weekStart) {
+      setTextIfPresent(selectedWeekLabel, `Viewing ${formatWeekRange(weekStart)}`);
+      hideBoardError();
+
+      const { data, error } = await supabaseClient
+        .from('FS_WinnerWallLeaderboardView')
+        .select('rank, player_name, game_name, amount_won, submitted_at, leaderboard_week_start')
+        .eq('leaderboard_week_start', weekStart)
+        .lte('rank', 10)
+        .order('rank', { ascending: true });
+
+      if (error) {
+        renderEmptyBoard('Unable to load this leaderboard right now.');
+        showBoardError(error.message || 'Leaderboard query failed.');
+        return;
+      }
+
+      renderBoard(data || []);
+    }
+
+    function renderBoard(rows) {
+      if (!rows.length) {
+        renderEmptyBoard(`No wins submitted yet for ${formatWeekRange(activeWeek)}.`);
+        return;
+      }
+
+      boardEl.innerHTML = '';
+
+      rows.forEach((row) => {
+        const item = document.createElement('div');
+        item.className = 'winner-wall-row';
+
+        const rank = document.createElement('div');
+        rank.className = 'winner-wall-rank';
+        rank.textContent = row.rank;
+
+        const details = document.createElement('div');
+        details.className = 'winner-wall-row-main';
+        details.innerHTML = `
+          <div class="winner-wall-player">${escapeHtml(row.player_name)}</div>
+          <div class="winner-wall-row-meta">${escapeHtml(row.game_name)} &middot; ${formatSubmittedAt(row.submitted_at)}</div>
+        `;
+
+        const amount = document.createElement('div');
+        amount.className = 'winner-wall-amount';
+        amount.textContent = formatCurrency(row.amount_won);
+
+        item.appendChild(rank);
+        item.appendChild(details);
+        item.appendChild(amount);
+        boardEl.appendChild(item);
+      });
+    }
+
+    function renderEmptyBoard(message) {
+      if (!boardEl) return;
+      boardEl.innerHTML = `<div class="winner-wall-board-empty">${escapeHtml(message)}</div>`;
+    }
+
+    function renderWeekOptions(weeks) {
+      if (!weekSelect) return;
+      weekSelect.innerHTML = '';
+
+      weeks.forEach((weekStart) => {
+        const option = document.createElement('option');
+        option.value = weekStart;
+        option.textContent = formatWeekRange(weekStart);
+        weekSelect.appendChild(option);
+      });
+
+      weekSelect.disabled = weeks.length === 0;
+    }
+
+    function renderWeekList(weeks) {
+      if (!weekList) return;
+      if (!weeks.length) {
+        weekList.innerHTML = '<div class="winner-wall-board-empty">No weeks available yet.</div>';
+        return;
+      }
+
+      weekList.innerHTML = '';
+
+      weeks.forEach((weekStart) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `winner-wall-week-chip${weekStart === activeWeek ? ' active' : ''}`;
+        button.textContent = formatWeekRange(weekStart);
+        button.addEventListener('click', async () => {
+          activeWeek = weekStart;
+          syncWeekControls();
+          await loadLeaderboard(activeWeek);
+        });
+        weekList.appendChild(button);
+      });
+    }
+
+    function syncWeekControls() {
+      if (weekSelect) weekSelect.value = activeWeek;
+      renderWeekList(availableWeeks);
+
+      const index = availableWeeks.indexOf(activeWeek);
+      if (prevWeekBtn) prevWeekBtn.disabled = index === -1 || index >= availableWeeks.length - 1;
+      if (nextWeekBtn) nextWeekBtn.disabled = index <= 0;
+    }
+
+    function renderFallbackGames() {
+      if (!gameSelect) return;
+      gameSelect.innerHTML = '<option value="">Choose a game</option>';
+      FALLBACK_GAMES.forEach((gameName, index) => {
+        const option = document.createElement('option');
+        option.value = String(index + 1);
+        option.textContent = gameName;
+        gameSelect.appendChild(option);
+      });
+    }
+
+    function enableFormIfReady() {
+      if (!playerSelect || !gameSelect || !submitBtn) return;
+      const playersReady = !playerSelect.disabled;
+      const gamesReady = !gameSelect.disabled;
+      submitBtn.disabled = !(playersReady && gamesReady);
+    }
+
+    function setFormMessage(message, tone) {
+      if (!formStatus) return;
+      formStatus.hidden = false;
+      formStatus.className = `winner-wall-alert winner-wall-alert-${tone}`;
+      formStatus.textContent = message;
+    }
+
+    function showBoardError(message) {
+      if (!boardError) return;
+      boardError.hidden = false;
+      boardError.textContent = message;
+    }
+
+    function hideBoardError() {
+      if (!boardError) return;
+      boardError.hidden = true;
+      boardError.textContent = '';
+    }
+
+    function setTextIfPresent(element, value) {
+      if (element) element.textContent = value;
+    }
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0
+      }).format(Number(value || 0));
+    }
+
+    function formatSubmittedAt(value) {
+      if (!value) return 'Submitted recently';
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: MOUNTAIN_TIME_ZONE,
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      }).format(new Date(value));
+    }
+
+    function formatWeekRange(weekStart) {
+      const start = new Date(`${weekStart}T00:00:00`);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
+
+      const startLabel = new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric'
+      }).format(start);
+
+      const endLabel = new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      }).format(end);
+
+      return `${startLabel} - ${endLabel}`;
+    }
+
+    function getCurrentWeekStartIso() {
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: MOUNTAIN_TIME_ZONE,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        weekday: 'short'
+      });
+
+      const parts = Object.fromEntries(
+        formatter.formatToParts(now).map((part) => [part.type, part.value])
+      );
+
+      const weekdayMap = {
+        Sun: 0,
+        Mon: 1,
+        Tue: 2,
+        Wed: 3,
+        Thu: 4,
+        Fri: 5,
+        Sat: 6
+      };
+
+      const localDate = new Date(`${parts.year}-${parts.month}-${parts.day}T12:00:00`);
+      localDate.setDate(localDate.getDate() - weekdayMap[parts.weekday]);
+      return localDate.toISOString().slice(0, 10);
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  </script>
+
+</body>
+</html>
