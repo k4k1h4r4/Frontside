@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=33">
+  <link rel="stylesheet" href="style.css?v=34">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -454,7 +454,8 @@
     <a href="index.html" class="nav-logo">FRONTSIDE</a>
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
-      <li><a href="skill-games.html">Skill Games</a></li>
+      <li><a href="skill-games.html">Games</a></li>
+      <li><a href="winner-wall.html">Winner Wall</a></li>
       <li><a href="keno.html">Keno</a></li>
       <li><a href="ticket.html" class="active">Tickets</a></li>
     </ul>
@@ -472,7 +473,7 @@
       <div class="ticket-topline">
         <div>
           <div class="ticket-id" id="result-ticket-id">Ticket</div>
-          <div class="ticket-subtitle" id="result-created">Purchased</div>
+          <div class="ticket-subtitle" id="result-created">Purchase Time</div>
         </div>
 
         <div class="ticket-status-badge">
@@ -505,7 +506,7 @@
         </div>
 
         <div class="ticket-detail-card">
-          <div class="ticket-detail-label">Purchased</div>
+          <div class="ticket-detail-label">Purchase Time</div>
           <div class="ticket-detail-value" id="result-created-full">&mdash;</div>
         </div>
       </div>
@@ -669,7 +670,7 @@
 
     function fillResult(data) {
       document.getElementById('result-ticket-id').textContent = data.ticket_id || 'Ticket';
-      document.getElementById('result-created').textContent = `Purchased · ${formatDateTime(data.created)}`;
+      document.getElementById('result-created').textContent = `Purchase Time · ${formatDateTime(data.created)}`;
       document.getElementById('result-total-win').textContent = centsToCurrency(data.total_win);
       document.getElementById('result-last-win').textContent = centsToCurrency(data.last_race_win);
       document.getElementById('result-races-booked').textContent = data.races_booked ?? '—';
