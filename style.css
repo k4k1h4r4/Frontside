@@ -1046,6 +1046,371 @@ footer a:hover { color: var(--accent); }
   border-color: #ff9b9b;
 }
 
+.hero-winner-wall .hero-bg {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(212,175,55,0.18), transparent 26%),
+    radial-gradient(circle at 15% 85%, rgba(111,75,52,0.28), transparent 34%),
+    linear-gradient(135deg, #21150d 0%, #16100b 45%, #0a0705 100%);
+  filter: none;
+  transform: none;
+}
+
+.hero-winner-wall:hover .hero-bg {
+  transform: none;
+}
+
+.winner-wall-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2rem 2rem 5rem;
+}
+
+.winner-wall-intro,
+.winner-wall-grid {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.winner-wall-intro {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 1.2rem;
+}
+
+.winner-wall-grid {
+  grid-template-columns: minmax(320px, 0.95fr) minmax(0, 1.2fr);
+  align-items: start;
+}
+
+.winner-wall-highlight,
+.winner-wall-card {
+  background: linear-gradient(180deg, rgba(26,19,14,0.96), rgba(18,13,9,0.98));
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-heavy);
+}
+
+.winner-wall-highlight {
+  padding: 1.6rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.winner-wall-highlight::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.8;
+}
+
+.winner-wall-highlight-secondary {
+  background: linear-gradient(180deg, rgba(31,22,16,0.96), rgba(18,13,9,0.98));
+}
+
+.winner-wall-highlight-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  letter-spacing: 0.07em;
+  color: var(--accent-bright);
+  line-height: 1.05;
+  margin-bottom: 0.75rem;
+}
+
+.winner-wall-highlight-copy {
+  color: var(--text-dim);
+  line-height: 1.75;
+}
+
+.winner-wall-card {
+  padding: 1.5rem;
+}
+
+.winner-wall-card-board {
+  min-height: 100%;
+  grid-column: 1 / -1;
+}
+
+.winner-wall-card-archive {
+  grid-column: 1 / -1;
+}
+
+.winner-wall-card-head,
+.winner-wall-card-head-split,
+.winner-wall-week-picker,
+.winner-wall-row,
+.winner-wall-week-display,
+.winner-wall-board-tools {
+  display: flex;
+}
+
+.winner-wall-card-head,
+.winner-wall-card-head-split {
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.35rem;
+}
+
+.winner-wall-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.winner-wall-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.winner-wall-field label,
+.winner-wall-field-note,
+.winner-wall-week-caption,
+.winner-wall-row-meta {
+  font-family: 'Oswald', sans-serif;
+}
+
+.winner-wall-field label {
+  font-size: 0.82rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.winner-wall-field select,
+.winner-wall-field input,
+.winner-wall-week-picker select {
+  width: 100%;
+  border: 1px solid var(--border-accent);
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  padding: 0.95rem 1rem;
+  font-family: 'Oswald', sans-serif;
+  font-size: 1rem;
+  color-scheme: dark;
+}
+
+.winner-wall-field select,
+.winner-wall-week-picker select {
+  background-color: #18110c;
+  color: #f3ead8;
+}
+
+.winner-wall-field select option,
+.winner-wall-week-picker select option {
+  background: #18110c;
+  color: #f3ead8;
+}
+
+.winner-wall-field select:focus,
+.winner-wall-field input:focus,
+.winner-wall-week-picker select:focus {
+  outline: none;
+  border-color: var(--accent-bright);
+  box-shadow: 0 0 0 3px rgba(212,175,55,0.12);
+}
+
+.winner-wall-field select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.winner-wall-amount-wrap {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  align-items: center;
+  border: 1px solid var(--border-accent);
+  background: rgba(255,255,255,0.04);
+}
+
+.winner-wall-amount-wrap span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.7rem;
+  color: var(--accent-bright);
+  border-right: 1px solid var(--border-accent);
+}
+
+.winner-wall-amount-wrap input {
+  border: 0;
+  background: transparent;
+}
+
+.winner-wall-field-note {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.winner-wall-submit {
+  width: 100%;
+  justify-content: center;
+}
+
+.winner-wall-alert {
+  margin-top: 1rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-dim);
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.88rem;
+  letter-spacing: 0.05em;
+  line-height: 1.6;
+}
+
+.winner-wall-alert-info {
+  border-color: var(--accent-dim);
+  background: rgba(212,175,55,0.08);
+}
+
+.winner-wall-alert-success {
+  border-color: #4d8c54;
+  background: rgba(77,140,84,0.14);
+  color: #d5f0d8;
+}
+
+.winner-wall-alert-error {
+  border-color: #8c433b;
+  background: rgba(140,67,59,0.14);
+  color: #efc0ba;
+}
+
+.winner-wall-board-meta {
+  padding: 0 0 1rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+
+.winner-wall-week-display {
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8rem;
+  letter-spacing: 0.06em;
+  color: var(--accent-bright);
+}
+
+.winner-wall-week-caption {
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.winner-wall-board {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.winner-wall-row {
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.025);
+}
+
+.winner-wall-row:nth-child(1) {
+  border-color: var(--accent);
+  box-shadow: 0 0 18px rgba(212,175,55,0.12);
+}
+
+.winner-wall-rank {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8rem;
+  color: var(--accent-bright);
+  background: rgba(212,175,55,0.08);
+  flex-shrink: 0;
+}
+
+.winner-wall-row-main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.winner-wall-player {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.7rem;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+
+.winner-wall-row-meta {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.winner-wall-amount {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  letter-spacing: 0.06em;
+  color: var(--accent-bright);
+  line-height: 1;
+  text-align: right;
+}
+
+.winner-wall-board-empty {
+  padding: 2rem 1rem;
+  border: 1px dashed var(--border-accent);
+  text-align: center;
+  color: var(--text-dim);
+  font-family: 'Oswald', sans-serif;
+  letter-spacing: 0.08em;
+  line-height: 1.7;
+}
+
+.winner-wall-week-picker {
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.15rem;
+}
+
+.winner-wall-week-picker .btn {
+  white-space: nowrap;
+}
+
+.winner-wall-archive-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.winner-wall-week-chip {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-dim);
+  padding: 0.75rem 0.95rem;
+  cursor: pointer;
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.winner-wall-week-chip:hover,
+.winner-wall-week-chip.active {
+  border-color: var(--accent-dim);
+  color: var(--accent-bright);
+  background: rgba(212,175,55,0.08);
+}
+
 @media (max-width: 700px) {
   nav {
     padding: 0 1rem;
@@ -1183,5 +1548,59 @@ footer a:hover { color: var(--accent); }
   .winner-copy,
   .skill-callout {
     padding: 1.5rem;
+  }
+
+  .winner-wall-page {
+    padding: 1.25rem 0.8rem 4rem;
+  }
+
+  .winner-wall-intro,
+  .winner-wall-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .winner-wall-card-archive {
+    grid-column: auto;
+  }
+
+  .winner-wall-card-head-split,
+  .winner-wall-week-picker,
+  .winner-wall-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .winner-wall-week-picker .btn,
+  .winner-wall-week-picker select {
+    width: 100%;
+  }
+
+  .winner-wall-rank {
+    width: 48px;
+    height: 48px;
+    font-size: 1.5rem;
+  }
+
+  .winner-wall-player,
+  .winner-wall-amount {
+    text-align: left;
+  }
+
+  .winner-wall-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .winner-wall-row-main {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .winner-wall-amount {
+    font-size: clamp(2rem, 7vw, 2.6rem);
+    text-align: right;
+    margin-left: auto;
+    flex: 0 0 auto;
   }
 }
