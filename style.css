@@ -632,6 +632,10 @@ footer p {
   filter: invert(0);
 }
 
+.keno-cell[data-num="69"].heatmap-active .ball69-img {
+  filter: invert(1);
+}
+
 .draw-ball[data-num="69"] .ball69-img {
   width: 95%;
   height: 95%;
