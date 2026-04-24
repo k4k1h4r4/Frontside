@@ -625,7 +625,7 @@ footer p {
   object-fit: contain;
   display: block;
   pointer-events: none;
-  filter: invert(1);
+  filter: invert(0.43);
 }
 
 .keno-cell[data-num="69"].drawn .ball69-img {
@@ -633,12 +633,12 @@ footer p {
 }
 
 .draw-ball[data-num="69"] .ball69-img {
-  width: 65%;
-  height: 65%;
+  width: 95%;
+  height: 95%;
   object-fit: contain;
   display: block;
   pointer-events: none;
-  filter: invert(1);
+  filter: invert(0.6) sepia(1) saturate(2) hue-rotate(10deg);
 }
 
 @keyframes ballIn {
