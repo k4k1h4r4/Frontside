@@ -619,6 +619,28 @@ footer p {
   color: #ffffff;
 }
 
+.ball69-img {
+  width: 95%;
+  height: 95%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+  filter: invert(1);
+}
+
+.keno-cell[data-num="69"].drawn .ball69-img {
+  filter: invert(0);
+}
+
+.draw-ball[data-num="69"] .ball69-img {
+  width: 65%;
+  height: 65%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+  filter: invert(1);
+}
+
 @keyframes ballIn {
   from { transform: scale(0.7); opacity: 0.3; }
   to   { transform: scale(1); opacity: 1; }
