@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Keno &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=27">
+  <link rel="stylesheet" href="style.css?v=28">
 </head>
 <body>
 
@@ -137,8 +137,12 @@
         for (let n = start; n <= end; n++) {
           const cell = document.createElement('div');
           cell.className = 'keno-cell';
-          cell.textContent = n;
           cell.dataset.num = n;
+          if (n === 69) {
+            cell.innerHTML = '<img class="ball69-img" src="images/sixnine.png" alt="69">';
+          } else {
+            cell.textContent = n;
+          }
           el.appendChild(cell);
         }
       }
@@ -156,7 +160,9 @@
         const ball = document.createElement('div');
         ball.className = 'draw-ball';
         ball.dataset.num = num;
-        ball.innerHTML = `${num}<span class="draw-ball-num">#${i + 1}</span>`;
+        ball.innerHTML = num === 69
+          ? `<img class="ball69-img" src="images/sixnine.png" alt="69"><span class="draw-ball-num">#${i + 1}</span>`
+          : `${num}<span class="draw-ball-num">#${i + 1}</span>`;
         strip.appendChild(ball);
       });
       document.getElementById('draw-order-wrap').style.display = 'block';
@@ -284,7 +290,13 @@
       document.querySelectorAll('.keno-cell').forEach(cell => {
         const num = Number(cell.dataset.num);
         const count = heatMapCounts[num] ?? 0;
-        cell.textContent = heatMapEnabled && heatMapFrequencyMode ? count : num;
+        if (heatMapEnabled && heatMapFrequencyMode) {
+          cell.textContent = count;
+        } else if (num === 69) {
+          cell.innerHTML = '<img class="ball69-img" src="images/sixnine.png" alt="69">';
+        } else {
+          cell.textContent = num;
+        }
       });
     }
 
