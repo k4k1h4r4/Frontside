@@ -374,7 +374,7 @@ nav {
   border: 1px solid var(--accent-dim);
   padding: 0.7rem 1.4rem;
   text-decoration: none;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
   cursor: pointer;
   background: rgba(178,122,70,0.05);
 }
@@ -978,6 +978,7 @@ footer a:hover { color: var(--accent); }
 
 .keno-action-stack {
   display: flex;
+  align-items: center;
   gap: 0.65rem;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -991,18 +992,27 @@ footer a:hover { color: var(--accent); }
   box-shadow: 0 0 14px rgba(178,122,70,0.18);
 }
 
-#heatmap-btn {
-  width: auto;
-  max-width: 140px;
-  min-width: 0;
+#heatmap-btn,
+#refresh-btn {
+  height: 2.5rem;
   min-height: 2.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   white-space: nowrap;
+}
+
+#heatmap-btn {
+  width: auto;
+  max-width: 140px;
+  min-width: 0;
   line-height: 1.05;
   padding: 0.35rem 0.8rem;
+}
+
+#refresh-btn {
+  line-height: 1;
 }
 
 .heatmap-legend {
@@ -1536,6 +1546,8 @@ footer a:hover { color: var(--accent); }
 
   .keno-action-stack .btn {
     flex: 0 0 auto;
+    height: 2.5rem;
+    min-height: 2.5rem;
   }
 
   #heatmap-btn {
