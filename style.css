@@ -474,8 +474,8 @@ nav {
 }
 
 .heatmap-games-input {
-  width: 3.4ch;
-  min-width: 3.4ch;
+  width: 5ch;
+  min-width: 5ch;
   margin: 0 0.12rem;
   padding: 0.12rem 0.18rem;
   border: 1px solid var(--accent-dim);
@@ -1466,7 +1466,7 @@ footer a:hover { color: var(--accent); }
   .keno-board-wrap {
     width: 100%;
     margin: 0;
-    padding: 1rem;
+    padding: 0.3rem;
   }
 
   .keno-section {
