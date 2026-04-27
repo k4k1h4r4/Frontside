@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Keno &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=31">
+  <link rel="stylesheet" href="style.css?v=32">
 </head>
 <body>
 
@@ -23,8 +23,9 @@
 
     <div class="keno-header">
       <div class="keno-game-info">
-        <div class="keno-game-number" id="game-number">&mdash;&mdash;</div>
+	  	<div class="keno-game-number" id="game-number">&mdash;&mdash;</div> 
         <div class="keno-timestamp" id="game-timestamp">Loading&hellip;</div>
+  
       </div>
       <div class="keno-header-controls" style="display:flex; flex-direction:column; align-items:flex-end; gap:0.75rem;">
         <div class="keno-status">
@@ -45,12 +46,12 @@
     <div id="error-msg" class="error-msg" style="display:none; margin-bottom:1.5rem;"></div>
 
     <div class="keno-board-wrap" id="board-wrap" style="display:none;">
-      <div style="margin-bottom:1.2rem;">
-        <p style="font-family:'Oswald',sans-serif; font-size:0.7rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;">Numbers 1 &ndash; 40</p>
+      <div style="margin-bottom:1.2rem;">      
         <div class="keno-section" id="section-low"></div>
       </div>
       <div>
-        <p style="font-family:'Oswald',sans-serif; font-size:0.7rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;">Numbers 41 &ndash; 80</p>
+        <br>
+		
         <div class="keno-section" id="section-high"></div>
       </div>
     </div>
