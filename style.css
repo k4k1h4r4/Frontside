@@ -1102,7 +1102,7 @@ footer a:hover { color: var(--accent); }
 }
 
 .hero-title-compact {
-  font-size: clamp(2.4rem, 9vw, 5rem);
+  font-size: clamp(2.4rem, 10vw, 5rem);
   line-height: 0.9;
 }
 
@@ -1631,7 +1631,7 @@ footer a:hover { color: var(--accent); }
   }
 
   .hero-title-compact {
-    font-size: clamp(2rem, 8vw, 3.2rem);
+    font-size: clamp(2rem, 10vw, 3.2rem);
   }
 
   .btn-submit-win-anchor {
