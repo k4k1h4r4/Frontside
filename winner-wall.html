@@ -14,7 +14,7 @@
   <meta name="twitter:description" content="Submit the big hits and browse the weekly Top 10 at Frontside Table.">
   <meta name="twitter:image" content="images/Frontside.png">
   <link rel="image_src" href="images/Frontside.png">
-  <link rel="stylesheet" href="style.css?v=27">
+  <link rel="stylesheet" href="style.css?v=28">
 </head>
 <body>
 
@@ -29,44 +29,50 @@
     </ul>
   </nav>
 
-  <section class="hero hero-simple hero-winner-wall">
+  <section class="hero hero-simple hero-winner-wall hero-winner-wall-compact" id="top">
     <div class="hero-bg"></div>
     <div class="hero-overlay"></div>
     <div class="hero-content">
       <p class="hero-eyebrow">Chicken Dinner</p>
-      <h1 class="hero-title">Winner Wall</h1>
-      <p class="hero-sub">Sunday to Saturday. <span class="hero-sub-emphasis">Top 10.</span></p>
+      <h1 class="hero-title hero-title-compact">Winner Wall</h1>
+      <p class="hero-sub">Sunday - Saturday</p>
+      <a href="#submit-win" class="btn btn-submit-win-anchor">Submit Win</a>
     </div>
   </section>
 
   <main class="winner-wall-page">
       <article class="winner-wall-card winner-wall-card-board">
-        <div class="winner-wall-card-head winner-wall-card-head-split">
+
           <div>
-            <p class="section-label">Top 10</p>
-            <h2 class="section-title">Weekly leaderboard</h2>
+            <h2 class="section-title">Leaderboard</h2>
           </div>
 
-        </div>
+
 
         <div class="winner-wall-board-meta">
           <div class="winner-wall-week-display" id="selected-week-label">Loading leaderboard...</div>
-          <div class="winner-wall-week-caption">Weeks run Sunday through Saturday.</div>
+
+		<div class="winner-wall-week-nav">
+          <button class="btn btn-secondary" type="button" id="prev-week-btn">&#8592; Previous</button>
+          <button class="btn btn-secondary" type="button" id="next-week-btn">Next &#8594;</button>
         </div>
+        </div>
+
 
         <div class="winner-wall-alert winner-wall-alert-error" id="board-error" hidden></div>
 
         <div class="winner-wall-board" id="leaderboard-board">
           <div class="winner-wall-board-empty">Loading Top 10...</div>
         </div>
+
+
       </article>
 
-    <section class="winner-wall-grid">
-      <article class="winner-wall-card">
+      <article class="winner-wall-card" id="submit-win">
         <div class="winner-wall-card-head">
           <div>
             <p class="section-label">Submit A Win</p>
-            <h2 class="section-title">Put it on the wall.</h2>
+            <h2 class="section-title">Put it on the wall!</h2>
           </div>
         </div>
 
@@ -95,7 +101,7 @@
               <span>$</span>
               <input id="amount-input" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required>
             </div>
-            <p class="winner-wall-field-note">Rounded to the nearest whole dollar on submit.</p>
+            <p class="winner-wall-field-note">Single spin + Bonus. Rounded to the nearest dollar.</p>
           </div>
 
           <button class="btn winner-wall-submit" type="submit" id="submit-btn" disabled>Submit Win</button>
@@ -104,29 +110,7 @@
         <div class="winner-wall-alert" id="form-status" hidden></div>
       </article>
 
-
-
-      <article class="winner-wall-card winner-wall-card-archive">
-        <div class="winner-wall-card-head">
-          <div>
-            <p class="section-label">Previous Weeks</p>
-            <h2 class="section-title">Look back</h2>
-          </div>
-        </div>
-
-        <div class="winner-wall-week-picker">
-          <button class="btn btn-secondary" type="button" id="prev-week-btn">Previous</button>
-          <select id="week-select" disabled>
-            <option value="">Loading weeks...</option>
-          </select>
-          <button class="btn btn-secondary" type="button" id="next-week-btn">Next</button>
-        </div>
-
-        <div class="winner-wall-archive-list" id="week-list">
-          <div class="winner-wall-board-empty">Current week will appear here after setup.</div>
-        </div>
-      </article>
-    </section>
+      <select id="week-select" hidden disabled></select>
   </main>
 
   <footer>
@@ -187,6 +171,7 @@
     let activeWeek = currentWeekStart;
 
     setTextIfPresent(currentWeekRange, formatWeekRange(currentWeekStart));
+    setTextIfPresent(selectedWeekLabel, formatSelectedWeekLabel(currentWeekStart));
     renderFallbackGames();
 
     if (!isConfigured) {
@@ -243,6 +228,7 @@
         setFormMessage('Win submitted. The leaderboard is refreshing now.', 'success');
         activeWeek = currentWeekStart;
         await refreshAllData();
+        document.getElementById('top').scrollIntoView({ behavior: 'smooth' });
       });
     }
 
@@ -399,7 +385,7 @@
     }
 
     async function loadLeaderboard(weekStart) {
-      setTextIfPresent(selectedWeekLabel, `Viewing ${formatWeekRange(weekStart)}`);
+      setTextIfPresent(selectedWeekLabel, formatSelectedWeekLabel(weekStart));
       hideBoardError();
 
       const { data, error } = await supabaseClient
@@ -580,6 +566,19 @@
       }).format(end);
 
       return `${startLabel} - ${endLabel}`;
+    }
+
+    function formatSelectedWeekLabel(weekStart) {
+      const start = new Date(`${weekStart}T00:00:00`);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
+
+      const dateFormat = new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+
+      return `${dateFormat.format(start)} - ${dateFormat.format(end)}`;
     }
 
     function getCurrentWeekStartIso() {
