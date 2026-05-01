@@ -781,7 +781,7 @@ footer {
   background: rgba(11,7,5,0.96);
   border-top: 1px solid var(--border);
   text-align: center;
-  padding: 2.5rem 2rem;
+  padding: 0.5rem 1.5rem;
 }
 
 footer p {
