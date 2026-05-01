@@ -1095,16 +1095,58 @@ footer a:hover { color: var(--accent); }
   transform: none;
 }
 
+/* ── Winner Wall compact hero & Submit Win button ── */
+.hero-winner-wall-compact {
+  height: 28vh;
+  min-height: 180px;
+}
+
+.hero-title-compact {
+  font-size: clamp(2.4rem, 9vw, 5rem);
+  line-height: 0.9;
+}
+
+.hero-winner-wall-compact .hero-eyebrow {
+  margin-bottom: 0.3rem;
+}
+
+.hero-winner-wall-compact .hero-sub {
+  margin-top: 0.4rem;
+}
+
+.btn-submit-win-anchor {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.5rem 1.4rem;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-decoration: none;
+  background: rgba(212,175,55,0.12);
+  border: 1px solid var(--accent);
+  color: var(--accent-bright);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-submit-win-anchor:hover {
+  background: var(--accent);
+  color: #130d09;
+}
+
+
 .winner-wall-page {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 2rem 2rem 5rem;
+  padding: 1rem 1rem 3rem;
 }
 
 .winner-wall-intro,
 .winner-wall-grid {
   display: grid;
-  gap: 1.2rem;
+  gap: 0.75rem;
 }
 
 .winner-wall-intro {
@@ -1159,12 +1201,22 @@ footer a:hover { color: var(--accent); }
 }
 
 .winner-wall-card {
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 .winner-wall-card-board {
   min-height: 100%;
   grid-column: 1 / -1;
+}
+
+.winner-wall-card-board .section-title {
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+
+#submit-win .winner-wall-card-head {
+  justify-content: center;
+  text-align: center;
 }
 
 .winner-wall-card-archive {
@@ -1184,8 +1236,8 @@ footer a:hover { color: var(--accent); }
 .winner-wall-card-head-split {
   align-items: start;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.35rem;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
 }
 
 .winner-wall-form {
@@ -1220,7 +1272,7 @@ footer a:hover { color: var(--accent); }
   border: 1px solid var(--border-accent);
   background: rgba(255,255,255,0.04);
   color: var(--text);
-  padding: 0.95rem 1rem;
+  padding: 0.65rem 0.8rem;
   font-family: 'Oswald', sans-serif;
   font-size: 1rem;
   color-scheme: dark;
@@ -1316,18 +1368,20 @@ footer a:hover { color: var(--accent); }
 }
 
 .winner-wall-board-meta {
-  padding: 0 0 1rem;
+  padding: 0 0 0.6rem;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 1rem;
+  margin-bottom: 0.6rem;
 }
 
 .winner-wall-week-display {
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.8rem;
+  font-size: clamp(1.05rem, 2.5vw, 1.35rem);
   letter-spacing: 0.06em;
   color: var(--accent-bright);
+  text-align: center;
 }
 
 .winner-wall-week-caption {
@@ -1340,13 +1394,13 @@ footer a:hover { color: var(--accent); }
 
 .winner-wall-board {
   display: grid;
-  gap: 0.8rem;
+  gap: 0.45rem;
 }
 
 .winner-wall-row {
   align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.05rem;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
   border: 1px solid var(--border);
   background: rgba(255,255,255,0.025);
 }
@@ -1357,15 +1411,15 @@ footer a:hover { color: var(--accent); }
 }
 
 .winner-wall-rank {
-  width: 54px;
-  height: 54px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 1px solid var(--accent-dim);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.8rem;
+  font-size: 1.4rem;
   color: var(--accent-bright);
   background: rgba(212,175,55,0.08);
   flex-shrink: 0;
@@ -1378,23 +1432,23 @@ footer a:hover { color: var(--accent); }
 
 .winner-wall-player {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.7rem;
+  font-size: 1.3rem;
   letter-spacing: 0.06em;
   color: var(--text);
   line-height: 1;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.15rem;
 }
 
 .winner-wall-row-meta {
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
 
 .winner-wall-amount {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  font-size: clamp(1.3rem, 3vw, 2rem);
   letter-spacing: 0.06em;
   color: var(--accent-bright);
   line-height: 1;
@@ -1411,11 +1465,20 @@ footer a:hover { color: var(--accent); }
   line-height: 1.7;
 }
 
-.winner-wall-week-picker {
+.winner-wall-week-nav {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.15rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
 }
+
+.winner-wall-week-nav .btn {
+  min-width: 100px;
+}
+
+
 
 .winner-wall-week-picker .btn {
   white-space: nowrap;
@@ -1562,6 +1625,21 @@ footer a:hover { color: var(--accent); }
     min-height: 240px;
   }
 
+  .hero-winner-wall-compact {
+    height: 24vh;
+    min-height: 170px;
+  }
+
+  .hero-title-compact {
+    font-size: clamp(2rem, 8vw, 3.2rem);
+  }
+
+  .btn-submit-win-anchor {
+    margin-top: 0.6rem;
+    padding: 0.45rem 1.1rem;
+    font-size: 0.72rem;
+  }
+
   .hero-logo {
     width: 92%;
   }
@@ -1589,7 +1667,7 @@ footer a:hover { color: var(--accent); }
   }
 
   .winner-wall-page {
-    padding: 1.25rem 0.8rem 4rem;
+    padding: 0.75rem 0.6rem 3rem;
   }
 
   .winner-wall-intro,
@@ -1614,9 +1692,9 @@ footer a:hover { color: var(--accent); }
   }
 
   .winner-wall-rank {
-    width: 48px;
-    height: 48px;
-    font-size: 1.5rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
   }
 
   .winner-wall-player,
@@ -1636,7 +1714,7 @@ footer a:hover { color: var(--accent); }
   }
 
   .winner-wall-amount {
-    font-size: clamp(2rem, 7vw, 2.6rem);
+    font-size: clamp(1.3rem, 5.5vw, 1.8rem);
     text-align: right;
     margin-left: auto;
     flex: 0 0 auto;
