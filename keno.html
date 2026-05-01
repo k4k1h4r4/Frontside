@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Keno &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=35">
+  <link rel="stylesheet" href="style.css?v=36">
 </head>
 <body>
 
@@ -216,6 +216,21 @@
       heatMapGames = nextValue;
       syncHeatMapGamesInput();
       recalculateHeatMapCounts();
+    }
+
+    function readHeatMapLinkState() {
+      const params = new URLSearchParams(window.location.search);
+      const heatMapParam = (params.get('heatmap') || '').toLowerCase();
+      const gamesParam = params.get('games');
+
+      heatMapEnabled = ['1', 'true', 'yes', 'on'].includes(heatMapParam);
+
+      if (gamesParam !== null) {
+        const parsed = Number(gamesParam);
+        if (Number.isFinite(parsed)) {
+          heatMapGames = clampHeatMapGames(Math.round(parsed));
+        }
+      }
     }
 
     function handleHeatMapGamesInput(event) {
@@ -587,6 +602,7 @@
     }
 
     (async function init() {
+      readHeatMapLinkState();
       updateHeatMapButton();
       updateSecondaryButton();
       updateHeatMapLegend();
