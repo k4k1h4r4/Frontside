@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Frontside Bingo</title>
+    <link rel="stylesheet" href="bingo.css">
+  </head>
+  <body>
+    <nav>
+      <a href="index.html" class="nav-logo">FRONTSIDE</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="skill-games.html">Games</a></li>
+        <li><a href="winner-wall.html">Winners</a></li>
+        <li><a href="keno.html">Keno</a></li>
+        <li><a href="ticket.html">Tickets</a></li>
+        <li><a href="bingo.html" class="active">Bingo</a></li>
+      </ul>
+    </nav>
+
+    <section class="hero hero-simple hero-winner-wall hero-winner-wall-compact" aria-labelledby="page-title">
+      <div class="hero-bg" aria-hidden="true"></div>
+      <div class="hero-overlay" aria-hidden="true"></div>
+      <div class="hero-content">
+        <p class="hero-eyebrow">Drink. Mark. Repeat.</p>
+        <h1 id="page-title" class="hero-title hero-title-compact">Frontside Bingo</h1>
+        <p class="hero-sub">Tap squares to mark the card</p>
+      </div>
+    </section>
+
+    <main class="bingo-app">
+
+      <section class="bingo-page" aria-label="Bingo card">
+        <header class="bingo-toolbar">
+          <div>
+            <p class="section-label">Tonight's Card</p>
+            <p id="marked-count" class="bingo-count">0 / 16 marked</p>
+          </div>
+          <div class="bingo-actions" aria-label="Card controls">
+            <button id="clear-marks" class="btn btn-secondary" type="button">Clear</button>
+            <button id="new-card" class="btn" type="button">New Card</button>
+          </div>
+        </header>
+
+        <div class="bingo-board-wrap">
+          <div id="bingo-board" class="bingo-board" role="group" aria-label="Random bingo card"></div>
+        </div>
+
+        <p id="saved-status" class="saved-status" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <script src="bingo.js"></script>
+  </body>
+</html>
