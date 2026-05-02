@@ -22,7 +22,8 @@ const OPTIONS = [
   "Player 'Luck Taps' a skill game",
   "Cowboy tells everyone he's leaving",
   'Skill game chair up',
-  'Offshore Angler Fishing Bonus'
+  'Offshore Angler Fishing Bonus',
+  'Jamie has towel after shift'
 ];
 
 const STORAGE_KEY = 'frontside-bingo-card-v1';
