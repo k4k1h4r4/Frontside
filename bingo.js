@@ -1,5 +1,4 @@
 const OPTIONS = [
-  'FUPA sighting! (Skin)',
   'Change channel / Remote request',
   'Bartender checks an ID',
   'Kitchen runs out of the Special',
