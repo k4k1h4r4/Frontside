@@ -411,7 +411,7 @@ nav {
   max-width: 100%;
   display: block;
   font-family: 'Oswald', Arial, sans-serif;
-  font-size: clamp(0.48rem, 2.35vw, 0.95rem);
+  font-size: clamp(0.48rem, 2.85vw, 0.95rem);
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1.08;
