@@ -23,7 +23,8 @@ const OPTIONS = [
   "Cowboy tells everyone he's leaving",
   'Skill game chair up',
   'Offshore Angler Fishing Bonus',
-  'Jamie has towel after shift'
+  'Jamie has towel after shift',
+  'Amanda says, "I do what I want"'
 ];
 
 const STORAGE_KEY = 'frontside-bingo-card-v1';
