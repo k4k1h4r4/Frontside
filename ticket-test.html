@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=38">
+  <link rel="stylesheet" href="style.css?v=39">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -497,7 +497,7 @@
   <div class="ticket-page">
     <div class="ticket-header">
       <div>
-        <div class="ticket-title">Ticket Scan v3</div>
+        <div class="ticket-title">Ticket Scan v4</div>
         <div class="ticket-subtitle">Ticket lookup and payout summary</div>
       </div>
     </div>
@@ -622,7 +622,6 @@
       <div class="camera-overlay-label">Align barcode strip in green box · ticket extends left</div>
 
       <div class="camera-overlay-bottombar">
-        <button id="camera-scan-btn" type="button" class="btn">Scan Ticket</button>
       </div>
     </div>
   </div>
@@ -659,7 +658,6 @@
     const cameraFrame = document.getElementById('camera-frame');
     const cameraCloseBtn = document.getElementById('camera-close-btn');
     const cameraTorchBtn = document.getElementById('camera-torch-btn');
-    const cameraScanBtn = document.getElementById('camera-scan-btn');
 
     let loadedImage = null;
     let loadedImageUrl = '';
@@ -883,8 +881,8 @@
       const enabled = await setTorchState(!cameraTorchEnabled);
       setOcrStatus(
         enabled
-          ? 'Torch is on. Align the ticket inside the frame, then tap Scan Ticket.'
-          : 'Torch is off. Align the ticket inside the frame, then tap Scan Ticket.',
+          ? 'Torch is on. Align the barcode in the green box.'
+          : 'Torch is off. Align the barcode in the green box.',
         enabled ? 'good' : 'warn'
       );
     }
@@ -952,7 +950,7 @@
       const reader = new ZXing.BrowserMultiFormatReader(hints);
       barcodeScanner = reader;
 
-      const scanFrame = () => {
+      const scanFrame = async () => {
         if (!barcodeScanActive) return;
 
         try {
@@ -969,7 +967,7 @@
           tempCanvas.height = vh;
           tempCanvas.getContext('2d').drawImage(cameraVideo, 0, 0, vw, vh);
 
-          const result = reader.decodeFromCanvas(tempCanvas);
+          const result = await reader.decodeFromCanvas(tempCanvas);
           if (result) {
             onBarcodeDetected(result.getText());
             return; // Stop scanning loop
@@ -978,7 +976,7 @@
           // ZXing throws NotFoundException when no barcode visible — ignore
         }
 
-        requestAnimationFrame(scanFrame);
+        if (barcodeScanActive) requestAnimationFrame(scanFrame);
       };
 
       requestAnimationFrame(scanFrame);
@@ -1054,54 +1052,14 @@
         return false;
       }
 
+      // Capture the FULL video frame — OCR regions are fractional coords of this
       const vw = cameraVideo.videoWidth;
       const vh = cameraVideo.videoHeight;
 
-      const videoRect = cameraVideo.getBoundingClientRect();
-      const frameRect = cameraFrame.getBoundingClientRect();
-      const videoAspect = vw / vh;
-      const elementAspect = videoRect.width / videoRect.height;
-
-      // Find the actual displayed video content inside the fullscreen video
-      // element after object-fit: contain letterboxing is applied.
-      let renderW;
-      let renderH;
-      let renderX;
-      let renderY;
-
-      if (videoAspect > elementAspect) {
-        renderW = videoRect.width;
-        renderH = renderW / videoAspect;
-        renderX = videoRect.left;
-        renderY = videoRect.top + ((videoRect.height - renderH) / 2);
-      } else {
-        renderH = videoRect.height;
-        renderW = renderH * videoAspect;
-        renderX = videoRect.left + ((videoRect.width - renderW) / 2);
-        renderY = videoRect.top;
-      }
-
-      const scaleX = vw / renderW;
-      const scaleY = vh / renderH;
-
-      const rawCropLeft = (frameRect.left - renderX) * scaleX;
-      const rawCropTop = (frameRect.top - renderY) * scaleY;
-      const rawCropRight = (frameRect.right - renderX) * scaleX;
-      const rawCropBottom = (frameRect.bottom - renderY) * scaleY;
-
-      const cropX = Math.max(0, Math.round(rawCropLeft));
-      const cropY = Math.max(0, Math.round(rawCropTop));
-      const cropRight = Math.min(vw, Math.round(rawCropRight));
-      const cropBottom = Math.min(vh, Math.round(rawCropBottom));
-      const cropW = Math.max(1, cropRight - cropX);
-      const cropH = Math.max(1, cropBottom - cropY);
-
-      // Draw only the frame region into the output canvas
       const canvas = document.createElement('canvas');
-      canvas.width = cropW;
-      canvas.height = cropH;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(cameraVideo, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+      canvas.width = vw;
+      canvas.height = vh;
+      canvas.getContext('2d').drawImage(cameraVideo, 0, 0, vw, vh);
 
       const dataUrl = canvas.toDataURL('image/jpeg', 0.97);
       await showImageFromDataUrl(dataUrl);
@@ -1239,27 +1197,6 @@
       }
     }
 
-    async function captureAndScanFromCamera() {
-      cameraScanBtn.textContent = 'Capturing…';
-      stopBarcodeScanning();
-
-      try {
-        const captured = await captureCurrentCameraFrame();
-        if (!captured) {
-          setOcrStatus('Camera is not ready yet. Give it a moment and try again.', 'warn');
-          return;
-        }
-
-        setOcrStatus('Picture captured. Reading PIN…', 'warn');
-        document.querySelector('.ticket-ocr-debug').style.display = 'block';
-        await scanLoadedImageForPin();
-      } catch (error) {
-        setOcrStatus(`Unable to capture image: ${error.message}`, 'bad');
-      } finally {
-        cameraScanBtn.textContent = 'Scan Ticket';
-      }
-    }
-
     function clearLoadedImage() {
       closeCameraOverlay();
       loadedImage = null;
@@ -1275,7 +1212,6 @@
     clearTicketBtn.addEventListener('click', clearLoadedImage);
     cameraCloseBtn.addEventListener('click', closeCameraOverlay);
     cameraTorchBtn.addEventListener('click', toggleTorch);
-    cameraScanBtn.addEventListener('click', captureAndScanFromCamera);
     updateTorchButton({ supported: false });
 
     form.addEventListener('submit', async (event) => {
