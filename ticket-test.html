@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticket Scan &mdash; Frontside</title>
+  <link rel="stylesheet" href="style.css?v=35">
+  <style>
+    .ticket-page {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 5rem;
+    }
+
+    .ticket-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ticket-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      letter-spacing: 0.08em;
+      color: var(--accent-bright);
+      line-height: 1;
+      text-shadow: 0 0 18px var(--accent-glow);
+    }
+
+    .ticket-subtitle {
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-top: 0.5rem;
+    }
+
+    .ticket-form-wrap,
+    .ticket-results,
+    .ticket-secondary-grid .ticket-detail-card,
+    .ticket-ocr-wrap,
+    .ticket-ocr-preview-wrap,
+    .ticket-ocr-debug {
+      background: linear-gradient(180deg, rgba(26,19,14,0.96), rgba(18,13,9,0.98));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-heavy);
+    }
+
+    .ticket-form-wrap,
+    .ticket-ocr-wrap,
+    .ticket-ocr-preview-wrap,
+    .ticket-ocr-debug {
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .ticket-form {
+      display: grid;
+      grid-template-columns: 1.3fr 0.9fr auto;
+      gap: 1rem;
+      align-items: end;
+    }
+
+    .ticket-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .ticket-field label,
+    .ticket-ocr-title,
+    .ticket-debug-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.9rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .ticket-ocr-title,
+    .ticket-debug-title {
+      margin-bottom: 0.8rem;
+    }
+
+    .ticket-field input,
+    .ticket-file-input {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-accent);
+      color: var(--text);
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.05rem;
+      letter-spacing: 0.08em;
+      padding: 0.9rem 1rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+
+    .ticket-file-input {
+      padding: 0.7rem 0.8rem;
+    }
+
+    .ticket-field input:focus,
+    .ticket-file-input:focus {
+      border-color: var(--accent-bright);
+      box-shadow: 0 0 0 3px rgba(178,122,70,0.14);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .ticket-submit,
+    .ticket-scan-btn {
+      min-width: 150px;
+      height: 49px;
+    }
+
+    .ticket-hint,
+    .ticket-ocr-copy,
+    .ticket-ocr-status,
+    .ticket-debug-copy {
+      margin-top: 0.9rem;
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .ticket-ocr-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .ticket-ocr-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 1rem;
+    }
+
+    .ticket-ocr-preview {
+      width: 100%;
+      display: none;
+      border: 1px solid var(--border-accent);
+      background: rgba(0,0,0,0.25);
+    }
+
+    .ticket-ocr-preview.visible {
+      display: block;
+    }
+
+    .ticket-ocr-crop-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .ticket-ocr-crop canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid var(--border-accent);
+      background: #fff;
+    }
+
+    .ticket-ocr-crop-label {
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 0.55rem;
+    }
+
+    .ticket-results {
+      display: none;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .ticket-results.open {
+      display: block;
+    }
+
+    .ticket-topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ticket-id {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.9rem;
+      letter-spacing: 0.08em;
+      color: var(--text);
+    }
+
+    .ticket-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text);
+      padding: 0.55rem 0.8rem;
+      border: 1px solid var(--border-accent);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .ticket-status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #6d6d6d;
+      box-shadow: 0 0 10px rgba(255,255,255,0.08);
+      flex-shrink: 0;
+    }
+
+    .ticket-status-dot.paid {
+      background: #7d9b55;
+      box-shadow: 0 0 12px rgba(125,155,85,0.55);
+    }
+
+    .ticket-status-dot.pending {
+      background: #d39a63;
+      box-shadow: 0 0 12px rgba(211,154,99,0.45);
+    }
+
+    .ticket-status-dot.other {
+      background: #9b7253;
+      box-shadow: 0 0 12px rgba(155,114,83,0.35);
+    }
+
+    .ticket-highlight-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .ticket-highlight {
+      padding: 1.3rem 1.25rem;
+      border: 1px solid var(--border-accent);
+      background: linear-gradient(180deg, rgba(35,25,18,0.96), rgba(20,14,9,0.98));
+    }
+
+    .ticket-highlight-label,
+    .ticket-detail-label {
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.45rem;
+    }
+
+    .ticket-highlight-value.total-win {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3rem, 8vw, 4.8rem);
+      line-height: 0.95;
+      letter-spacing: 0.04em;
+      color: #f4e3c7;
+      text-shadow: 0 0 30px rgba(178,122,70,0.22);
+    }
+
+    .ticket-highlight-value.last-win {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1;
+      letter-spacing: 0.05em;
+      color: var(--accent-bright);
+    }
+
+    .ticket-secondary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .ticket-detail-card {
+      padding: 1rem 1.05rem;
+    }
+
+    .ticket-detail-value {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1rem;
+      line-height: 1.5;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .loading-msg {
+      margin-bottom: 1rem;
+    }
+
+    .ticket-ocr-status.good { color: #b8d49a; }
+    .ticket-ocr-status.warn { color: #e9c38d; }
+    .ticket-ocr-status.bad { color: #d18d7d; }
+
+    .camera-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: #000;
+      display: none;
+    }
+
+    .camera-overlay.open {
+      display: block;
+    }
+
+    .camera-overlay video {
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+      display: block;
+      background: #000;
+    }
+
+    .camera-overlay-ui {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .camera-frame {
+      position: absolute;
+      /* Narrow vertical strip on the right side for barcode alignment */
+      right: 8%;
+      top: 50%;
+      width: min(7vw, 7vh);
+      height: min(72vw, 72vh);
+      transform: translateY(-50%);
+      border: 3px solid rgba(178,220,100,0.95);
+      box-shadow:
+        0 0 0 9999px rgba(0,0,0,0.45),
+        0 0 18px rgba(178,220,100,0.35);
+      pointer-events: none;
+    }
+
+    /* Ghost outline showing where the rest of the ticket extends to the left */
+    .camera-ticket-ghost {
+      position: absolute;
+      right: 8%;
+      top: 50%;
+      /* Ticket is ~12.5x wider than the barcode strip, ghost spans that */
+      width: min(87vw, 87vh);
+      height: min(72vw, 72vh);
+      transform: translate(-calc(min(7vw, 7vh)), -50%);
+      border: 1px dashed rgba(255,255,255,0.28);
+      pointer-events: none;
+    }
+
+    .camera-frame-label {
+      position: absolute;
+      right: 8%;
+      top: 50%;
+      width: min(7vw, 7vh);
+      transform: translateY(calc(-50% - min(38vw, 38vh) - 1.6rem));
+      text-align: center;
+      color: rgba(178,220,100,0.9);
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .camera-frame-grid {
+      display: none;
+    }
+
+    .camera-overlay-topbar,
+    .camera-overlay-bottombar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: max(16px, env(safe-area-inset-top)) 16px 16px;
+      pointer-events: none;
+    }
+
+    .camera-overlay-bottombar {
+      top: auto;
+      bottom: 0;
+      padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+      justify-content: center;
+    }
+
+    .camera-overlay-topbar .btn,
+    .camera-overlay-bottombar .btn {
+      pointer-events: auto;
+      min-width: 132px;
+      height: 52px;
+      background: rgba(18,13,9,0.92);
+      backdrop-filter: blur(6px);
+    }
+
+    .camera-overlay-label {
+      position: absolute;
+      left: 50%;
+      bottom: calc(max(86px, env(safe-area-inset-bottom) + 70px));
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.68);
+      color: #fff;
+      padding: 0.45rem 0.7rem;
+      font-family: 'Oswald', sans-serif;
+      font-size: 0.74rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    @media (max-width: 860px) {
+      .ticket-form,
+      .ticket-ocr-grid,
+      .ticket-ocr-crop-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .ticket-submit,
+      .ticket-scan-btn {
+        width: 100%;
+      }
+
+      .ticket-highlight-grid,
+      .ticket-secondary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (orientation: portrait) {
+      .camera-frame {
+        right: 5%;
+        width: min(10vw, 10vh);
+        height: min(55vw, 55vh);
+      }
+      .camera-ticket-ghost {
+        right: 5%;
+        width: min(85vw, 85vh);
+        height: min(55vw, 55vh);
+      }
+      .camera-frame-label {
+        right: 5%;
+        width: min(10vw, 10vh);
+      }
+    }
+
+    @media (orientation: landscape) {
+      .camera-frame {
+        right: 8%;
+        width: min(6vw, 6vh);
+        height: min(70vh, 70vw);
+      }
+      .camera-ticket-ghost {
+        right: 8%;
+        width: min(84vw, 84vh);
+        height: min(70vh, 70vw);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">FRONTSIDE</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="skill-games.html">Games</a></li>
+      <li><a href="winner-wall.html">Winners</a></li>
+      <li><a href="keno.html">Keno</a></li>
+      <li><a href="ticket.html" class="active">Tickets</a></li>
+    </ul>
+  </nav>
+
+  <div class="ticket-page">
+    <div class="ticket-header">
+      <div>
+        <div class="ticket-title">Ticket Scan</div>
+        <div class="ticket-subtitle">Ticket lookup and payout summary</div>
+      </div>
+    </div>
+	
+	<section id="ticket-results" class="ticket-results" aria-live="polite">
+      <div class="ticket-topline">
+        <div>
+          <div class="ticket-id" id="result-ticket-id">Ticket</div>
+          <div class="ticket-subtitle" id="result-created">Purchase Time</div>
+        </div>
+
+        <div class="ticket-status-badge">
+          <span id="result-status-dot" class="ticket-status-dot other"></span>
+          <span id="result-status">Unknown</span>
+        </div>
+      </div>
+
+      <div class="ticket-highlight-grid">
+        <div class="ticket-highlight">
+          <div class="ticket-highlight-label">Total Win</div>
+          <div class="ticket-highlight-value total-win" id="result-total-win">$0.00</div>
+        </div>
+
+        <div class="ticket-highlight">
+          <div class="ticket-highlight-label">Last Game Win</div>
+          <div class="ticket-highlight-value last-win" id="result-last-win">$0.00</div>
+        </div>
+      </div>
+
+      <div class="ticket-secondary-grid">
+        <div class="ticket-detail-card">
+          <div class="ticket-detail-label">Games Purchased</div>
+          <div class="ticket-detail-value" id="result-races-booked">&mdash;</div>
+        </div>
+
+        <div class="ticket-detail-card">
+          <div class="ticket-detail-label">Games Played</div>
+          <div class="ticket-detail-value" id="result-races-played">&mdash;</div>
+        </div>
+
+        <div class="ticket-detail-card">
+          <div class="ticket-detail-label">Purchase Time</div>
+          <div class="ticket-detail-value" id="result-created-full">&mdash;</div>
+        </div>
+      </div>
+    </section>
+
+    <div id="error-msg" class="error-msg" style="display:none; margin-bottom:1.5rem;"></div>
+    <div id="loading-msg" class="loading-msg" style="display:none;">Searching ticket&hellip;</div>
+
+    <div class="ticket-form-wrap">
+      <form id="ticket-form" class="ticket-form">
+        <div class="ticket-field">
+          <label for="serial">Serial</label>
+          <input id="serial" name="serial" type="text" autocomplete="off" placeholder="26105-5-251" required>
+        </div>
+
+        <div class="ticket-field">
+          <label for="pin">PIN</label>
+          <input id="pin" name="pin" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="9918" required>
+        </div>
+
+        <button type="submit" class="btn ticket-submit">Search</button>
+      </form>
+
+    </div>
+
+    <div class="ticket-ocr-wrap">
+      <div class="ticket-ocr-title">Scan ticket with Camera</div>
+      <div class="ticket-ocr-grid">
+        <div>
+          <div class="ticket-ocr-actions">
+            <button id="start-camera-btn" type="button" class="btn ticket-scan-btn">Start Camera</button>
+            <button id="clear-ticket-btn" type="button" class="btn btn-secondary ticket-scan-btn">Clear Image</button>
+          </div>
+
+          <div class="ticket-ocr-copy">
+            Start Camera and align the barcode strip into the green box — Serial decodes instantly. The PIN box location is then calculated automatically from the barcode position.
+          </div>
+		  <div id="ticket-ocr-status" class="ticket-ocr-status">Waiting for image or camera.</div>
+        </div>
+
+        <div class="ticket-ocr-preview-wrap">
+          <img id="ticket-preview" class="ticket-ocr-preview" alt="Ticket preview">
+          <div class="ticket-hint">Tip: Best results with camera in Landscape-mode, and your flashlight on.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ticket-ocr-debug" style="display:none;">
+      <div class="ticket-debug-title">OCR crop preview</div>
+      <div class="ticket-debug-copy">This preview shows the region being read for PIN extraction. Serial is decoded from the barcode.</div>
+      <div class="ticket-ocr-crop-grid">
+        <div class="ticket-ocr-crop">
+          <div class="ticket-ocr-crop-label">PIN line crop</div>
+          <canvas id="pin-line-crop-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+
+  <div id="camera-overlay" class="camera-overlay" aria-hidden="true">
+    <video id="camera-video" playsinline autoplay muted></video>
+    <div class="camera-overlay-ui">
+      <div class="camera-overlay-topbar">
+        <button id="camera-close-btn" type="button" class="btn btn-secondary">Close</button>
+        <button id="camera-torch-btn" type="button" class="btn btn-secondary">Torch On</button>
+      </div>
+
+      <div id="camera-frame" class="camera-frame">
+        <div class="camera-frame-grid"></div>
+      </div>
+
+      <!-- Ghost outline showing where ticket body extends to the left -->
+      <div class="camera-ticket-ghost"></div>
+
+      <!-- Label above the barcode guide -->
+      <div class="camera-frame-label">Barcode</div>
+
+      <div class="camera-overlay-label">Align barcode strip in green box · ticket extends left</div>
+
+      <div class="camera-overlay-bottombar">
+        <button id="camera-scan-btn" type="button" class="btn">Scan Ticket</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>This is a Frontside parody website, and in no way affiliated with any establishments named Frontside. <br>Ticket details via <a href="https://kenocloud.com" target="_blank" rel="noopener noreferrer">KenoCloud</a></p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+  <script>
+    const TICKET_ENDPOINT = 'https://kenocloud.com/kenocloud/casino/41/game/1/ticket';
+
+    const OCR_REGIONS = {
+      // Blue box: Cloud PIN area — right ~35% of ticket, upper portion of that column
+      pinLine: { x: 0.60, y: 0.28, w: 0.33, h: 0.47 }
+    };
+
+    const form = document.getElementById('ticket-form');
+    const results = document.getElementById('ticket-results');
+    const errorEl = document.getElementById('error-msg');
+    const loadingEl = document.getElementById('loading-msg');
+
+    const ticketPreview = document.getElementById('ticket-preview');
+    const ocrStatus = document.getElementById('ticket-ocr-status');
+    const serialInput = document.getElementById('serial');
+    const pinInput = document.getElementById('pin');
+    const pinLineCropCanvas = document.getElementById('pin-line-crop-canvas');
+
+    const startCameraBtn = document.getElementById('start-camera-btn');
+    const clearTicketBtn = document.getElementById('clear-ticket-btn');
+    const cameraOverlay = document.getElementById('camera-overlay');
+    const cameraVideo = document.getElementById('camera-video');
+    const cameraFrame = document.getElementById('camera-frame');
+    const cameraCloseBtn = document.getElementById('camera-close-btn');
+    const cameraTorchBtn = document.getElementById('camera-torch-btn');
+    const cameraScanBtn = document.getElementById('camera-scan-btn');
+
+    let loadedImage = null;
+    let loadedImageUrl = '';
+    let cameraStream = null;
+    let cameraTorchEnabled = false;
+    let barcodeScanner = null;
+    let barcodeScanActive = false;
+
+    // ── Base-36 barcode → serial decoder ────────────────────────────────────
+    // Barcode format: "9XQ 3I5 A8"
+    //   Seg1: 9XQ  (fixed prefix, ignored)
+    //   Seg2: e.g. "3I5" → split as [Q][3I][5]
+    //     - last char of seg1 (Q) base36 → first 2 digits of serial part 1
+    //     - first 2 chars of seg2 (3I) base36 → last 3 digits of serial part 1
+    //     → combined: "26" + "126" = "26126"
+    //   Middle digit (5 in seg2 position 2) → serial part 2 (literal "5")
+    //   Seg3: e.g. "A8" base36 → serial part 3 (e.g. 368)
+    // Result: "26126-5-368"
+    function base36(str) {
+      return parseInt(str, 36);
+    }
+
+    function decodeBarcodeSerial(raw) {
+      // Normalise: strip spaces, uppercase
+      const s = raw.replace(/\s+/g, '').toUpperCase();
+      // Expect 8 chars: e.g. "9XQ3I5A8"
+      if (s.length < 8) return '';
+
+      // Seg1 = s[0..2], Seg2 = s[3..5], Seg3 = s[6..7]
+      const seg1LastChar = s[2];           // Q
+      const seg2First2   = s.slice(3, 5);  // 3I
+      const seg2Middle   = s[5];           // 5  (literal middle serial digit)
+      const seg3         = s.slice(6, 8);  // A8
+
+      const part1a = base36(seg1LastChar); // 26
+      const part1b = base36(seg2First2);   // 126  (zero-padded to 3 digits)
+      const part2  = base36(seg2Middle);   // 5
+      const part3  = base36(seg3);         // 368
+
+      if (isNaN(part1a) || isNaN(part1b) || isNaN(part2) || isNaN(part3)) return '';
+
+      const serial = `${part1a}${String(part1b).padStart(3, '0')}-${part2}-${part3}`;
+      return serial;
+    }
+
+    function centsToCurrency(value) {
+      const amount = Number(value || 0) / 100;
+      return amount.toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      });
+    }
+
+    function formatDateTime(value) {
+      if (!value) return '—';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return value;
+      return d.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    }
+
+    function setStatusBadge(status) {
+      const normalized = String(status || 'UNKNOWN').toUpperCase();
+      const dot = document.getElementById('result-status-dot');
+      dot.className = 'ticket-status-dot';
+
+      if (normalized === 'PAID') {
+        dot.classList.add('paid');
+      } else if (normalized === 'PENDING' || normalized === 'ACTIVE') {
+        dot.classList.add('pending');
+      } else {
+        dot.classList.add('other');
+      }
+
+      document.getElementById('result-status').textContent = normalized;
+    }
+
+    function fillResult(data) {
+      document.getElementById('result-ticket-id').textContent = data.ticket_id || 'Ticket';
+      document.getElementById('result-created').textContent = `Purchase Time · ${formatDateTime(data.created)}`;
+      document.getElementById('result-total-win').textContent = centsToCurrency(data.total_win);
+      document.getElementById('result-last-win').textContent = centsToCurrency(data.last_race_win);
+      document.getElementById('result-races-booked').textContent = data.races_booked ?? '—';
+      document.getElementById('result-races-played').textContent = data.races_played ?? '—';
+      document.getElementById('result-created-full').textContent = formatDateTime(data.created);
+
+      setStatusBadge(data.status);
+      results.classList.add('open');
+    }
+
+    function showError(message) {
+      errorEl.style.display = 'block';
+      errorEl.textContent = message;
+    }
+
+    function clearError() {
+      errorEl.style.display = 'none';
+      errorEl.textContent = '';
+    }
+
+    function setLoading(isLoading) {
+      loadingEl.style.display = isLoading ? 'block' : 'none';
+    }
+
+    function setOcrStatus(message, type = '') {
+      ocrStatus.className = 'ticket-ocr-status';
+      if (type) ocrStatus.classList.add(type);
+      ocrStatus.textContent = message;
+    }
+
+    function revokeLoadedUrl() {
+      if (loadedImageUrl && loadedImageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(loadedImageUrl);
+      }
+      loadedImageUrl = '';
+    }
+
+    function getPrimaryVideoTrack() {
+      return cameraStream?.getVideoTracks?.()[0] || null;
+    }
+
+    function isRearCameraTrack(track) {
+      const settings = track?.getSettings?.() || {};
+      const label = String(track?.label || '').toLowerCase();
+      const facingMode = String(settings.facingMode || '').toLowerCase();
+      return (
+        facingMode === 'environment' ||
+        label.includes('back') ||
+        label.includes('rear') ||
+        label.includes('environment')
+      );
+    }
+
+    function updateTorchButton({ supported = false } = {}) {
+      cameraTorchBtn.textContent = cameraTorchEnabled ? 'Torch Off' : 'Torch On';
+      cameraTorchBtn.disabled = !supported;
+      cameraTorchBtn.style.opacity = supported ? '1' : '0.65';
+    }
+
+    function torchIsSupported() {
+      const videoTrack = getPrimaryVideoTrack();
+      if (!videoTrack || !isRearCameraTrack(videoTrack)) return false;
+      return Boolean(videoTrack.getCapabilities?.().torch);
+    }
+
+    async function waitForCameraVideoReady() {
+      if (cameraVideo.readyState >= 2) return;
+
+      await new Promise((resolve, reject) => {
+        const onReady = () => {
+          cleanup();
+          resolve();
+        };
+        const onError = () => {
+          cleanup();
+          reject(new Error('Video preview did not become ready.'));
+        };
+        const cleanup = () => {
+          cameraVideo.removeEventListener('loadedmetadata', onReady);
+          cameraVideo.removeEventListener('canplay', onReady);
+          cameraVideo.removeEventListener('error', onError);
+        };
+
+        cameraVideo.addEventListener('loadedmetadata', onReady, { once: true });
+        cameraVideo.addEventListener('canplay', onReady, { once: true });
+        cameraVideo.addEventListener('error', onError, { once: true });
+      });
+    }
+
+    async function setTorchState(enabled) {
+      const videoTrack = getPrimaryVideoTrack();
+      if (!videoTrack || !isRearCameraTrack(videoTrack)) {
+        cameraTorchEnabled = false;
+        updateTorchButton({ supported: false });
+        return false;
+      }
+
+      const capabilities = videoTrack.getCapabilities?.() || {};
+      if (!capabilities.torch) {
+        cameraTorchEnabled = false;
+        updateTorchButton({ supported: false });
+        return false;
+      }
+
+      try {
+        await videoTrack.applyConstraints({ advanced: [{ torch: enabled }] });
+        cameraTorchEnabled = enabled;
+        updateTorchButton({ supported: true });
+        return true;
+      } catch (_) {
+        try {
+          await videoTrack.applyConstraints({ torch: enabled });
+          cameraTorchEnabled = enabled;
+          updateTorchButton({ supported: true });
+          return true;
+        } catch (_) {
+          cameraTorchEnabled = false;
+          updateTorchButton({ supported: true });
+          return false;
+        }
+      }
+    }
+
+    async function toggleTorch() {
+      if (!cameraStream) {
+        setOcrStatus('Start the camera before using the torch.', 'warn');
+        return;
+      }
+
+      if (!torchIsSupported()) {
+        updateTorchButton({ supported: false });
+        setOcrStatus('Torch control is not supported on this phone or browser.', 'warn');
+        return;
+      }
+
+      const enabled = await setTorchState(!cameraTorchEnabled);
+      setOcrStatus(
+        enabled
+          ? 'Torch is on. Align the ticket inside the frame, then tap Scan Ticket.'
+          : 'Torch is off. Align the ticket inside the frame, then tap Scan Ticket.',
+        enabled ? 'good' : 'warn'
+      );
+    }
+
+    async function startCamera() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setOcrStatus('Camera is not supported in this browser.', 'bad');
+        return;
+      }
+
+      try {
+        await stopCameraStreamOnly();
+
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            aspectRatio: { ideal: 16 / 9 }
+          },
+          audio: false
+        });
+
+        // Try to lock to landscape so the ticket frame stays wide
+        try {
+          if (screen.orientation?.lock) {
+            await screen.orientation.lock('landscape');
+          }
+        } catch (_) { /* silently ignore — not all browsers support this */ }
+
+        cameraVideo.srcObject = cameraStream;
+        cameraOverlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        await cameraVideo.play().catch(() => {});
+        await waitForCameraVideoReady();
+        updateTorchButton({ supported: torchIsSupported() });
+
+        setOcrStatus(
+          torchIsSupported()
+            ? 'Camera started. Tap Torch On, then align the barcode in the green box — rest of ticket extends left.'
+            : 'Camera started. Align the barcode strip in the green box — Serial and PIN will be captured automatically.',
+          'good'
+        );
+
+        startBarcodeScanning();
+      } catch (error) {
+        setOcrStatus(`Unable to start camera: ${error.message}`, 'bad');
+      }
+    }
+
+    function startBarcodeScanning() {
+      if (barcodeScanActive) return;
+      barcodeScanActive = true;
+
+      const hints = new Map();
+      // Prefer Code 128 and Code 39 which are common on tickets
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+        ZXing.BarcodeFormat.CODE_128,
+        ZXing.BarcodeFormat.CODE_39,
+        ZXing.BarcodeFormat.CODE_93,
+        ZXing.BarcodeFormat.EAN_13,
+        ZXing.BarcodeFormat.UPC_A,
+      ]);
+
+      const reader = new ZXing.BrowserMultiFormatReader(hints);
+      barcodeScanner = reader;
+
+      const scanFrame = () => {
+        if (!barcodeScanActive) return;
+
+        try {
+          const vw = cameraVideo.videoWidth;
+          const vh = cameraVideo.videoHeight;
+          if (!vw || !vh) {
+            requestAnimationFrame(scanFrame);
+            return;
+          }
+
+          // Draw current frame to a temp canvas for ZXing
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = vw;
+          tempCanvas.height = vh;
+          tempCanvas.getContext('2d').drawImage(cameraVideo, 0, 0, vw, vh);
+
+          const result = reader.decodeFromCanvas(tempCanvas);
+          if (result) {
+            onBarcodeDetected(result.getText(), result.getResultPoints(), vw, vh, tempCanvas);
+            return; // Stop scanning loop
+          }
+        } catch (_) {
+          // ZXing throws NotFoundException when no barcode visible — ignore
+        }
+
+        requestAnimationFrame(scanFrame);
+      };
+
+      requestAnimationFrame(scanFrame);
+    }
+
+    function stopBarcodeScanning() {
+      barcodeScanActive = false;
+      barcodeScanner = null;
+    }
+
+    async function onBarcodeDetected(rawBarcode, resultPoints, frameW, frameH, frameCanvas) {
+      stopBarcodeScanning();
+      setOcrStatus('Barcode found! Decoding serial and reading PIN…', 'warn');
+
+      // Decode serial from barcode immediately
+      const serial = decodeBarcodeSerial(rawBarcode);
+      if (serial) {
+        serialInput.value = serial;
+      } else {
+        setOcrStatus(`Barcode read (${rawBarcode}) but could not decode serial. Check format.`, 'bad');
+      }
+
+      // ── Calculate PIN region relative to barcode position ──────────────────
+      // Result points for a vertical barcode are two points top & bottom of the bar strip.
+      // From the ticket: PIN box is to the LEFT of the barcode.
+      // Ticket proportions (measured from photo):
+      //   - Barcode strip width  ≈ barcodeH * 0.08  (it's tall and narrow)
+      //   - PIN box starts       ≈ 0.5 × barcodeH to the LEFT of barcode left edge
+      //   - PIN box width        ≈ 3.5 × barcodeH
+      //   - PIN box top          ≈ barcode top
+      //   - PIN box height       ≈ 0.55 × barcodeH
+      let pinRegion = null;
+
+      if (resultPoints && resultPoints.length >= 2) {
+        const pts = resultPoints.map(p => ({ x: p.getX(), y: p.getY() }));
+        const bTop    = Math.min(...pts.map(p => p.y));
+        const bBottom = Math.max(...pts.map(p => p.y));
+        const bLeft   = Math.min(...pts.map(p => p.x));
+        const bRight  = Math.max(...pts.map(p => p.x));
+        const bH = bBottom - bTop;
+        const bW = bRight - bLeft;
+        // Use whichever dimension is larger as the "height" of the barcode strip
+        const stripH = Math.max(bH, bW);
+
+        const pinX = bLeft - stripH * 4.0;   // PIN box left edge
+        const pinY = bTop  - stripH * 0.05;  // slight top padding
+        const pinW = stripH * 3.5;            // PIN box width
+        const pinH = stripH * 0.60;           // PIN box height
+
+        // Convert to fractional coordinates relative to full frame
+        pinRegion = {
+          x: Math.max(0, pinX / frameW),
+          y: Math.max(0, pinY / frameH),
+          w: Math.min(1 - Math.max(0, pinX / frameW), pinW / frameW),
+          h: Math.min(1 - Math.max(0, pinY / frameH), pinH / frameH)
+        };
+      }
+
+      // Capture still from the already-drawn frameCanvas (full frame)
+      const dataUrl = frameCanvas.toDataURL('image/jpeg', 0.97);
+      await showImageFromDataUrl(dataUrl);
+      closeCameraOverlay();
+
+      document.querySelector('.ticket-ocr-debug').style.display = 'block';
+      await scanLoadedImageForPin(pinRegion);
+    }
+
+    async function stopCameraStreamOnly() {
+      stopBarcodeScanning();
+      if (cameraStream) {
+        await setTorchState(false).catch(() => {});
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      cameraTorchEnabled = false;
+      cameraVideo.srcObject = null;
+      updateTorchButton({ supported: false });
+    }
+
+    async function closeCameraOverlay() {
+      await stopCameraStreamOnly();
+      cameraOverlay.classList.remove('open');
+      document.body.style.overflow = '';
+      try { screen.orientation?.unlock?.(); } catch (_) {}
+    }
+
+    function showImageFromDataUrl(dataUrl) {
+      return new Promise((resolve, reject) => {
+        revokeLoadedUrl();
+        loadedImageUrl = dataUrl;
+
+        const img = new Image();
+        img.onload = () => {
+          loadedImage = img;
+          ticketPreview.src = dataUrl;
+          ticketPreview.classList.add('visible');
+          resolve();
+        };
+        img.onerror = reject;
+        img.src = dataUrl;
+      });
+    }
+
+    async function captureCurrentCameraFrame() {
+      if (!cameraStream || !cameraVideo.videoWidth || !cameraVideo.videoHeight) {
+        return false;
+      }
+
+      const vw = cameraVideo.videoWidth;
+      const vh = cameraVideo.videoHeight;
+
+      const videoRect = cameraVideo.getBoundingClientRect();
+      const frameRect = cameraFrame.getBoundingClientRect();
+      const videoAspect = vw / vh;
+      const elementAspect = videoRect.width / videoRect.height;
+
+      // Find the actual displayed video content inside the fullscreen video
+      // element after object-fit: contain letterboxing is applied.
+      let renderW;
+      let renderH;
+      let renderX;
+      let renderY;
+
+      if (videoAspect > elementAspect) {
+        renderW = videoRect.width;
+        renderH = renderW / videoAspect;
+        renderX = videoRect.left;
+        renderY = videoRect.top + ((videoRect.height - renderH) / 2);
+      } else {
+        renderH = videoRect.height;
+        renderW = renderH * videoAspect;
+        renderX = videoRect.left + ((videoRect.width - renderW) / 2);
+        renderY = videoRect.top;
+      }
+
+      const scaleX = vw / renderW;
+      const scaleY = vh / renderH;
+
+      const rawCropLeft = (frameRect.left - renderX) * scaleX;
+      const rawCropTop = (frameRect.top - renderY) * scaleY;
+      const rawCropRight = (frameRect.right - renderX) * scaleX;
+      const rawCropBottom = (frameRect.bottom - renderY) * scaleY;
+
+      const cropX = Math.max(0, Math.round(rawCropLeft));
+      const cropY = Math.max(0, Math.round(rawCropTop));
+      const cropRight = Math.min(vw, Math.round(rawCropRight));
+      const cropBottom = Math.min(vh, Math.round(rawCropBottom));
+      const cropW = Math.max(1, cropRight - cropX);
+      const cropH = Math.max(1, cropBottom - cropY);
+
+      // Draw only the frame region into the output canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = cropW;
+      canvas.height = cropH;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(cameraVideo, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.97);
+      await showImageFromDataUrl(dataUrl);
+      closeCameraOverlay();
+      return true;
+    }
+
+    
+    function preprocessToCanvas(sourceImage, region, targetCanvas, options = {}) {
+      const { scale = 4 } = options;
+
+      const sx = Math.round(sourceImage.naturalWidth * region.x);
+      const sy = Math.round(sourceImage.naturalHeight * region.y);
+      const sw = Math.round(sourceImage.naturalWidth * region.w);
+      const sh = Math.round(sourceImage.naturalHeight * region.h);
+
+      const workCanvas = document.createElement('canvas');
+      workCanvas.width = sw * scale;
+      workCanvas.height = sh * scale;
+
+      const ctx = workCanvas.getContext('2d', { willReadFrequently: true });
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(sourceImage, sx, sy, sw, sh, 0, 0, workCanvas.width, workCanvas.height);
+
+      const imageData = ctx.getImageData(0, 0, workCanvas.width, workCanvas.height);
+      const data = imageData.data;
+      const pixelCount = data.length / 4;
+
+      // Step 1: Convert to grayscale
+      const grays = new Uint8ClampedArray(pixelCount);
+      for (let i = 0; i < pixelCount; i++) {
+        const base = i * 4;
+        grays[i] = Math.round(data[base] * 0.299 + data[base+1] * 0.587 + data[base+2] * 0.114);
+      }
+
+      // Step 2: Adaptive threshold — use mean of the crop to handle
+      // varying lighting. Tickets are light paper (~180-220) with dark
+      // ink (~30-90), so threshold = mean - 20 cleanly separates them.
+      let sum = 0;
+      for (let i = 0; i < pixelCount; i++) sum += grays[i];
+      const mean = sum / pixelCount;
+      const threshold = Math.max(100, Math.min(210, mean - 20));
+
+      // Step 3: Binarize — ink (below threshold) → black, background → white
+      for (let i = 0; i < pixelCount; i++) {
+        const base = i * 4;
+        const v = grays[i] < threshold ? 0 : 255;
+        data[base] = data[base+1] = data[base+2] = v;
+        data[base+3] = 255;
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+
+      targetCanvas.width = workCanvas.width;
+      targetCanvas.height = workCanvas.height;
+      targetCanvas.getContext('2d').drawImage(workCanvas, 0, 0);
+
+      return targetCanvas;
+    }
+
+
+    function extractSerial(text) {
+      const cleaned = text.replace(/[—–−]/g, '-').replace(/\s+/g, ' ').trim();
+      const direct = cleaned.match(/\b\d{5}-\d-\d{3}\b/);
+      if (direct) return direct[0];
+
+      const compact = cleaned.replace(/[^0-9-]/g, '');
+      const fallback = compact.match(/(\d{5})-?(\d)-?(\d{3})/);
+      if (fallback) return `${fallback[1]}-${fallback[2]}-${fallback[3]}`;
+      return '';
+    }
+
+    function extractPin(text) {
+      const cleaned = text.replace(/\s+/g, ' ').trim();
+
+      const direct = cleaned.match(/PIN\s*(\d{4})\b/i);
+      if (direct) return direct[1];
+
+      const cloud = cleaned.match(/Cloud\s*PIN\s*(\d{4})\b/i);
+      if (cloud) return cloud[1];
+
+      const digitsAfterPin = cleaned.match(/PIN[^0-9]{0,8}([0-9]{4})/i);
+      if (digitsAfterPin) return digitsAfterPin[1];
+
+      return '';
+    }
+
+    async function recognizeCanvas(targetCanvas, whitelist, psm) {
+      return Tesseract.recognize(targetCanvas, 'eng', {
+        logger: () => {},
+        tessedit_pageseg_mode: psm,
+        tessedit_char_whitelist: whitelist
+      });
+    }
+
+    async function scanLoadedImageForPin(pinRegion = null) {
+      clearError();
+
+      if (!loadedImage) {
+        setOcrStatus('No image captured for PIN scan.', 'warn');
+        return;
+      }
+
+      setOcrStatus('Reading PIN from ticket…', 'warn');
+
+      // Use barcode-relative region if available, otherwise fall back to fixed region
+      const region = pinRegion || OCR_REGIONS.pinLine;
+
+      try {
+        const pinLineCanvas = preprocessToCanvas(loadedImage, region, pinLineCropCanvas, {
+          scale: 6,
+          threshold: 180
+        });
+
+        const pinResult = await recognizeCanvas(
+          pinLineCanvas,
+          'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ./',
+          '6'
+        );
+
+        const pin = extractPin(pinResult.data.text || '');
+        if (pin) pinInput.value = pin;
+
+        const serial = serialInput.value.trim();
+
+        if (serial && pin) {
+          setOcrStatus(`Scan complete. Serial ${serial} and PIN ${pin}.`, 'good');
+        } else if (serial) {
+          setOcrStatus(`Serial ${serial} found from barcode. PIN not detected — enter manually.`, 'warn');
+        } else if (pin) {
+          setOcrStatus(`PIN ${pin} found. Serial not decoded — enter manually.`, 'warn');
+        } else {
+          setOcrStatus('PIN not detected. Enter it manually.', 'bad');
+        }
+      } catch (error) {
+        setOcrStatus(`OCR failed: ${error.message}`, 'bad');
+      }
+    }
+
+    async function captureAndScanFromCamera() {
+      cameraScanBtn.textContent = 'Capturing…';
+      stopBarcodeScanning();
+
+      try {
+        const captured = await captureCurrentCameraFrame();
+        if (!captured) {
+          setOcrStatus('Camera is not ready yet. Give it a moment and try again.', 'warn');
+          return;
+        }
+
+        setOcrStatus('Picture captured. Reading PIN…', 'warn');
+        document.querySelector('.ticket-ocr-debug').style.display = 'block';
+        await scanLoadedImageForPin(null); // null = use fixed fallback region
+      } catch (error) {
+        setOcrStatus(`Unable to capture image: ${error.message}`, 'bad');
+      } finally {
+        cameraScanBtn.textContent = 'Scan Ticket';
+      }
+    }
+
+    function clearLoadedImage() {
+      closeCameraOverlay();
+      loadedImage = null;
+      ticketPreview.src = '';
+      ticketPreview.classList.remove('visible');
+      pinLineCropCanvas.width = 0;
+      pinLineCropCanvas.height = 0;
+      revokeLoadedUrl();
+      setOcrStatus('Waiting for image or camera.');
+    }
+
+    startCameraBtn.addEventListener('click', startCamera);
+    clearTicketBtn.addEventListener('click', clearLoadedImage);
+    cameraCloseBtn.addEventListener('click', closeCameraOverlay);
+    cameraTorchBtn.addEventListener('click', toggleTorch);
+    cameraScanBtn.addEventListener('click', captureAndScanFromCamera);
+    updateTorchButton({ supported: false });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearError();
+      setLoading(true);
+
+      const ticketid = document.getElementById('serial').value.trim();
+      const pin = document.getElementById('pin').value.trim();
+
+      try {
+        const response = await fetch(TICKET_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ ticketid, pin })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        fillResult(data);
+      } catch (error) {
+        results.classList.remove('open');
+        showError(`Unable to retrieve ticket details. ${error.message}. If this page is hosted on a different domain, confirm the API allows cross-origin POST requests.`);
+      } finally {
+        setLoading(false);
+      }
+    });
+  </script>
+</body>
+</html>
