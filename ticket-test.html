@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=42">
+  <link rel="stylesheet" href="style.css?v=43">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -341,46 +341,16 @@
 
     .camera-frame {
       position: absolute;
-      /* Narrow vertical strip on the right side for barcode alignment */
-      right: 8%;
+      left: 50%;
       top: 50%;
-      width: min(7vw, 7vh);
-      height: min(72vw, 72vh);
-      transform: translateY(-50%);
+      width: 92vw;
+      height: 52vw;
+      transform: translate(-50%, -50%);
       border: 3px solid rgba(178,220,100,0.95);
       box-shadow:
         0 0 0 9999px rgba(0,0,0,0.45),
         0 0 18px rgba(178,220,100,0.35);
       pointer-events: none;
-    }
-
-    /* Ghost outline showing where the rest of the ticket extends to the left */
-    .camera-ticket-ghost {
-      position: absolute;
-      right: 8%;
-      top: 50%;
-      /* Ticket is ~12.5x wider than the barcode strip, ghost spans that */
-      width: min(87vw, 87vh);
-      height: min(72vw, 72vh);
-      transform: translate(-calc(min(7vw, 7vh)), -50%);
-      border: 1px dashed rgba(255,255,255,0.28);
-      pointer-events: none;
-    }
-
-    .camera-frame-label {
-      position: absolute;
-      right: 8%;
-      top: 50%;
-      width: min(7vw, 7vh);
-      transform: translateY(calc(-50% - min(38vw, 38vh) - 1.6rem));
-      text-align: center;
-      color: rgba(178,220,100,0.9);
-      font-family: 'Oswald', sans-serif;
-      font-size: 0.68rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      pointer-events: none;
-      white-space: nowrap;
     }
 
     .camera-frame-grid {
@@ -450,35 +420,6 @@
       }
     }
 
-    @media (orientation: portrait) {
-      .camera-frame {
-        right: 5%;
-        width: min(10vw, 10vh);
-        height: min(55vw, 55vh);
-      }
-      .camera-ticket-ghost {
-        right: 5%;
-        width: min(85vw, 85vh);
-        height: min(55vw, 55vh);
-      }
-      .camera-frame-label {
-        right: 5%;
-        width: min(10vw, 10vh);
-      }
-    }
-
-    @media (orientation: landscape) {
-      .camera-frame {
-        right: 8%;
-        width: min(6vw, 6vh);
-        height: min(70vh, 70vw);
-      }
-      .camera-ticket-ghost {
-        right: 8%;
-        width: min(84vw, 84vh);
-        height: min(70vh, 70vw);
-      }
-    }
   </style>
 </head>
 <body>
@@ -497,7 +438,7 @@
   <div class="ticket-page">
     <div class="ticket-header">
       <div>
-        <div class="ticket-title">Ticket Scan v7</div>
+        <div class="ticket-title">Ticket Scan v8</div>
         <div class="ticket-subtitle">Ticket lookup and payout summary</div>
       </div>
     </div>
@@ -609,17 +550,9 @@
         <button id="camera-torch-btn" type="button" class="btn btn-secondary">Torch On</button>
       </div>
 
-      <div id="camera-frame" class="camera-frame">
-        <div class="camera-frame-grid"></div>
-      </div>
+      <div id="camera-frame" class="camera-frame"></div>
 
-      <!-- Ghost outline showing where ticket body extends to the left -->
-      <div class="camera-ticket-ghost"></div>
-
-      <!-- Label above the barcode guide -->
-      <div class="camera-frame-label">Barcode</div>
-
-      <div class="camera-overlay-label">Align barcode strip in green box · ticket extends left</div>
+      <div class="camera-overlay-label">Hold right side of ticket in frame &middot; barcode on right edge</div>
 
       <div class="camera-overlay-bottombar">
       </div>
@@ -906,24 +839,24 @@
           audio: false
         });
 
-        // Try to lock to landscape so the ticket frame stays wide
-        try {
-          if (screen.orientation?.lock) {
-            await screen.orientation.lock('landscape');
-          }
-        } catch (_) { /* silently ignore — not all browsers support this */ }
-
         cameraVideo.srcObject = cameraStream;
         cameraOverlay.classList.add('open');
         document.body.style.overflow = 'hidden';
+
+        try {
+          if (screen.orientation?.lock) {
+            await screen.orientation.lock('portrait');
+          }
+        } catch (_) {}
+
         await cameraVideo.play().catch(() => {});
         await waitForCameraVideoReady();
         updateTorchButton({ supported: torchIsSupported() });
 
         setOcrStatus(
           torchIsSupported()
-            ? 'Camera started. Tap Torch On, then align the barcode in the green box — rest of ticket extends left.'
-            : 'Camera started. Align the barcode strip in the green box — Serial and PIN will be captured automatically.',
+            ? 'Camera ready. Torch On recommended — hold right side of ticket in the green box.'
+            : 'Camera ready. Hold right side of ticket in green box — barcode on right edge.',
           'good'
         );
 
@@ -945,26 +878,31 @@
       ]);
       hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
 
-      // BrowserMultiFormatReader.decode(videoElement) captures the current
-      // video frame into an internal canvas and runs ZXing synchronously.
-      // It throws NotFoundException when no barcode is visible (expected)
-      // and returns a Result when one is found.
       const reader = new ZXing.BrowserMultiFormatReader(hints);
       barcodeScanner = reader;
+
+      const tempCanvas = document.createElement('canvas');
 
       const scanFrame = () => {
         if (!barcodeScanActive) return;
 
-        if (cameraVideo.videoWidth && cameraVideo.videoHeight) {
+        const vw = cameraVideo.videoWidth;
+        const vh = cameraVideo.videoHeight;
+
+        if (vw && vh) {
+          if (tempCanvas.width !== vw) tempCanvas.width = vw;
+          if (tempCanvas.height !== vh) tempCanvas.height = vh;
+          tempCanvas.getContext('2d').drawImage(cameraVideo, 0, 0, vw, vh);
+
           try {
-            const result = reader.decode(cameraVideo);
+            const bitmap = reader.createBinaryBitmapFromCanvas(tempCanvas);
+            const result = reader.decodeBitmap(bitmap);
             onBarcodeDetected(result.getText());
-            return; // barcode found — stop loop
+            return;
           } catch (e) {
-            if (e && e.name !== 'NotFoundException') {
-              console.warn('[ZXing]', e.name, e.message);
+            if (e?.name !== 'NotFoundException') {
+              console.warn('[ZXing]', e?.name, e?.message);
             }
-            // NotFoundException is normal every frame — fall through to next rAF
           }
         }
 
