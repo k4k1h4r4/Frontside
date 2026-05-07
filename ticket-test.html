@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=43">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css?v=44">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -339,18 +340,43 @@
       pointer-events: none;
     }
 
+    .camera-capture-frame {
+      position: absolute;
+      right: max(16px, env(safe-area-inset-right));
+      top: 50%;
+      width: min(94vw, calc((100vh - 140px) * 0.82));
+      aspect-ratio: 0.82 / 1;
+      transform: translateY(-50%);
+      border: 2px solid rgba(255,255,255,0.75);
+      box-shadow:
+        0 0 0 9999px rgba(0,0,0,0.46),
+        0 0 22px rgba(255,255,255,0.18);
+      pointer-events: none;
+    }
+
+    .camera-ocr-frame,
     .camera-frame {
       position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 92vw;
-      height: 52vw;
-      transform: translate(-50%, -50%);
-      border: 3px solid rgba(178,220,100,0.95);
-      box-shadow:
-        0 0 0 9999px rgba(0,0,0,0.45),
-        0 0 18px rgba(178,220,100,0.35);
+      box-sizing: border-box;
       pointer-events: none;
+    }
+
+    .camera-ocr-frame {
+      left: 15%;
+      top: 25%;
+      width: 68%;
+      height: 36%;
+      border: 3px solid rgba(38,124,255,0.96);
+      box-shadow: 0 0 18px rgba(38,124,255,0.3);
+    }
+
+    .camera-frame {
+      right: 1.5%;
+      top: 55%;
+      width: 11%;
+      height: 43%;
+      border: 3px solid rgba(178,220,100,0.98);
+      box-shadow: 0 0 16px rgba(178,220,100,0.34);
     }
 
     .camera-frame-grid {
@@ -438,7 +464,7 @@
   <div class="ticket-page">
     <div class="ticket-header">
       <div>
-        <div class="ticket-title">Ticket Scan v8</div>
+        <div class="ticket-title">Ticket Scan v9</div>
         <div class="ticket-subtitle">Ticket lookup and payout summary</div>
       </div>
     </div>
@@ -516,7 +542,7 @@
           </div>
 
           <div class="ticket-ocr-copy">
-            Start Camera and align the barcode strip into the green box — Serial decodes instantly. The PIN box location is then calculated automatically from the barcode position.
+            Start Camera and align the right half of the ticket in the white guide, with the barcode in the green vertical box. Serial decodes instantly, then the blue box is captured for the Cloud PIN.
           </div>
 		  <div id="ticket-ocr-status" class="ticket-ocr-status">Waiting for image or camera.</div>
         </div>
@@ -550,7 +576,10 @@
         <button id="camera-torch-btn" type="button" class="btn btn-secondary">Torch On</button>
       </div>
 
-      <div id="camera-frame" class="camera-frame"></div>
+      <div id="camera-capture-frame" class="camera-capture-frame">
+        <div id="camera-ocr-frame" class="camera-ocr-frame"></div>
+        <div id="camera-frame" class="camera-frame"></div>
+      </div>
 
       <div class="camera-overlay-label">Hold right side of ticket in frame &middot; barcode on right edge</div>
 
@@ -569,9 +598,11 @@
     const TICKET_ENDPOINT = 'https://kenocloud.com/kenocloud/casino/41/game/1/ticket';
 
     const OCR_REGIONS = {
-      // Blue box: Cloud PIN area — measured from ticket photo (~63–90% wide, 22–74% tall)
-      pinLine: { x: 0.63, y: 0.22, w: 0.27, h: 0.52 }
+      // Blue guide: Cloud PIN area, relative to the captured right half of the ticket.
+      pinLine: { x: 0.15, y: 0.25, w: 0.68, h: 0.36 }
     };
+    const BARCODE_SCAN_INTERVAL_MS = 120;
+    const BARCODE_ROTATIONS = [0, 90, 270, 180];
 
     const form = document.getElementById('ticket-form');
     const results = document.getElementById('ticket-results');
@@ -588,7 +619,9 @@
     const clearTicketBtn = document.getElementById('clear-ticket-btn');
     const cameraOverlay = document.getElementById('camera-overlay');
     const cameraVideo = document.getElementById('camera-video');
+    const cameraCaptureFrame = document.getElementById('camera-capture-frame');
     const cameraFrame = document.getElementById('camera-frame');
+    const cameraOcrFrame = document.getElementById('camera-ocr-frame');
     const cameraCloseBtn = document.getElementById('camera-close-btn');
     const cameraTorchBtn = document.getElementById('camera-torch-btn');
 
@@ -598,6 +631,7 @@
     let cameraTorchEnabled = false;
     let barcodeScanner = null;
     let barcodeScanActive = false;
+    let barcodeDecodeInProgress = false;
 
     // ── Base-36 barcode → serial decoder ────────────────────────────────────
     // Barcode format: "9XQ 3I5 A8"
@@ -614,8 +648,8 @@
     }
 
     function decodeBarcodeSerial(raw) {
-      // Normalise: strip spaces, uppercase
-      const s = raw.replace(/\s+/g, '').toUpperCase();
+      // Normalise: barcode payload is base-36 alphanumeric.
+      const s = String(raw || '').replace(/[^0-9A-Z]/gi, '').toUpperCase();
       // Expect 8 chars: e.g. "9XQ3I5A8"
       if (s.length < 8) return '';
 
@@ -855,8 +889,8 @@
 
         setOcrStatus(
           torchIsSupported()
-            ? 'Camera ready. Torch On recommended — hold right side of ticket in the green box.'
-            : 'Camera ready. Hold right side of ticket in green box — barcode on right edge.',
+            ? 'Camera ready. Torch On recommended. Align the right half of the ticket in the white guide.'
+            : 'Camera ready. Align the right half of the ticket in the white guide; barcode in red.',
           'good'
         );
 
@@ -866,9 +900,149 @@
       }
     }
 
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function getVideoContentRect() {
+      const box = cameraVideo.getBoundingClientRect();
+      const vw = cameraVideo.videoWidth;
+      const vh = cameraVideo.videoHeight;
+      if (!box.width || !box.height || !vw || !vh) return null;
+
+      const videoRatio = vw / vh;
+      const boxRatio = box.width / box.height;
+      let width = box.width;
+      let height = box.height;
+      let left = box.left;
+      let top = box.top;
+
+      if (boxRatio > videoRatio) {
+        height = box.height;
+        width = height * videoRatio;
+        left += (box.width - width) / 2;
+      } else {
+        width = box.width;
+        height = width / videoRatio;
+        top += (box.height - height) / 2;
+      }
+
+      return {
+        left,
+        top,
+        right: left + width,
+        bottom: top + height,
+        width,
+        height
+      };
+    }
+
+    function getVideoCropForElement(element) {
+      const content = getVideoContentRect();
+      if (!content || !element) return null;
+
+      const rect = element.getBoundingClientRect();
+      const left = clamp(rect.left, content.left, content.right);
+      const top = clamp(rect.top, content.top, content.bottom);
+      const right = clamp(rect.right, content.left, content.right);
+      const bottom = clamp(rect.bottom, content.top, content.bottom);
+      const width = right - left;
+      const height = bottom - top;
+      if (width < 2 || height < 2) return null;
+
+      return {
+        sx: Math.round(((left - content.left) / content.width) * cameraVideo.videoWidth),
+        sy: Math.round(((top - content.top) / content.height) * cameraVideo.videoHeight),
+        sw: Math.round((width / content.width) * cameraVideo.videoWidth),
+        sh: Math.round((height / content.height) * cameraVideo.videoHeight)
+      };
+    }
+
+    function drawVideoElementCrop(element, targetCanvas, options = {}) {
+      const crop = getVideoCropForElement(element);
+      if (!crop) return false;
+
+      const { minLongEdge = 0 } = options;
+      const scale = minLongEdge ? Math.max(1, minLongEdge / Math.max(crop.sw, crop.sh)) : 1;
+      targetCanvas.width = Math.max(1, Math.round(crop.sw * scale));
+      targetCanvas.height = Math.max(1, Math.round(crop.sh * scale));
+
+      const ctx = targetCanvas.getContext('2d', { willReadFrequently: true });
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(
+        cameraVideo,
+        crop.sx,
+        crop.sy,
+        crop.sw,
+        crop.sh,
+        0,
+        0,
+        targetCanvas.width,
+        targetCanvas.height
+      );
+
+      return true;
+    }
+
+    function rotateCanvas(sourceCanvas, degrees, targetCanvas) {
+      if (!degrees) return sourceCanvas;
+
+      const quarterTurn = Math.abs(degrees) % 180 === 90;
+      targetCanvas.width = quarterTurn ? sourceCanvas.height : sourceCanvas.width;
+      targetCanvas.height = quarterTurn ? sourceCanvas.width : sourceCanvas.height;
+
+      const ctx = targetCanvas.getContext('2d', { willReadFrequently: true });
+      ctx.save();
+      ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+      ctx.translate(targetCanvas.width / 2, targetCanvas.height / 2);
+      ctx.rotate((degrees * Math.PI) / 180);
+      ctx.drawImage(sourceCanvas, -sourceCanvas.width / 2, -sourceCanvas.height / 2);
+      ctx.restore();
+
+      return targetCanvas;
+    }
+
+    function createBinaryBitmapFromCanvas(canvas) {
+      const source = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
+      return new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(source));
+    }
+
+    function isExpectedZxingMiss(error) {
+      const message = String(error?.message || '');
+      return (
+        ['NotFoundException', 'ChecksumException', 'FormatException'].includes(error?.name) ||
+        message.includes('No MultiFormat Readers') ||
+        message.includes('No barcode')
+      );
+    }
+
+    function decodeBarcodeCanvas(reader, canvas) {
+      const bitmap = createBinaryBitmapFromCanvas(canvas);
+      const result = reader.decodeBitmap(bitmap);
+      return String(result?.getText?.() || '').trim();
+    }
+
+    function tryDecodeBarcodeFromCanvas(reader, sourceCanvas, rotatedCanvas) {
+      for (const rotation of BARCODE_ROTATIONS) {
+        const canvas = rotateCanvas(sourceCanvas, rotation, rotatedCanvas);
+        try {
+          const text = decodeBarcodeCanvas(reader, canvas);
+          if (text) return text;
+        } catch (error) {
+          if (!isExpectedZxingMiss(error)) {
+            console.warn('[ZXing]', error?.name, error?.message);
+          }
+        }
+      }
+
+      return '';
+    }
+
     function startBarcodeScanning() {
       if (barcodeScanActive) return;
       barcodeScanActive = true;
+      barcodeDecodeInProgress = false;
 
       const hints = new Map();
       hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
@@ -882,27 +1056,30 @@
       barcodeScanner = reader;
 
       const tempCanvas = document.createElement('canvas');
+      const rotatedCanvas = document.createElement('canvas');
+      let lastScanAt = 0;
 
-      const scanFrame = () => {
+      const scanFrame = (timestamp) => {
         if (!barcodeScanActive) return;
 
-        const vw = cameraVideo.videoWidth;
-        const vh = cameraVideo.videoHeight;
+        const ready = cameraVideo.videoWidth && cameraVideo.videoHeight;
+        const due = timestamp - lastScanAt >= BARCODE_SCAN_INTERVAL_MS;
 
-        if (vw && vh) {
-          if (tempCanvas.width !== vw) tempCanvas.width = vw;
-          if (tempCanvas.height !== vh) tempCanvas.height = vh;
-          tempCanvas.getContext('2d').drawImage(cameraVideo, 0, 0, vw, vh);
+        if (ready && due && !barcodeDecodeInProgress) {
+          lastScanAt = timestamp;
+          barcodeDecodeInProgress = true;
 
           try {
-            const bitmap = reader.createBinaryBitmapFromCanvas(tempCanvas);
-            const result = reader.decodeBitmap(bitmap);
-            onBarcodeDetected(result.getText());
-            return;
-          } catch (e) {
-            if (e?.name !== 'NotFoundException') {
-              console.warn('[ZXing]', e?.name, e?.message);
+            const drawn = drawVideoElementCrop(cameraFrame, tempCanvas, { minLongEdge: 640 });
+            if (drawn) {
+              const rawBarcode = tryDecodeBarcodeFromCanvas(reader, tempCanvas, rotatedCanvas);
+              if (rawBarcode) {
+                onBarcodeDetected(rawBarcode);
+                return;
+              }
             }
+          } finally {
+            barcodeDecodeInProgress = false;
           }
         }
 
@@ -914,6 +1091,7 @@
 
     function stopBarcodeScanning() {
       barcodeScanActive = false;
+      barcodeDecodeInProgress = false;
       barcodeScanner = null;
     }
 
@@ -982,18 +1160,14 @@
         return false;
       }
 
-      // Capture the FULL video frame — OCR regions are fractional coords of this
-      const vw = cameraVideo.videoWidth;
-      const vh = cameraVideo.videoHeight;
-
+      // Capture the guided right-half ticket frame for the fixed OCR crop.
       const canvas = document.createElement('canvas');
-      canvas.width = vw;
-      canvas.height = vh;
-      canvas.getContext('2d').drawImage(cameraVideo, 0, 0, vw, vh);
+      const captured = drawVideoElementCrop(cameraCaptureFrame, canvas, { minLongEdge: 1400 });
+      if (!captured) return false;
 
       const dataUrl = canvas.toDataURL('image/jpeg', 0.97);
       await showImageFromDataUrl(dataUrl);
-      closeCameraOverlay();
+      await closeCameraOverlay();
       return true;
     }
 
@@ -1066,11 +1240,11 @@
     function extractPin(text) {
       const cleaned = text.replace(/\s+/g, ' ').trim();
 
-      const direct = cleaned.match(/PIN\s*(\d{4})\b/i);
-      if (direct) return direct[1];
-
-      const cloud = cleaned.match(/Cloud\s*PIN\s*(\d{4})\b/i);
+      const cloud = cleaned.match(/Cloud\s*PIN\s*[:#-]?\s*(\d{4})\b/i);
       if (cloud) return cloud[1];
+
+      const direct = cleaned.match(/\bPIN\s*[:#-]?\s*(\d{4})\b/i);
+      if (direct) return direct[1];
 
       const digitsAfterPin = cleaned.match(/PIN[^0-9]{0,8}([0-9]{4})/i);
       if (digitsAfterPin) return digitsAfterPin[1];
