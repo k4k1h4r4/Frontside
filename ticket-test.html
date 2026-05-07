@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css?v=44">
+  <link rel="stylesheet" href="style.css?v=45">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -329,7 +329,7 @@
     .camera-overlay video {
       width: 100vw;
       height: 100vh;
-      object-fit: contain;
+      object-fit: cover;
       display: block;
       background: #000;
     }
@@ -464,7 +464,7 @@
   <div class="ticket-page">
     <div class="ticket-header">
       <div>
-        <div class="ticket-title">Ticket Scan v9</div>
+        <div class="ticket-title">Ticket Scan v10</div>
         <div class="ticket-subtitle">Ticket lookup and payout summary</div>
       </div>
     </div>
@@ -632,6 +632,7 @@
     let barcodeScanner = null;
     let barcodeScanActive = false;
     let barcodeDecodeInProgress = false;
+    let barcodeCaptureInProgress = false;
 
     // ── Base-36 barcode → serial decoder ────────────────────────────────────
     // Barcode format: "9XQ 3I5 A8"
@@ -866,9 +867,8 @@
         cameraStream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: 'environment' },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            aspectRatio: { ideal: 16 / 9 }
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
           },
           audio: false
         });
@@ -890,7 +890,7 @@
         setOcrStatus(
           torchIsSupported()
             ? 'Camera ready. Torch On recommended. Align the right half of the ticket in the white guide.'
-            : 'Camera ready. Align the right half of the ticket in the white guide; barcode in red.',
+            : 'Camera ready. Align the right half of the ticket in the white guide; barcode in green.',
           'good'
         );
 
@@ -912,12 +912,23 @@
 
       const videoRatio = vw / vh;
       const boxRatio = box.width / box.height;
+      const objectFit = getComputedStyle(cameraVideo).objectFit;
       let width = box.width;
       let height = box.height;
       let left = box.left;
       let top = box.top;
 
-      if (boxRatio > videoRatio) {
+      if (objectFit === 'cover') {
+        if (boxRatio > videoRatio) {
+          width = box.width;
+          height = width / videoRatio;
+          top += (box.height - height) / 2;
+        } else {
+          height = box.height;
+          width = height * videoRatio;
+          left += (box.width - width) / 2;
+        }
+      } else if (boxRatio > videoRatio) {
         height = box.height;
         width = height * videoRatio;
         left += (box.width - width) / 2;
@@ -937,15 +948,18 @@
       };
     }
 
-    function getVideoCropForElement(element) {
+    function getVideoCropForElement(element, options = {}) {
       const content = getVideoContentRect();
       if (!content || !element) return null;
 
       const rect = element.getBoundingClientRect();
-      const left = clamp(rect.left, content.left, content.right);
-      const top = clamp(rect.top, content.top, content.bottom);
-      const right = clamp(rect.right, content.left, content.right);
-      const bottom = clamp(rect.bottom, content.top, content.bottom);
+      const { paddingX = 0, paddingY = 0 } = options;
+      const padX = rect.width * paddingX;
+      const padY = rect.height * paddingY;
+      const left = clamp(rect.left - padX, content.left, content.right);
+      const top = clamp(rect.top - padY, content.top, content.bottom);
+      const right = clamp(rect.right + padX, content.left, content.right);
+      const bottom = clamp(rect.bottom + padY, content.top, content.bottom);
       const width = right - left;
       const height = bottom - top;
       if (width < 2 || height < 2) return null;
@@ -959,7 +973,7 @@
     }
 
     function drawVideoElementCrop(element, targetCanvas, options = {}) {
-      const crop = getVideoCropForElement(element);
+      const crop = getVideoCropForElement(element, options);
       if (!crop) return false;
 
       const { minLongEdge = 0 } = options;
@@ -982,6 +996,15 @@
         targetCanvas.height
       );
 
+      return true;
+    }
+
+    function drawFullVideoFrame(targetCanvas) {
+      if (!cameraVideo.videoWidth || !cameraVideo.videoHeight) return false;
+
+      targetCanvas.width = cameraVideo.videoWidth;
+      targetCanvas.height = cameraVideo.videoHeight;
+      targetCanvas.getContext('2d').drawImage(cameraVideo, 0, 0, targetCanvas.width, targetCanvas.height);
       return true;
     }
 
@@ -1070,7 +1093,11 @@
           barcodeDecodeInProgress = true;
 
           try {
-            const drawn = drawVideoElementCrop(cameraFrame, tempCanvas, { minLongEdge: 640 });
+            const drawn = drawVideoElementCrop(cameraFrame, tempCanvas, {
+              minLongEdge: 640,
+              paddingX: 0.75,
+              paddingY: 0.08
+            });
             if (drawn) {
               const rawBarcode = tryDecodeBarcodeFromCanvas(reader, tempCanvas, rotatedCanvas);
               if (rawBarcode) {
@@ -1096,9 +1123,12 @@
     }
 
     async function onBarcodeDetected(rawBarcode) {
+      if (barcodeCaptureInProgress) return;
+      barcodeCaptureInProgress = true;
       stopBarcodeScanning();
       setOcrStatus('Barcode found! Capturing frame for PIN…', 'warn');
 
+      try {
       // 1. Decode serial from barcode
       const serial = decodeBarcodeSerial(rawBarcode);
       if (serial) {
@@ -1117,6 +1147,12 @@
       // 3. OCR the PIN region from the still
       document.querySelector('.ticket-ocr-debug').style.display = 'block';
       await scanLoadedImageForPin();
+      } catch (error) {
+        setOcrStatus(`Barcode decoded but auto-capture failed: ${error.message}`, 'bad');
+        console.error('[Ticket scan]', error);
+      } finally {
+        barcodeCaptureInProgress = false;
+      }
     }
 
     async function stopCameraStreamOnly() {
@@ -1131,11 +1167,15 @@
       updateTorchButton({ supported: false });
     }
 
-    async function closeCameraOverlay() {
-      await stopCameraStreamOnly();
+    function hideCameraOverlay() {
       cameraOverlay.classList.remove('open');
       document.body.style.overflow = '';
       try { screen.orientation?.unlock?.(); } catch (_) {}
+    }
+
+    async function closeCameraOverlay() {
+      hideCameraOverlay();
+      await stopCameraStreamOnly();
     }
 
     function showImageFromDataUrl(dataUrl) {
@@ -1162,12 +1202,15 @@
 
       // Capture the guided right-half ticket frame for the fixed OCR crop.
       const canvas = document.createElement('canvas');
-      const captured = drawVideoElementCrop(cameraCaptureFrame, canvas, { minLongEdge: 1400 });
+      const captured =
+        drawVideoElementCrop(cameraCaptureFrame, canvas, { minLongEdge: 1400 }) ||
+        drawFullVideoFrame(canvas);
       if (!captured) return false;
 
       const dataUrl = canvas.toDataURL('image/jpeg', 0.97);
       await showImageFromDataUrl(dataUrl);
-      await closeCameraOverlay();
+      hideCameraOverlay();
+      stopCameraStreamOnly().catch(error => console.warn('[Camera cleanup]', error));
       return true;
     }
 
