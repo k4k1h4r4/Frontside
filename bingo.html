@@ -4,7 +4,84 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Frontside Bingo</title>
-    <link rel="stylesheet" href="bingo.css?v=6">
+    <link rel="stylesheet" href="bingo.css?v=5">
+    <style>
+      /* ── Landing chooser ── */
+      .bingo-chooser {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 2rem 1.25rem calc(3rem + env(safe-area-inset-bottom));
+        width: min(100%, 780px);
+        margin: 0 auto;
+      }
+
+      .chooser-btn {
+        width: 100%;
+        max-width: 480px;
+        min-height: 3.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--accent-dim);
+        background: rgba(178, 122, 70, 0.05);
+        color: var(--accent-bright);
+        cursor: pointer;
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.18s;
+        touch-action: manipulation;
+      }
+
+      .chooser-btn:hover,
+      .chooser-btn:focus-visible {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #130d09;
+        box-shadow: 0 0 22px var(--accent-glow);
+        outline: none;
+      }
+
+      .chooser-btn:active {
+        transform: translateY(1px);
+      }
+
+      @media (max-width: 700px) {
+        .bingo-chooser {
+          padding-left: 0.85rem;
+          padding-right: 0.85rem;
+          gap: 0.6rem;
+        }
+
+        .chooser-btn {
+          max-width: 100%;
+        }
+      }
+
+      /* ── Hero transition ── */
+      .hero-content {
+        transition: opacity 0.35s ease;
+      }
+
+      /* ── Hidden game section ── */
+      .bingo-app {
+        display: none;
+      }
+
+      .bingo-app.is-visible {
+        display: block;
+      }
+
+      /* ── Chooser hide ── */
+      .bingo-chooser.is-hidden {
+        display: none;
+      }
+    </style>
   </head>
   <body>
     <nav>
@@ -18,18 +95,26 @@
       </ul>
     </nav>
 
-    <section class="hero hero-simple hero-winner-wall hero-winner-wall-compact" aria-labelledby="page-title">
+    <!-- Hero — starts in "landing" state, swaps to game state on Frontside Bingo click -->
+    <section id="bingo-hero" class="hero hero-simple hero-winner-wall hero-winner-wall-compact" aria-labelledby="page-title">
       <div class="hero-bg" aria-hidden="true"></div>
       <div class="hero-overlay" aria-hidden="true"></div>
-      <div class="hero-content">
-        <p class="hero-eyebrow">Drink. Mark. Repeat.</p>
-        <h1 id="page-title" class="hero-title hero-title-compact">Frontside Bingo</h1>
-        <p class="hero-sub">Tap squares to mark the card</p>
+      <div class="hero-content" id="hero-content">
+        <!-- Landing state -->
+        <p class="hero-eyebrow" id="hero-eyebrow">Drink. Mark. Repeat.</p>
+        <h1 id="page-title" class="hero-title hero-title-compact">Bingo</h1>
+        <p class="hero-sub" id="hero-sub">Choose your own adventure</p>
       </div>
     </section>
 
-    <main class="bingo-app">
+    <!-- Chooser buttons -->
+    <div class="bingo-chooser" id="bingo-chooser" role="group" aria-label="Choose bingo game">
+      <a href="keno-bingo.html" class="chooser-btn">Keno Bingo</a>
+      <button id="btn-frontside-bingo" class="chooser-btn" type="button">Frontside Bingo</button>
+    </div>
 
+    <!-- Full bingo game (hidden until Frontside Bingo chosen) -->
+    <main class="bingo-app" id="bingo-app">
       <section class="bingo-page" aria-label="Bingo card">
         <header class="bingo-toolbar">
           <div>
@@ -49,6 +134,27 @@
         <p id="saved-status" class="saved-status" aria-live="polite"></p>
       </section>
     </main>
+
+    <script>
+      document.getElementById('btn-frontside-bingo').addEventListener('click', function () {
+        // Fade out hero text
+        var heroContent = document.getElementById('hero-content');
+        heroContent.style.opacity = '0';
+
+        setTimeout(function () {
+          // Swap hero copy
+          document.getElementById('page-title').textContent = 'Frontside Bingo';
+          document.getElementById('hero-sub').textContent = 'Tap squares to mark the card';
+
+          // Fade back in
+          heroContent.style.opacity = '1';
+        }, 300);
+
+        // Hide chooser, show game
+        document.getElementById('bingo-chooser').classList.add('is-hidden');
+        document.getElementById('bingo-app').classList.add('is-visible');
+      });
+    </script>
 
     <script src="bingo.js"></script>
   </body>
