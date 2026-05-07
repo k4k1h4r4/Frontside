@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Keno Bingo — Frontside</title>
-    <link rel="stylesheet" href="bingo.css?v=3">
+    <link rel="stylesheet" href="bingo.css?v=4">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       /* ── 5×5 Keno Bingo overrides & additions ── */
@@ -1189,7 +1189,21 @@
         }
       }
 
-      function startPolling() { pollKeno(); pollTimer = setInterval(pollKeno, POLL_MS); }
+      function startPolling() {
+        pollKeno();
+        pollTimer = setInterval(pollKeno, POLL_MS);
+
+        // Catch up immediately when the tab becomes visible again.
+        // Browsers throttle / suspend setInterval while the page is hidden,
+        // so without this a player who backgrounds the app would miss the draw.
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            clearInterval(pollTimer);
+            pollKeno();
+            pollTimer = setInterval(pollKeno, POLL_MS);
+          }
+        });
+      }
 
       /* ─────────────────────────────────────────
          SUPABASE — LOBBY
