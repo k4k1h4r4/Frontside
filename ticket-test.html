@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=39">
+  <link rel="stylesheet" href="style.css?v=40">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -497,7 +497,7 @@
   <div class="ticket-page">
     <div class="ticket-header">
       <div>
-        <div class="ticket-title">Ticket Scan v4</div>
+        <div class="ticket-title">Ticket Scan v5</div>
         <div class="ticket-subtitle">Ticket lookup and payout summary</div>
       </div>
     </div>
@@ -938,53 +938,35 @@
       barcodeScanActive = true;
 
       const hints = new Map();
-      // Prefer Code 128 and Code 39 which are common on tickets
       hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
         ZXing.BarcodeFormat.CODE_128,
         ZXing.BarcodeFormat.CODE_39,
         ZXing.BarcodeFormat.CODE_93,
-        ZXing.BarcodeFormat.EAN_13,
-        ZXing.BarcodeFormat.UPC_A,
       ]);
+      hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
 
       const reader = new ZXing.BrowserMultiFormatReader(hints);
       barcodeScanner = reader;
 
-      const scanFrame = async () => {
+      // decodeContinuously is ZXing's built-in rAF loop for live video —
+      // it calls the callback on every frame with either a result or an error.
+      // NotFoundException on every non-barcode frame is expected and ignored.
+      reader.decodeContinuously(cameraVideo, (result, error) => {
         if (!barcodeScanActive) return;
-
-        try {
-          const vw = cameraVideo.videoWidth;
-          const vh = cameraVideo.videoHeight;
-          if (!vw || !vh) {
-            requestAnimationFrame(scanFrame);
-            return;
-          }
-
-          // Draw current frame to a temp canvas for ZXing
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = vw;
-          tempCanvas.height = vh;
-          tempCanvas.getContext('2d').drawImage(cameraVideo, 0, 0, vw, vh);
-
-          const result = await reader.decodeFromCanvas(tempCanvas);
-          if (result) {
-            onBarcodeDetected(result.getText());
-            return; // Stop scanning loop
-          }
-        } catch (_) {
-          // ZXing throws NotFoundException when no barcode visible — ignore
+        if (result) {
+          onBarcodeDetected(result.getText());
+        } else if (error && error.name !== 'NotFoundException') {
+          console.warn('[ZXing]', error.name, error.message);
         }
-
-        if (barcodeScanActive) requestAnimationFrame(scanFrame);
-      };
-
-      requestAnimationFrame(scanFrame);
+      });
     }
 
     function stopBarcodeScanning() {
       barcodeScanActive = false;
-      barcodeScanner = null;
+      if (barcodeScanner) {
+        barcodeScanner.reset();
+        barcodeScanner = null;
+      }
     }
 
     async function onBarcodeDetected(rawBarcode) {
