@@ -1,0 +1,1529 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Keno Bingo — Frontside</title>
+    <link rel="stylesheet" href="bingo.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      /* ── 5×5 Keno Bingo overrides & additions ── */
+
+      .bingo-board {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      .bingo-cell.free-space {
+        border-color: var(--accent);
+        background:
+          linear-gradient(180deg, rgba(212,175,55,0.22), rgba(140,116,37,0.18)),
+          var(--bg-card);
+        color: var(--accent-bright);
+        cursor: default;
+        pointer-events: none;
+      }
+      .bingo-cell.free-space .bingo-cell-text {
+        color: var(--accent-bright);
+        font-size: clamp(0.42rem, 1.9vw, 0.78rem);
+      }
+
+      .bingo-cell.is-marked.keno-hit {
+        border-color: #3ecf8e;
+        background: linear-gradient(180deg, rgba(62,207,142,0.92), rgba(17,120,79,0.94));
+        color: rgba(8,30,20,0.95);
+        box-shadow: 0 0 18px rgba(62,207,142,0.35), inset 0 1px 0 rgba(255,255,255,0.22);
+      }
+
+      /* ── STATUS BAR ── */
+      .keno-status-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.55rem 0.85rem;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,0.025);
+        margin-bottom: 0.85rem;
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      .keno-status-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: var(--sand-muted);
+        flex-shrink: 0;
+        transition: background 0.3s;
+      }
+      .keno-status-dot.live    { background: #3ecf8e; box-shadow: 0 0 6px rgba(62,207,142,0.6); }
+      .keno-status-dot.waiting { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); animation: pulse-dot 1.2s ease-in-out infinite; }
+      @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+      .keno-status-text { color: var(--text-dim); }
+      .keno-game-ref    { color: var(--text-muted); margin-left: auto; }
+
+      /* ── WIN BANNER ── */
+      .win-banner {
+        display: none;
+        text-align: center;
+        padding: 0.9rem 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid var(--accent);
+        background: linear-gradient(135deg, rgba(212,175,55,0.12), rgba(140,116,37,0.08));
+      }
+      .win-banner.show { display: block; }
+      .win-banner-title {
+        font-family: 'Bebas Neue', Impact, sans-serif;
+        font-size: clamp(2rem, 8vw, 3.5rem);
+        letter-spacing: 0.1em;
+        color: var(--accent-bright);
+        text-shadow: 0 0 30px var(--accent-glow);
+        line-height: 1;
+      }
+      .win-banner-sub {
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.75rem;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        margin-top: 0.2rem;
+      }
+
+      /* ── GLOBAL BINGO ALERT (shown on Your Card when anyone wins) ── */
+      .global-bingo-alert {
+        display: none;
+        text-align: center;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid #3ecf8e;
+        background: linear-gradient(135deg, rgba(62,207,142,0.1), rgba(17,120,79,0.07));
+        position: relative;
+        overflow: hidden;
+      }
+      .global-bingo-alert::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #3ecf8e, transparent);
+      }
+      .global-bingo-alert.show { display: block; }
+      .global-bingo-alert-title {
+        font-family: 'Bebas Neue', Impact, sans-serif;
+        font-size: clamp(1.2rem, 4vw, 1.8rem);
+        letter-spacing: 0.1em;
+        color: #3ecf8e;
+        text-shadow: 0 0 16px rgba(62,207,142,0.5);
+        line-height: 1;
+      }
+      .global-bingo-alert-sub {
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.68rem;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        color: rgba(62,207,142,0.7);
+        margin-top: 0.15rem;
+      }
+
+      /* ── HIT CHIPS ── */
+      .hit-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-top: 0.6rem;
+        min-height: 1.8rem;
+      }
+      .hit-chip {
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.65rem;
+        letter-spacing: 0.08em;
+        padding: 0.15rem 0.5rem;
+        border: 1px solid var(--border-accent);
+        color: var(--text-muted);
+        background: transparent;
+      }
+      .hit-chip.matched {
+        border-color: #3ecf8e;
+        color: #3ecf8e;
+        background: rgba(62,207,142,0.08);
+      }
+      .draw-history-label {
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.65rem;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: var(--accent-dim);
+        margin-top: 1rem;
+        margin-bottom: 0.35rem;
+      }
+
+      /* ── BOARD OVERLAY ── */
+      .bingo-board-wrap { position: relative; }
+      .board-waiting-overlay {
+        display: none;
+        position: absolute;
+        inset: 0;
+        background: rgba(10,7,5,0.72);
+        z-index: 10;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+        backdrop-filter: blur(2px);
+      }
+      .board-waiting-overlay.show { display: flex; }
+      .overlay-title {
+        font-family: 'Bebas Neue', Impact, sans-serif;
+        font-size: clamp(1.8rem, 6vw, 2.8rem);
+        letter-spacing: 0.1em;
+        color: var(--accent-bright);
+      }
+      .overlay-sub {
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+      }
+
+      /* ── LOCKED BOARD INDICATOR ── */
+      .bingo-board-wrap.is-locked::after {
+        content: '🔒  Card Locked';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        background: rgba(212,175,55,0.1);
+        border-top: 1px solid var(--accent-dim);
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.68rem;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--accent-dim);
+        text-align: center;
+        padding: 0.35rem;
+        pointer-events: none;
+      }
+
+      /* ── VIEW PANELS ── */
+      .view-panel { display: none; }
+      .view-panel.active { display: block; }
+
+      /* ── THREE-WAY NAV ── */
+      .view-nav {
+        display: flex;
+        gap: 0;
+        margin-bottom: 0.85rem;
+        border: 1px solid var(--border);
+      }
+      .view-nav-btn {
+        flex: 1;
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.7rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        background: transparent;
+        border: none;
+        border-right: 1px solid var(--border);
+        padding: 0.55rem 0.5rem;
+        cursor: pointer;
+        transition: color 0.2s, background 0.2s;
+        position: relative;
+      }
+      .view-nav-btn:last-child { border-right: none; }
+      .view-nav-btn:hover { color: var(--text-dim); background: rgba(255,255,255,0.03); }
+      .view-nav-btn.active {
+        color: var(--accent-bright);
+        background: rgba(212,175,55,0.07);
+      }
+      .view-nav-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 2px;
+        background: var(--accent);
+      }
+      .view-nav-btn .nav-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px; height: 16px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #0a0705;
+        font-size: 0.55rem;
+        font-weight: 700;
+        margin-left: 0.35rem;
+        vertical-align: middle;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .view-nav-btn .nav-badge.show { opacity: 1; }
+
+      /* ── NAME MODAL ── */
+      .name-modal-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(5,3,2,0.82);
+        z-index: 900;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+      }
+      .name-modal-backdrop.show { display: flex; }
+      .name-modal {
+        background: var(--bg-card);
+        border: 1px solid var(--accent-dim);
+        padding: 2rem 2rem 1.75rem;
+        max-width: 380px;
+        width: 90%;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.65);
+        position: relative;
+      }
+      .name-modal::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      }
+      .name-modal-title {
+        font-family: 'Bebas Neue', Impact, sans-serif;
+        font-size: 2rem;
+        letter-spacing: 0.1em;
+        color: var(--accent-bright);
+        margin-bottom: 0.25rem;
+        line-height: 1;
+      }
+      .name-modal-sub {
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.7rem;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 1.25rem;
+      }
+      .name-modal-input {
+        width: 100%;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid var(--border-accent);
+        color: var(--text);
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 1rem;
+        letter-spacing: 0.08em;
+        padding: 0.65rem 0.85rem;
+        outline: none;
+        transition: border-color 0.2s;
+        margin-bottom: 1rem;
+      }
+      .name-modal-input:focus { border-color: var(--accent-dim); }
+      .name-modal-input::placeholder { color: var(--text-muted); }
+      .name-modal-actions {
+        display: flex;
+        gap: 0.6rem;
+        justify-content: flex-end;
+      }
+
+      /* ── WAITING ROOM ── */
+      .room-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+      }
+      .room-title {
+        font-family: 'Bebas Neue', Impact, sans-serif;
+        font-size: 1.6rem;
+        letter-spacing: 0.1em;
+        color: var(--accent-bright);
+        line-height: 1;
+      }
+      .room-count {
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.68rem;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+      .room-draw-ref {
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.68rem;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--accent-dim);
+        margin-bottom: 0.85rem;
+        padding-bottom: 0.65rem;
+        border-bottom: 1px solid var(--border);
+      }
+      .lobby-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        min-height: 80px;
+      }
+      .lobby-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.55rem 0.8rem;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,0.02);
+        transition: border-color 0.3s, background 0.3s;
+      }
+      .lobby-row.is-me {
+        border-color: var(--accent-dim);
+        background: rgba(212,175,55,0.05);
+      }
+      .lobby-row.bingo-winner {
+        border-color: #3ecf8e;
+        background: rgba(62,207,142,0.07);
+        animation: winner-pulse 1.5s ease-in-out infinite;
+      }
+      @keyframes winner-pulse {
+        0%,100% { box-shadow: 0 0 0 rgba(62,207,142,0); }
+        50%      { box-shadow: 0 0 18px rgba(62,207,142,0.28); }
+      }
+      .lobby-avatar {
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        border: 1px solid var(--border-accent);
+        background: rgba(212,175,55,0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Bebas Neue', Impact, sans-serif;
+        font-size: 1rem;
+        color: var(--accent-bright);
+        flex-shrink: 0;
+      }
+      .lobby-row.bingo-winner .lobby-avatar {
+        border-color: #3ecf8e;
+        background: rgba(62,207,142,0.12);
+        color: #3ecf8e;
+      }
+      .lobby-name {
+        font-family: 'Bebas Neue', Impact, sans-serif;
+        font-size: 1.15rem;
+        letter-spacing: 0.07em;
+        color: var(--text);
+        flex: 1 1 auto;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .lobby-row.is-me .lobby-name::after {
+        content: ' (you)';
+        font-size: 0.7rem;
+        letter-spacing: 0.15em;
+        color: var(--accent-dim);
+        font-family: 'Oswald', sans-serif;
+        font-weight: 400;
+      }
+      .lobby-status {
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.68rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--accent-dim);
+        flex-shrink: 0;
+      }
+
+      /* ── BINGO PROGRESS (BIN_O) ── */
+      .bingo-progress {
+        font-family: 'Bebas Neue', Impact, sans-serif;
+        font-size: 1.1rem;
+        letter-spacing: 0.18em;
+        flex-shrink: 0;
+      }
+      .bp-letter           { color: var(--text-muted); }
+      .bp-letter.hit       { color: #3ecf8e; }
+      .bp-letter.bingo-full{ color: var(--accent-bright); text-shadow: 0 0 8px var(--accent-glow); }
+
+      .lobby-empty {
+        padding: 1.5rem 1rem;
+        border: 1px dashed var(--border-accent);
+        text-align: center;
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.75rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        line-height: 1.8;
+      }
+
+      /* ── LAST ROUND VIEW ── */
+      .last-round-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+      }
+      .last-round-title {
+        font-family: 'Bebas Neue', Impact, sans-serif;
+        font-size: 1.6rem;
+        letter-spacing: 0.1em;
+        color: var(--accent-bright);
+        line-height: 1;
+      }
+      .last-round-game-ref {
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.68rem;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+
+      /* Winner callout in Last Round */
+      .lr-bingo-callout {
+        display: none;
+        margin-bottom: 1rem;
+        padding: 1rem 1.25rem;
+        border: 1px solid #3ecf8e;
+        background: linear-gradient(135deg, rgba(62,207,142,0.1), rgba(17,120,79,0.07));
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .lr-bingo-callout::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #3ecf8e, transparent);
+      }
+      .lr-bingo-callout.show { display: block; }
+      .lr-bingo-callout-title {
+        font-family: 'Bebas Neue', Impact, sans-serif;
+        font-size: clamp(1.6rem, 6vw, 2.6rem);
+        letter-spacing: 0.1em;
+        color: #3ecf8e;
+        text-shadow: 0 0 24px rgba(62,207,142,0.5);
+        line-height: 1;
+        margin-bottom: 0.2rem;
+      }
+      .lr-bingo-callout-names {
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: rgba(62,207,142,0.8);
+      }
+
+      /* Your card snapshot in Last Round */
+      .lr-section-label {
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.65rem;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        color: var(--accent-dim);
+        margin-bottom: 0.5rem;
+        margin-top: 0.85rem;
+      }
+      .lr-board {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.22rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.88;
+      }
+      .lr-cell {
+        aspect-ratio: 1;
+        border: 1px solid var(--border);
+        background: var(--bg-card);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: clamp(0.48rem, 1.6vw, 0.7rem);
+        letter-spacing: 0.04em;
+        color: var(--text-muted);
+      }
+      .lr-cell.free-space   { border-color: var(--accent-dim); color: var(--accent-dim); font-size: clamp(0.38rem,1.2vw,0.56rem); }
+      .lr-cell.keno-hit     { border-color: #3ecf8e; background: linear-gradient(180deg,rgba(62,207,142,0.88),rgba(17,120,79,0.9)); color: rgba(8,30,20,0.95); }
+      .lr-cell.marked-manual{ border-color: var(--accent-dim); background: rgba(212,175,55,0.1); color: var(--accent-bright); }
+
+      /* Standings */
+      .lr-standings {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+      .lr-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0.8rem;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,0.02);
+      }
+      .lr-row.is-me         { border-color: var(--accent-dim); background: rgba(212,175,55,0.05); }
+      .lr-row.bingo-winner  { border-color: #3ecf8e; background: rgba(62,207,142,0.07); }
+      .lr-rank {
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.65rem;
+        letter-spacing: 0.1em;
+        color: var(--text-muted);
+        width: 1.4rem;
+        flex-shrink: 0;
+        text-align: right;
+      }
+      .lr-standings .lr-row:first-child .lr-rank { color: var(--accent-bright); font-weight: 700; }
+      .lr-name {
+        font-family: 'Bebas Neue', Impact, sans-serif;
+        font-size: 1.1rem;
+        letter-spacing: 0.07em;
+        color: var(--text);
+        flex: 1 1 auto;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .lr-row.is-me .lr-name::after {
+        content: ' (you)';
+        font-size: 0.65rem;
+        letter-spacing: 0.15em;
+        color: var(--accent-dim);
+        font-family: 'Oswald', sans-serif;
+        font-weight: 400;
+      }
+      .lr-empty {
+        padding: 1.5rem 1rem;
+        border: 1px dashed var(--border-accent);
+        text-align: center;
+        font-family: 'Oswald', Arial, sans-serif;
+        font-size: 0.75rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        line-height: 1.8;
+      }
+
+      /* ── RESPONSIVE ── */
+      @media (max-width: 700px) {
+        .bingo-board { gap: 0.28rem; }
+        .bingo-cell-text { font-size: clamp(0.55rem, 3.2vw, 0.9rem); }
+        .view-nav-btn { font-size: 0.62rem; letter-spacing: 0.12em; }
+      }
+      @media (max-width: 420px) {
+        .bingo-cell-text { font-size: clamp(0.5rem, 2.8vw, 0.78rem); }
+        .bingo-cell { padding: clamp(0.18rem, 1.5vw, 0.38rem); }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="index.html" class="nav-logo">FRONTSIDE</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="skill-games.html">Games</a></li>
+        <li><a href="winner-wall.html">Winners</a></li>
+        <li><a href="keno.html">Keno</a></li>
+        <li><a href="ticket.html">Tickets</a></li>
+        <li><a href="bingo.html" class="active">Bingo</a></li>
+      </ul>
+    </nav>
+
+    <section class="hero hero-simple hero-winner-wall hero-winner-wall-compact" aria-labelledby="page-title">
+      <div class="hero-bg" aria-hidden="true"></div>
+      <div class="hero-overlay" aria-hidden="true"></div>
+      <div class="hero-content">
+        <p class="hero-eyebrow">Drink. Mark. Repeat.</p>
+        <h1 id="page-title" class="hero-title hero-title-compact">Keno Bingo</h1>
+        <p class="hero-sub">Lock in your card — the next draw fills it in</p>
+      </div>
+    </section>
+
+    <!-- Player Name Modal -->
+    <div class="name-modal-backdrop" id="name-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="name-modal-title">
+      <div class="name-modal">
+        <div class="name-modal-title" id="name-modal-title">What's Your Name?</div>
+        <div class="name-modal-sub">Saved for future rounds</div>
+        <input
+          type="text"
+          id="player-name-input"
+          class="name-modal-input"
+          placeholder="Your name…"
+          maxlength="24"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <div class="name-modal-actions">
+          <button class="btn btn-secondary" id="name-modal-cancel" type="button">Cancel</button>
+          <button class="btn" id="name-modal-confirm" type="button">Let's Play</button>
+        </div>
+      </div>
+    </div>
+
+    <main class="bingo-app">
+      <section class="bingo-page" aria-label="Keno Bingo card">
+
+        <!-- Toolbar -->
+        <header class="bingo-toolbar">
+          <div>
+            <p class="section-label" id="toolbar-label">Your Card</p>
+            <p id="marked-count" class="bingo-count">0 / 25 marked</p>
+          </div>
+          <div class="bingo-actions" aria-label="Card controls">
+            <button id="new-card"   class="btn btn-secondary" type="button">New Card</button>
+            <button id="lock-card"  class="btn"               type="button" disabled>Lock</button>
+          </div>
+        </header>
+
+        <!-- Keno status bar -->
+        <div class="keno-status-bar" aria-live="polite">
+          <div class="keno-status-dot" id="k-dot"></div>
+          <span class="keno-status-text" id="k-status-text">Connecting to Keno…</span>
+          <span class="keno-game-ref"    id="k-game-ref"></span>
+        </div>
+
+        <!-- Three-way view nav -->
+        <div class="view-nav" role="tablist" aria-label="View">
+          <button class="view-nav-btn active" id="nav-card"       role="tab" aria-selected="true"  type="button">Your Card</button>
+          <button class="view-nav-btn"         id="nav-room"       role="tab" aria-selected="false" type="button">
+            Waiting Room<span class="nav-badge" id="room-badge"></span>
+          </button>
+          <button class="view-nav-btn"         id="nav-lastround"  role="tab" aria-selected="false" type="button">Last Round</button>
+        </div>
+
+        <!-- ══ YOUR CARD ══ -->
+        <div id="view-card" class="view-panel active" role="tabpanel">
+
+          <div class="global-bingo-alert" id="global-bingo-alert" aria-live="assertive">
+            <div class="global-bingo-alert-title" id="global-bingo-alert-title">🎉 BINGO!</div>
+            <div class="global-bingo-alert-sub"   id="global-bingo-alert-sub"></div>
+          </div>
+
+          <div id="win-banner" class="win-banner" role="alert" aria-live="assertive">
+            <div class="win-banner-title">BINGO!</div>
+            <div class="win-banner-sub" id="win-detail">You hit a line!</div>
+          </div>
+
+          <div class="bingo-board-wrap" id="board-wrap">
+            <div class="board-waiting-overlay show" id="board-overlay" aria-hidden="true">
+              <div class="overlay-title">Generate a Card</div>
+              <div class="overlay-sub">Hit "New Card" to start</div>
+            </div>
+            <div id="bingo-board" class="bingo-board" role="group" aria-label="Keno Bingo card"></div>
+          </div>
+
+          <div id="hit-chips-wrap" style="display:none;">
+            <p class="draw-history-label">Last draw vs your card</p>
+            <div class="hit-chips" id="hit-chips" aria-live="polite"></div>
+          </div>
+
+          <p id="saved-status" class="saved-status" aria-live="polite"></p>
+        </div>
+
+        <!-- ══ WAITING ROOM ══ -->
+        <div id="view-room" class="view-panel" role="tabpanel">
+          <div class="room-header">
+            <div class="room-title">Waiting Room</div>
+            <div class="room-count" id="lobby-count">0 players</div>
+          </div>
+          <div class="room-draw-ref" id="lobby-draw-ref">Waiting for draw…</div>
+          <div class="lobby-list" id="lobby-list" aria-live="polite" aria-label="Players in lobby">
+            <div class="lobby-empty" id="lobby-empty">No players locked in yet<br>Generate &amp; lock a card to join</div>
+          </div>
+        </div>
+
+        <!-- ══ LAST ROUND ══ -->
+        <div id="view-lastround" class="view-panel" role="tabpanel">
+
+          <div class="last-round-header">
+            <div class="last-round-title">Last Round</div>
+            <div class="last-round-game-ref" id="lr-game-ref">—</div>
+          </div>
+
+          <div class="lr-bingo-callout" id="lr-bingo-callout">
+            <div class="lr-bingo-callout-title">🎉 BINGO!</div>
+            <div class="lr-bingo-callout-names" id="lr-bingo-names"></div>
+          </div>
+
+          <p class="lr-section-label" id="lr-standings-label" style="display:none;">Results</p>
+          <div class="lr-standings" id="lr-standings">
+            <div class="lr-empty" id="lr-empty">No results yet — play a round to see standings</div>
+          </div>
+
+        </div>
+
+      </section>
+    </main>
+
+    <script>
+      /* ─────────────────────────────────────────
+         CONFIG
+      ───────────────────────────────────────── */
+      const BASE          = 'https://kenocloud.com/kenocloud/casino/41/game/1/balldraw';
+      const POLL_MS       = 90_000;
+      const CARD_SIZE     = 25;
+      const FREE_INDEX    = 12;
+      const STORAGE_KEY   = 'frontside-keno-bingo-v2';
+      const NAME_KEY      = 'frontside-keno-bingo-player';
+      const SUPABASE_URL  = 'https://znqnnaslskjewfxcswxw.supabase.co';
+      const SUPABASE_KEY  = 'sb_publishable_0pVZp5JcAc9lSIClZD5eqQ_9Q33F7Uf';
+      const LOBBY_TABLE   = 'keno_bingo_lobby';
+      const RESULTS_TABLE = 'keno_bingo_results';
+
+      /* ─────────────────────────────────────────
+         SUPABASE
+      ───────────────────────────────────────── */
+      const { createClient } = supabase;
+      const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      /* ─────────────────────────────────────────
+         STATE
+      ───────────────────────────────────────── */
+      let state        = null;
+      let cardLocked   = false;
+      let latestRaceId = null;
+      let pollTimer    = null;
+      let playerName   = localStorage.getItem(NAME_KEY) || '';
+      let myRowId      = null;
+      let lobbyChannel = null;
+      let lobbyPlayers = [];
+
+      /* ─────────────────────────────────────────
+         DOM
+      ───────────────────────────────────────── */
+      const board              = document.querySelector('#bingo-board');
+      const boardWrap          = document.querySelector('#board-wrap');
+      const markedCount        = document.querySelector('#marked-count');
+      const savedStatus        = document.querySelector('#saved-status');
+      const newCardBtn         = document.querySelector('#new-card');
+      const lockCardBtn        = document.querySelector('#lock-card');
+      const overlay            = document.querySelector('#board-overlay');
+      const kDot               = document.querySelector('#k-dot');
+      const kStatusText        = document.querySelector('#k-status-text');
+      const kGameRef           = document.querySelector('#k-game-ref');
+      const winBanner          = document.querySelector('#win-banner');
+      const winDetail          = document.querySelector('#win-detail');
+      const hitChipsWrap       = document.querySelector('#hit-chips-wrap');
+      const hitChipsEl         = document.querySelector('#hit-chips');
+      const globalBingoAlert   = document.querySelector('#global-bingo-alert');
+      const globalBingoTitle   = document.querySelector('#global-bingo-alert-title');
+      const globalBingoSub     = document.querySelector('#global-bingo-alert-sub');
+      const navCard            = document.querySelector('#nav-card');
+      const navRoom            = document.querySelector('#nav-room');
+      const navLastRound       = document.querySelector('#nav-lastround');
+      const roomBadge          = document.querySelector('#room-badge');
+      const viewCard           = document.querySelector('#view-card');
+      const viewRoom           = document.querySelector('#view-room');
+      const viewLastRound      = document.querySelector('#view-lastround');
+      const lobbyList          = document.querySelector('#lobby-list');
+      const lobbyEmpty         = document.querySelector('#lobby-empty');
+      const lobbyCount         = document.querySelector('#lobby-count');
+      const lobbyDrawRef       = document.querySelector('#lobby-draw-ref');
+      const lrGameRef          = document.querySelector('#lr-game-ref');
+      const lrBingoCallout     = document.querySelector('#lr-bingo-callout');
+      const lrBingoNames       = document.querySelector('#lr-bingo-names');
+      const lrStandingsLabel   = document.querySelector('#lr-standings-label');
+      const lrStandings        = document.querySelector('#lr-standings');
+      const lrEmpty            = document.querySelector('#lr-empty');
+      const toolbarLabel       = document.querySelector('#toolbar-label');
+      const nameModalBackdrop  = document.querySelector('#name-modal-backdrop');
+      const playerNameInput    = document.querySelector('#player-name-input');
+      const nameModalConfirm   = document.querySelector('#name-modal-confirm');
+      const nameModalCancel    = document.querySelector('#name-modal-cancel');
+
+      /* ─────────────────────────────────────────
+         VIEW NAV
+      ───────────────────────────────────────── */
+      function showView(which) {
+        const map = { card: [navCard, viewCard], room: [navRoom, viewRoom], lastround: [navLastRound, viewLastRound] };
+        [navCard, navRoom, navLastRound].forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+        [viewCard, viewRoom, viewLastRound].forEach(v => v.classList.remove('active'));
+        const [btn, panel] = map[which];
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        panel.classList.add('active');
+        toolbarLabel.textContent = which === 'card' ? 'Your Card' : which === 'room' ? 'Waiting Room' : 'Last Round';
+      }
+
+      navCard.addEventListener('click',      () => showView('card'));
+      navRoom.addEventListener('click',      () => showView('room'));
+      navLastRound.addEventListener('click', () => showView('lastround'));
+
+      /* ─────────────────────────────────────────
+         CARD LOGIC
+      ───────────────────────────────────────── */
+      function shuffle(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
+
+      function createCard() {
+        const pool    = Array.from({ length: 80 }, (_, i) => i + 1);
+        const picks   = shuffle(pool).slice(0, 24);
+        const numbers = [...picks.slice(0, FREE_INDEX), null, ...picks.slice(FREE_INDEX)];
+        const marked  = Array(CARD_SIZE).fill(false);
+        marked[FREE_INDEX] = true;
+        return { numbers, marked };
+      }
+
+      function createState(waitingForRaceId = null) {
+        const { numbers, marked } = createCard();
+        return {
+          numbers,
+          marked,
+          kenoMarked:         Array(CARD_SIZE).fill(false),
+          waitingForRaceId,
+          lastAppliedRaceId:  null,
+          createdAt:          new Date().toISOString()
+        };
+      }
+
+      /* ─────────────────────────────────────────
+         PERSISTENCE
+      ───────────────────────────────────────── */
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return null;
+          const p = JSON.parse(raw);
+          if (Array.isArray(p.numbers) && p.numbers.length === CARD_SIZE &&
+              Array.isArray(p.marked)  && p.marked.length  === CARD_SIZE) {
+            return {
+              numbers:          p.numbers,
+              marked:           p.marked.map(Boolean),
+              kenoMarked:       p.kenoMarked ? p.kenoMarked.map(Boolean) : Array(CARD_SIZE).fill(false),
+              waitingForRaceId: p.waitingForRaceId  ?? null,
+              lastAppliedRaceId:p.lastAppliedRaceId ?? null,
+              createdAt:        p.createdAt || new Date().toISOString(),
+              locked:           p.locked    || false,
+              myRowId:          p.myRowId   || null
+            };
+          }
+        } catch (_) {}
+        return null;
+      }
+
+      function saveState() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, locked: cardLocked, myRowId })); }
+        catch (_) {}
+        const t = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        savedStatus.textContent = `Saved ${t}`;
+      }
+
+      /* ─────────────────────────────────────────
+         WIN DETECTION
+      ───────────────────────────────────────── */
+      function getWinLines() {
+        const lines = [];
+        for (let r = 0; r < 5; r++) lines.push([0,1,2,3,4].map(c => r * 5 + c));
+        for (let c = 0; c < 5; c++) lines.push([0,1,2,3,4].map(r => r * 5 + c));
+        lines.push([0,6,12,18,24]);
+        lines.push([4,8,12,16,20]);
+        return lines;
+      }
+
+      function checkWin() {
+        return getWinLines().filter(line => line.every(i => state.marked[i])).length;
+      }
+
+      function updateWinBanner(winCount) {
+        if (winCount > 0) {
+          winDetail.textContent = winCount === 1 ? '1 line complete!' : `${winCount} lines complete!`;
+          winBanner.classList.add('show');
+        } else {
+          winBanner.classList.remove('show');
+        }
+      }
+
+      /* ─────────────────────────────────────────
+         BINGO PROGRESS — BIN_O style
+      ───────────────────────────────────────── */
+      const BINGO_LETTERS = ['B','I','N','G','O'];
+
+      function bestBingoProgress(markedArr) {
+        const lines = getWinLines();
+        let bestHits = -1, bestLine = null;
+        lines.forEach(line => {
+          const hits = line.filter(i => markedArr[i]).length;
+          if (hits > bestHits) { bestHits = hits; bestLine = line; }
+        });
+        if (!bestLine) return { str: '_____', letters: [], hits: 0, isBingo: false };
+        const letters = bestLine.map((idx, pos) => ({ letter: BINGO_LETTERS[pos], hit: markedArr[idx] }));
+        const str = letters.map(l => l.hit ? l.letter : '_').join('');
+        return { str, letters, hits: bestHits, isBingo: bestHits === 5 };
+      }
+
+      function buildProgressEl(bestLine, isBingo) {
+        const el = document.createElement('div');
+        el.className = 'bingo-progress';
+        bestLine.split('').forEach(ch => {
+          const span = document.createElement('span');
+          span.className   = 'bp-letter' + (ch !== '_' ? (isBingo ? ' bingo-full' : ' hit') : '');
+          span.textContent = ch;
+          el.appendChild(span);
+        });
+        return el;
+      }
+
+      /* ─────────────────────────────────────────
+         LOCK UI
+      ───────────────────────────────────────── */
+      function applyLockUI(locked) {
+        cardLocked = locked;
+        boardWrap.classList.toggle('is-locked', locked);
+        newCardBtn.disabled     = locked;
+        lockCardBtn.disabled    = locked || !state;
+        lockCardBtn.textContent = locked ? 'Locked 🔒' : 'Lock';
+        if (locked) {
+          lockCardBtn.classList.remove('btn-secondary');
+        } else {
+          lockCardBtn.classList.add('btn-secondary');
+        }
+      }
+
+      // After a draw resolves: re-enable New Card and Lock for next round
+      function showPostDrawButtons() {
+        newCardBtn.disabled     = false;
+        lockCardBtn.disabled    = !state;
+        lockCardBtn.textContent = 'Lock';
+        lockCardBtn.classList.remove('btn-secondary');
+        boardWrap.classList.remove('is-locked');
+      }
+
+      /* ─────────────────────────────────────────
+         RENDER CARD
+      ───────────────────────────────────────── */
+      function render() {
+        board.replaceChildren();
+
+        state.numbers.forEach((num, i) => {
+          const isFree    = i === FREE_INDEX;
+          const isMarked  = state.marked[i];
+          const drawHappened = state.kenoMarked && state.kenoMarked.some(Boolean);
+          const isKenoHit = isMarked && state.kenoMarked && (isFree ? drawHappened : state.kenoMarked[i]);
+
+          const cell = document.createElement('button');
+          const text = document.createElement('span');
+
+          let cls = 'bingo-cell';
+          if (isFree) {
+            cls += ' free-space is-marked';
+            if (isKenoHit) cls += ' keno-hit';
+          } else if (isMarked) {
+            cls += ' is-marked';
+            if (isKenoHit) cls += ' keno-hit';
+          }
+
+          cell.className = cls;
+          cell.type = 'button';
+          cell.setAttribute('aria-pressed', String(isMarked));
+          text.className   = 'bingo-cell-text';
+          text.textContent = isFree ? 'FREE' : String(num);
+          cell.append(text);
+
+          if (!isFree) {
+            cell.dataset.index = String(i);
+            cell.setAttribute('aria-label', `${num}${isMarked ? ', marked' : ', unmarked'}`);
+          }
+
+          board.append(cell);
+        });
+
+        updateCount();
+        updateWinBanner(checkWin());
+        overlay.classList.remove('show');
+        overlay.setAttribute('aria-hidden', 'true');
+        lockCardBtn.disabled = cardLocked || !state;
+      }
+
+      function updateCount() {
+        const count = state.marked.filter(Boolean).length;
+        markedCount.textContent = `${count} / ${CARD_SIZE} marked`;
+      }
+
+      /* ─────────────────────────────────────────
+         MANUAL TAP — allowed even when locked
+      ───────────────────────────────────────── */
+      board.addEventListener('click', e => {
+        const cell = e.target.closest('.bingo-cell');
+        if (!cell || cell.classList.contains('free-space')) return;
+        const idx = Number(cell.dataset.index);
+        state.marked[idx] = !state.marked[idx];
+        saveState();
+        render();
+      });
+
+      /* ─────────────────────────────────────────
+         HIT CHIPS
+      ───────────────────────────────────────── */
+      function renderHitChips(drawnBalls, targetEl, wrapEl) {
+        wrapEl.style.display = 'block';
+        targetEl.innerHTML   = '';
+        const cardNums = new Set(state.numbers.filter(n => n !== null));
+        drawnBalls.forEach(n => {
+          const chip = document.createElement('span');
+          chip.className   = 'hit-chip' + (cardNums.has(n) ? ' matched' : '');
+          chip.textContent = n;
+          targetEl.append(chip);
+        });
+      }
+
+      /* ─────────────────────────────────────────
+         APPLY KENO DRAW
+      ───────────────────────────────────────── */
+      async function applyDraw(drawnBalls, raceId) {
+        const drawnSet   = new Set(drawnBalls);
+        const kenoMarked = Array(CARD_SIZE).fill(false);
+
+        // Reset all marks first — draw result is authoritative
+        state.marked = Array(CARD_SIZE).fill(false);
+        state.marked[FREE_INDEX] = true;
+
+        state.numbers.forEach((num, i) => {
+          if (num !== null && drawnSet.has(num)) {
+            state.marked[i] = true;
+            kenoMarked[i]   = true;
+          }
+        });
+
+        state.kenoMarked         = kenoMarked;
+        state.lastAppliedRaceId  = raceId;
+
+        saveState();
+        render();
+        renderHitChips(drawnBalls, hitChipsEl, hitChipsWrap);
+
+        // Write results to lobby row — only if this card was locked in
+        if (myRowId && cardLocked) {
+          const progress = bestBingoProgress(state.marked);
+          const payload = {
+            player_name:     playerName,
+            race_id_waiting: state.waitingForRaceId,
+            best_line:       progress.str,
+            matched_count:   progress.hits,
+            round_complete:  true,
+            updated_at:      new Date().toISOString()
+          };
+          const { error } = await sb.from(LOBBY_TABLE).update(payload).eq('id', myRowId);
+          if (error) console.warn('Result write error', error.message);
+        }
+      }
+
+      /* ─────────────────────────────────────────
+         GLOBAL BINGO ALERT
+      ───────────────────────────────────────── */
+      function showGlobalBingoAlert(winnerNames, isSelf) {
+        globalBingoAlert.classList.add('show');
+        globalBingoTitle.textContent = isSelf ? '🎉 YOU GOT BINGO!' : '🎉 BINGO!';
+        globalBingoSub.textContent   = isSelf
+          ? 'Congratulations — you hit a complete line!'
+          : `${winnerNames} hit BINGO this round`;
+      }
+
+      /* ─────────────────────────────────────────
+         KENO FEED
+      ───────────────────────────────────────── */
+      function setKStatus(type, text, gameRef = '') {
+        kDot.className          = 'keno-status-dot' + (type ? ` ${type}` : '');
+        kStatusText.textContent = text;
+        kGameRef.textContent    = gameRef;
+      }
+
+      async function fetchDraw(idOrLatest) {
+        const res = await fetch(`${BASE}/${idOrLatest}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      }
+
+      async function pollKeno() {
+        try {
+          const data    = await fetchDraw('latest');
+          const raceId  = data.raceid;
+          const gameRef = `Game #${data.racenumber + 1}`;
+
+          lobbyDrawRef.textContent = `Next draw · Game #${data.racenumber + 1}`;
+
+          if (latestRaceId === null) {
+            latestRaceId = raceId;
+            setKStatus('live', 'Connected — waiting for next draw', gameRef);
+            if (state && state.waitingForRaceId !== null && raceId > state.waitingForRaceId) {
+              setKStatus('live', 'Applying draw…', gameRef);
+              await applyDraw(data.balls, raceId);
+              state.waitingForRaceId = null;
+              saveState();
+              setKStatus('live', 'Draw applied — watching for next', gameRef);
+            }
+            return;
+          }
+
+          if (raceId !== latestRaceId) {
+            latestRaceId = raceId;
+            setKStatus('live', 'New draw! Checking cards…', gameRef);
+
+            if (state && cardLocked) {
+              const shouldApply = state.waitingForRaceId === null || raceId > state.waitingForRaceId;
+              if (shouldApply) {
+                // Apply draw first — this writes results to lobby row
+                await applyDraw(data.balls, raceId);
+                state.waitingForRaceId = null;
+                saveState();
+              }
+            }
+
+            // Snapshot lobby (now contains results) → results table, then clear
+            await snapshotAndClearLobby(raceId, gameRef);
+
+            if (!state || !cardLocked) {
+              setKStatus('live', state ? 'New round — lock your card to play!' : 'Generate and lock a card to play!', gameRef);
+            } else {
+              setTimeout(() => setKStatus('live', 'Draw complete — New Card or Lock to play again', gameRef), 2500);
+            }
+          } else {
+            setKStatus(
+              cardLocked ? 'waiting' : 'live',
+              cardLocked ? 'Card locked — waiting for next Keno draw…' : 'Watching for next draw…',
+              gameRef
+            );
+          }
+        } catch (err) {
+          setKStatus('', `Feed error — retrying… (${err.message})`);
+        }
+      }
+
+      function startPolling() { pollKeno(); pollTimer = setInterval(pollKeno, POLL_MS); }
+
+      /* ─────────────────────────────────────────
+         SUPABASE — LOBBY
+      ───────────────────────────────────────── */
+      async function upsertLobbyRow(extra = {}) {
+        if (!playerName || !cardLocked) return;
+
+        const payload = {
+          player_name:     playerName,
+          race_id_waiting: state ? state.waitingForRaceId : null,
+          best_line:       null,
+          matched_count:   0,
+          round_complete:  false,
+          updated_at:      new Date().toISOString(),
+          ...extra
+        };
+
+        if (myRowId) {
+          const { error } = await sb.from(LOBBY_TABLE).update(payload).eq('id', myRowId);
+          if (error) console.warn('Supabase update error', error.message);
+        } else {
+          const { data, error } = await sb.from(LOBBY_TABLE).insert(payload).select('id').single();
+          if (error) { console.warn('Supabase insert error', error.message); }
+          else { myRowId = data.id; saveState(); }
+        }
+      }
+
+      async function removeMyRow() {
+        if (!myRowId) return;
+        await sb.from(LOBBY_TABLE).delete().eq('id', myRowId);
+        myRowId = null;
+      }
+
+      /* ─────────────────────────────────────────
+         SUPABASE — SNAPSHOT → RESULTS, CLEAR LOBBY
+      ───────────────────────────────────────── */
+      async function snapshotAndClearLobby(newRaceId, gameRef) {
+        // 1. Read ALL current lobby rows — including round_complete: true results just written
+        const { data: rows } = await sb
+          .from(LOBBY_TABLE)
+          .select('player_name, best_line, matched_count, round_complete');
+
+        if (rows && rows.length > 0) {
+          // Deduplicate by player_name — keep the row with the highest matched_count
+          const byName = {};
+          rows.forEach(r => {
+            const existing = byName[r.player_name];
+            if (!existing || (r.matched_count || 0) > (existing.matched_count || 0)) {
+              byName[r.player_name] = r;
+            }
+          });
+          const dedupedRows = Object.values(byName);
+
+          // 2. Write to results table (single row id=1 — most recent only)
+          const winners = dedupedRows
+            .filter(r => r.round_complete && r.best_line === 'BINGO')
+            .map(r => r.player_name);
+
+          await sb.from(RESULTS_TABLE).upsert({
+            id:           1,
+            game_ref:     gameRef,
+            race_id:      newRaceId,
+            players:      JSON.stringify(dedupedRows),
+            winner_names: winners.length > 0 ? winners.join(', ') : null,
+            completed_at: new Date().toISOString()
+          }, { onConflict: 'id' });
+        }
+
+        // 3. Clear entire lobby
+        await sb.from(LOBBY_TABLE).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        myRowId    = null;
+        cardLocked = false;
+
+        // 4. Show post-draw button state
+        showPostDrawButtons();
+
+        // 5. Refresh Last Round panel
+        fetchLastRound();
+      }
+
+      /* ─────────────────────────────────────────
+         SUPABASE — REALTIME LOBBY
+      ───────────────────────────────────────── */
+      function subscribeLobby() {
+        if (lobbyChannel) sb.removeChannel(lobbyChannel);
+        lobbyChannel = sb
+          .channel('keno-bingo-lobby')
+          .on('postgres_changes', { event: '*', schema: 'public', table: LOBBY_TABLE }, () => fetchLobby())
+          .subscribe();
+        fetchLobby();
+      }
+
+      async function fetchLobby() {
+        const { data, error } = await sb
+          .from(LOBBY_TABLE)
+          .select('id, player_name, best_line, matched_count, round_complete')
+          .eq('round_complete', false)
+          .order('updated_at', { ascending: true });
+
+        if (error) { console.warn('Lobby fetch error', error.message); return; }
+        lobbyPlayers = data || [];
+        renderLobby();
+
+        // Fire global BINGO alert on Your Card view if any winner
+        const winners = lobbyPlayers.filter(p => p.round_complete && p.best_line === 'BINGO');
+        if (winners.length > 0) {
+          const names  = winners.map(w => w.player_name).join(', ');
+          const isSelf = winners.some(w => w.id === myRowId);
+          showGlobalBingoAlert(names, isSelf);
+        }
+      }
+
+      /* ─────────────────────────────────────────
+         RENDER LOBBY
+      ───────────────────────────────────────── */
+      function renderLobby() {
+        const count = lobbyPlayers.length;
+        lobbyCount.textContent = `${count} ${count === 1 ? 'player' : 'players'}`;
+
+        if (count > 0) { roomBadge.textContent = count > 9 ? '9+' : String(count); roomBadge.classList.add('show'); }
+        else            { roomBadge.classList.remove('show'); }
+
+        if (count === 0) { lobbyList.innerHTML = ''; lobbyList.appendChild(lobbyEmpty); return; }
+
+        lobbyList.innerHTML = '';
+
+        lobbyPlayers.forEach(player => {
+          const isMe      = player.id === myRowId;
+          const hasResult = player.round_complete && player.best_line;
+          const isBingo   = hasResult && player.best_line === 'BINGO';
+
+          const row = document.createElement('div');
+          row.className = 'lobby-row' + (isMe ? ' is-me' : '') + (isBingo ? ' bingo-winner' : '');
+
+          const avatar = document.createElement('div');
+          avatar.className   = 'lobby-avatar';
+          avatar.textContent = player.player_name.charAt(0).toUpperCase();
+
+          const name = document.createElement('div');
+          name.className   = 'lobby-name';
+          name.textContent = player.player_name;
+
+          row.appendChild(avatar);
+          row.appendChild(name);
+
+          if (hasResult) {
+            row.appendChild(buildProgressEl(player.best_line, isBingo));
+          } else {
+            const st = document.createElement('div');
+            st.className   = 'lobby-status';
+            st.textContent = 'Locked in';
+            row.appendChild(st);
+          }
+
+          lobbyList.appendChild(row);
+        });
+      }
+
+      /* ─────────────────────────────────────────
+         LAST ROUND
+      ───────────────────────────────────────── */
+      async function fetchLastRound() {
+        const { data, error } = await sb
+          .from(RESULTS_TABLE)
+          .select('*')
+          .eq('id', 1)
+          .single();
+
+        if (error || !data) {
+          lrEmpty.style.display          = 'block';
+          lrStandingsLabel.style.display = 'none';
+          lrBingoCallout.classList.remove('show');
+          return;
+        }
+        renderLastRound(data);
+      }
+
+      function renderLastRound(data) {
+        lrGameRef.textContent = data.game_ref || '—';
+
+        // Winner callout
+        if (data.winner_names) {
+          lrBingoNames.textContent = `${data.winner_names} hit BINGO!`;
+          lrBingoCallout.classList.add('show');
+        } else {
+          lrBingoCallout.classList.remove('show');
+        }
+
+        // Standings — names and BIN_O results only
+        let players = [];
+        try { players = JSON.parse(data.players); } catch (_) {}
+        players.sort((a, b) => (b.matched_count || 0) - (a.matched_count || 0));
+
+        if (players.length === 0) {
+          lrEmpty.style.display          = 'block';
+          lrStandingsLabel.style.display = 'none';
+          lrStandings.innerHTML = '';
+          lrStandings.appendChild(lrEmpty);
+          return;
+        }
+
+        lrEmpty.style.display          = 'none';
+        lrStandingsLabel.style.display = 'block';
+        lrStandings.innerHTML = '';
+
+        players.forEach((player, idx) => {
+          const isBingo = player.best_line === 'BINGO';
+          const isMe    = playerName && player.player_name === playerName;
+
+          const row = document.createElement('div');
+          row.className = 'lr-row' + (isMe ? ' is-me' : '') + (isBingo ? ' bingo-winner' : '');
+
+          const rank = document.createElement('div');
+          rank.className   = 'lr-rank';
+          rank.textContent = String(idx + 1);
+
+          const name = document.createElement('div');
+          name.className   = 'lr-name';
+          name.textContent = player.player_name;
+
+          row.appendChild(rank);
+          row.appendChild(name);
+          if (player.best_line) row.appendChild(buildProgressEl(player.best_line, isBingo));
+
+          lrStandings.appendChild(row);
+        });
+      }
+
+      /* ─────────────────────────────────────────
+         NAME MODAL
+      ───────────────────────────────────────── */
+      function promptForName(onConfirm) {
+        // Skip if name already stored
+        if (playerName) { onConfirm(); return; }
+
+        playerNameInput.value = '';
+        nameModalBackdrop.classList.add('show');
+        setTimeout(() => playerNameInput.focus(), 50);
+
+        function confirm() {
+          const val = playerNameInput.value.trim();
+          if (!val) { playerNameInput.focus(); return; }
+          playerName = val;
+          localStorage.setItem(NAME_KEY, playerName);
+          close(); onConfirm();
+        }
+        function close() {
+          nameModalBackdrop.classList.remove('show');
+          nameModalConfirm.removeEventListener('click', confirm);
+          nameModalCancel.removeEventListener('click', close);
+          playerNameInput.removeEventListener('keydown', onKey);
+        }
+        function onKey(e) { if (e.key === 'Enter') confirm(); if (e.key === 'Escape') close(); }
+
+        nameModalConfirm.addEventListener('click', confirm);
+        nameModalCancel.addEventListener('click', close);
+        playerNameInput.addEventListener('keydown', onKey);
+      }
+
+      /* ─────────────────────────────────────────
+         CONTROLS
+      ───────────────────────────────────────── */
+
+      // NEW CARD — generates locally, free to cycle, no Supabase write
+      newCardBtn.addEventListener('click', () => {
+        if (cardLocked) return;
+        promptForName(() => {
+          state = createState(latestRaceId);
+          cardLocked = false;
+          saveState();
+          render();
+          hitChipsWrap.style.display = 'none';
+          winBanner.classList.remove('show');
+          globalBingoAlert.classList.remove('show');
+          lockCardBtn.disabled    = false;
+          lockCardBtn.textContent = 'Lock';
+          setKStatus('live', 'Card ready — lock in to join the round', kGameRef.textContent);
+        });
+      });
+
+      // LOCK — clears any previous draw markings, commits card for next round
+      lockCardBtn.addEventListener('click', () => {
+        if (!state || cardLocked) return;
+        promptForName(async () => {
+          // Always reset markings — draw result is cleared, fresh start
+          state.marked     = Array(CARD_SIZE).fill(false);
+          state.marked[FREE_INDEX] = true;
+          state.kenoMarked = Array(CARD_SIZE).fill(false);
+          state.waitingForRaceId = latestRaceId;
+          hitChipsWrap.style.display = 'none';
+          winBanner.classList.remove('show');
+          globalBingoAlert.classList.remove('show');
+          applyLockUI(true);
+          saveState();
+          render();
+          await removeMyRow();
+          await upsertLobbyRow();
+          setKStatus('waiting', 'Card locked — waiting for next Keno draw…', kGameRef.textContent);
+        });
+      });
+
+      /* ─────────────────────────────────────────
+         INIT
+      ───────────────────────────────────────── */
+      (function init() {
+        const saved = loadState();
+        if (saved) {
+          state      = saved;
+          myRowId    = saved.myRowId || null;
+          // Never restore lock state from localStorage — lock resets each draw
+          cardLocked = false;
+          render();
+          applyLockUI(false);
+        } else {
+          // Placeholder ghost board
+          board.innerHTML = '';
+          for (let i = 0; i < CARD_SIZE; i++) {
+            const cell = document.createElement('div');
+            cell.className    = 'bingo-cell';
+            cell.style.opacity = '0.2';
+            const text = document.createElement('span');
+            text.className   = 'bingo-cell-text';
+            text.textContent = '—';
+            cell.append(text);
+            board.append(cell);
+          }
+          lockCardBtn.disabled = true;
+        }
+
+        subscribeLobby();
+        fetchLastRound();
+        startPolling();
+      })();
+    </script>
+  </body>
+</html>
