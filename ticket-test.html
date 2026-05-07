@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=35">
+  <link rel="stylesheet" href="style.css?v=36">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -971,7 +971,7 @@
 
           const result = reader.decodeFromCanvas(tempCanvas);
           if (result) {
-            onBarcodeDetected(result.getText(), result.getResultPoints(), vw, vh, tempCanvas);
+            onBarcodeDetected(result.getText());
             return; // Stop scanning loop
           }
         } catch (_) {
@@ -989,11 +989,11 @@
       barcodeScanner = null;
     }
 
-    async function onBarcodeDetected(rawBarcode, resultPoints, frameW, frameH, frameCanvas) {
+    async function onBarcodeDetected(rawBarcode) {
       stopBarcodeScanning();
-      setOcrStatus('Barcode found! Decoding serial and reading PIN…', 'warn');
+      setOcrStatus('Barcode found! Capturing frame for PIN…', 'warn');
 
-      // Decode serial from barcode immediately
+      // 1. Decode serial from barcode
       const serial = decodeBarcodeSerial(rawBarcode);
       if (serial) {
         serialInput.value = serial;
@@ -1001,49 +1001,16 @@
         setOcrStatus(`Barcode read (${rawBarcode}) but could not decode serial. Check format.`, 'bad');
       }
 
-      // ── Calculate PIN region relative to barcode position ──────────────────
-      // Result points for a vertical barcode are two points top & bottom of the bar strip.
-      // From the ticket: PIN box is to the LEFT of the barcode.
-      // Ticket proportions (measured from photo):
-      //   - Barcode strip width  ≈ barcodeH * 0.08  (it's tall and narrow)
-      //   - PIN box starts       ≈ 0.5 × barcodeH to the LEFT of barcode left edge
-      //   - PIN box width        ≈ 3.5 × barcodeH
-      //   - PIN box top          ≈ barcode top
-      //   - PIN box height       ≈ 0.55 × barcodeH
-      let pinRegion = null;
-
-      if (resultPoints && resultPoints.length >= 2) {
-        const pts = resultPoints.map(p => ({ x: p.getX(), y: p.getY() }));
-        const bTop    = Math.min(...pts.map(p => p.y));
-        const bBottom = Math.max(...pts.map(p => p.y));
-        const bLeft   = Math.min(...pts.map(p => p.x));
-        const bRight  = Math.max(...pts.map(p => p.x));
-        const bH = bBottom - bTop;
-        const bW = bRight - bLeft;
-        // Use whichever dimension is larger as the "height" of the barcode strip
-        const stripH = Math.max(bH, bW);
-
-        const pinX = bLeft - stripH * 4.0;   // PIN box left edge
-        const pinY = bTop  - stripH * 0.05;  // slight top padding
-        const pinW = stripH * 3.5;            // PIN box width
-        const pinH = stripH * 0.60;           // PIN box height
-
-        // Convert to fractional coordinates relative to full frame
-        pinRegion = {
-          x: Math.max(0, pinX / frameW),
-          y: Math.max(0, pinY / frameH),
-          w: Math.min(1 - Math.max(0, pinX / frameW), pinW / frameW),
-          h: Math.min(1 - Math.max(0, pinY / frameH), pinH / frameH)
-        };
+      // 2. Snap the current frame
+      const captured = await captureCurrentCameraFrame();
+      if (!captured) {
+        setOcrStatus('Barcode decoded but frame capture failed.', 'warn');
+        return;
       }
 
-      // Capture still from the already-drawn frameCanvas (full frame)
-      const dataUrl = frameCanvas.toDataURL('image/jpeg', 0.97);
-      await showImageFromDataUrl(dataUrl);
-      closeCameraOverlay();
-
+      // 3. OCR the PIN region from the still
       document.querySelector('.ticket-ocr-debug').style.display = 'block';
-      await scanLoadedImageForPin(pinRegion);
+      await scanLoadedImageForPin();
     }
 
     async function stopCameraStreamOnly() {
@@ -1231,7 +1198,7 @@
       });
     }
 
-    async function scanLoadedImageForPin(pinRegion = null) {
+    async function scanLoadedImageForPin() {
       clearError();
 
       if (!loadedImage) {
@@ -1241,11 +1208,8 @@
 
       setOcrStatus('Reading PIN from ticket…', 'warn');
 
-      // Use barcode-relative region if available, otherwise fall back to fixed region
-      const region = pinRegion || OCR_REGIONS.pinLine;
-
       try {
-        const pinLineCanvas = preprocessToCanvas(loadedImage, region, pinLineCropCanvas, {
+        const pinLineCanvas = preprocessToCanvas(loadedImage, OCR_REGIONS.pinLine, pinLineCropCanvas, {
           scale: 6,
           threshold: 180
         });
@@ -1288,7 +1252,7 @@
 
         setOcrStatus('Picture captured. Reading PIN…', 'warn');
         document.querySelector('.ticket-ocr-debug').style.display = 'block';
-        await scanLoadedImageForPin(null); // null = use fixed fallback region
+        await scanLoadedImageForPin();
       } catch (error) {
         setOcrStatus(`Unable to capture image: ${error.message}`, 'bad');
       } finally {
