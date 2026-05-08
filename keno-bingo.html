@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Keno Bingo — Frontside</title>
-    <link rel="stylesheet" href="bingo.css?v=12">
+    <link rel="stylesheet" href="bingo.css?v=15">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       /* ── 5×5 Keno Bingo overrides & additions ── */
@@ -1275,63 +1275,65 @@
          SUPABASE — SNAPSHOT → RESULTS, CLEAR LOBBY
       ───────────────────────────────────────── */
       async function snapshotAndClearLobby(newRaceId, gameRef, drawnBalls) {
-        // 1. Read ALL current lobby rows, including card_numbers for offline players
-        const { data: rows } = await sb
-          .from(LOBBY_TABLE)
-          .select('player_name, best_line, matched_count, round_complete, card_numbers');
+        try {
+          // 1. Read ALL current lobby rows, including card_numbers for offline players
+          const { data: rows } = await sb
+            .from(LOBBY_TABLE)
+            .select('player_name, best_line, matched_count, round_complete, card_numbers');
 
-        if (rows && rows.length > 0) {
-          const drawnSet = new Set(drawnBalls);
+          if (rows && rows.length > 0) {
+            const drawnSet = new Set(drawnBalls);
 
-          // For any player who didn't record their own result (offline / backgrounded),
-          // calculate it now from their stored card_numbers.
-          const resolvedRows = rows.map(r => {
-            if (r.round_complete) return r; // already recorded by the player's own browser
-            if (!r.card_numbers)  return r; // no card data — can't calculate
-            let numbers;
-            try { numbers = JSON.parse(r.card_numbers); } catch (_) { return r; }
+            // For any player who didn't record their own result (offline / backgrounded),
+            // calculate it now from their stored card_numbers.
+            const resolvedRows = rows.map(r => {
+              if (r.round_complete) return r; // already recorded by the player's own browser
+              if (!r.card_numbers)  return r; // no card data — can't calculate
+              let numbers;
+              try { numbers = JSON.parse(r.card_numbers); } catch (_) { return r; }
 
-            const marked = numbers.map((n, i) => i === FREE_INDEX ? true : (n !== null && drawnSet.has(n)));
-            const progress = bestBingoProgress(marked);
-            return { ...r, best_line: progress.str, matched_count: progress.hits, round_complete: true };
-          });
+              const marked = numbers.map((n, i) => i === FREE_INDEX ? true : (n !== null && drawnSet.has(n)));
+              const progress = bestBingoProgress(marked);
+              return { ...r, best_line: progress.str, matched_count: progress.hits, round_complete: true };
+            });
 
-          // Deduplicate by player_name — keep the row with the highest matched_count
-          const byName = {};
-          resolvedRows.forEach(r => {
-            const existing = byName[r.player_name];
-            if (!existing || (r.matched_count || 0) > (existing.matched_count || 0)) {
-              byName[r.player_name] = r;
-            }
-          });
-          const dedupedRows = Object.values(byName);
+            // Deduplicate by player_name — keep the row with the highest matched_count
+            const byName = {};
+            resolvedRows.forEach(r => {
+              const existing = byName[r.player_name];
+              if (!existing || (r.matched_count || 0) > (existing.matched_count || 0)) {
+                byName[r.player_name] = r;
+              }
+            });
+            const dedupedRows = Object.values(byName);
 
-          // 2. Write to results table (single row id=1 — most recent only)
-          const winners = dedupedRows
-            .filter(r => r.best_line === 'BINGO')
-            .map(r => r.player_name);
+            // 2. Write to results table (single row id=1 — most recent only)
+            const winners = dedupedRows
+              .filter(r => r.best_line === 'BINGO')
+              .map(r => r.player_name);
 
-          await sb.from(RESULTS_TABLE).upsert({
-            id:           1,
-            game_ref:     gameRef,
-            race_id:      newRaceId,
-            players:      JSON.stringify(dedupedRows),
-            winner_names: winners.length > 0 ? winners.join(', ') : null,
-            completed_at: new Date().toISOString()
-          }, { onConflict: 'id' });
+            await sb.from(RESULTS_TABLE).upsert({
+              id:           1,
+              game_ref:     gameRef,
+              race_id:      newRaceId,
+              players:      JSON.stringify(dedupedRows),
+              winner_names: winners.length > 0 ? winners.join(', ') : null,
+              completed_at: new Date().toISOString()
+            }, { onConflict: 'id' });
+          }
+
+          // 3. Clear entire lobby
+          await sb.from(LOBBY_TABLE).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        } catch (e) {
+          console.warn('Snapshot error:', e.message);
+        } finally {
+          // Always unlock — even if Supabase failed, the draw happened and the lock must clear
+          myRowId    = null;
+          cardLocked = false;
+          saveState();
+          showPostDrawButtons();
+          fetchLastRound();
         }
-
-        // 3. Clear entire lobby
-        await sb.from(LOBBY_TABLE).delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        myRowId    = null;
-        cardLocked = false;
-        saveState();
-
-        // 4. Show post-draw button state
-        showPostDrawButtons();
-
-        // 5. Refresh Last Round panel
-        fetchLastRound();
       }
 
       /* ─────────────────────────────────────────
@@ -1486,31 +1488,12 @@
          NAME MODAL
       ───────────────────────────────────────── */
       function promptForName(onConfirm) {
-        // Skip if name already stored
         if (playerName) { onConfirm(); return; }
-
-        playerNameInput.value = '';
-        nameModalBackdrop.classList.add('show');
-        setTimeout(() => playerNameInput.focus(), 50);
-
-        function confirm() {
-          const val = playerNameInput.value.trim();
-          if (!val) { playerNameInput.focus(); return; }
-          playerName = val;
-          localStorage.setItem(NAME_KEY, playerName);
-          close(); onConfirm();
-        }
-        function close() {
-          nameModalBackdrop.classList.remove('show');
-          nameModalConfirm.removeEventListener('click', confirm);
-          nameModalCancel.removeEventListener('click', close);
-          playerNameInput.removeEventListener('keydown', onKey);
-        }
-        function onKey(e) { if (e.key === 'Enter') confirm(); if (e.key === 'Escape') close(); }
-
-        nameModalConfirm.addEventListener('click', confirm);
-        nameModalCancel.addEventListener('click', close);
-        playerNameInput.addEventListener('keydown', onKey);
+        const val = (window.prompt('Enter your name to play:') || '').trim();
+        if (!val) return;
+        playerName = val;
+        localStorage.setItem(NAME_KEY, playerName);
+        onConfirm();
       }
 
       /* ─────────────────────────────────────────
@@ -1563,7 +1546,9 @@
         if (saved) {
           state      = saved;
           myRowId    = saved.myRowId || null;
-          const wasLocked = saved.locked === true;
+          // Don't restore a stuck lock — if waitingForRaceId is null the draw already
+          // resolved but the unlock saveState never ran (e.g. page closed mid-cycle).
+          const wasLocked = saved.locked === true && saved.waitingForRaceId !== null;
           cardLocked = wasLocked;
           render();
           applyLockUI(wasLocked);
