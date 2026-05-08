@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Keno Bingo — Frontside</title>
-    <link rel="stylesheet" href="bingo.css?v=15">
+    <link rel="stylesheet" href="bingo.css?v=18">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       /* ── 5×5 Keno Bingo overrides & additions ── */
@@ -599,14 +599,18 @@
         line-height: 1.8;
       }
 
+      .bingo-board .bingo-cell:not(.free-space) .bingo-cell-text {
+        font-size: clamp(0.96rem, 4.7vw, 1.9rem);
+      }
+
       /* ── RESPONSIVE ── */
       @media (max-width: 700px) {
         .bingo-board { gap: 0.28rem; }
-        .bingo-cell-text { font-size: clamp(0.55rem, 3.2vw, 0.9rem); }
+        .bingo-board .bingo-cell:not(.free-space) .bingo-cell-text { font-size: clamp(1.1rem, 6.4vw, 1.8rem); }
         .view-nav-btn { font-size: 0.62rem; letter-spacing: 0.12em; }
       }
       @media (max-width: 420px) {
-        .bingo-cell-text { font-size: clamp(0.5rem, 2.8vw, 0.78rem); }
+        .bingo-board .bingo-cell:not(.free-space) .bingo-cell-text { font-size: clamp(1rem, 5.6vw, 1.56rem); }
         .bingo-cell { padding: clamp(0.18rem, 1.5vw, 0.38rem); }
       }
     </style>
@@ -763,6 +767,18 @@
       const SUPABASE_KEY  = 'sb_publishable_0pVZp5JcAc9lSIClZD5eqQ_9Q33F7Uf';
       const LOBBY_TABLE   = 'keno_bingo_lobby';
       const RESULTS_TABLE = 'keno_bingo_results';
+      const INVALID_PLAYER_NAMES = new Set(['yourname', 'your name', 'name', 'player', 'guest', 'test']);
+
+      function cleanPlayerName(value) {
+        return (value || '').trim().replace(/\s+/g, ' ');
+      }
+
+      function isValidPlayerName(value) {
+        const cleaned = cleanPlayerName(value);
+        if (cleaned.length < 2) return false;
+        if (!/[a-z]/i.test(cleaned)) return false;
+        return !INVALID_PLAYER_NAMES.has(cleaned.toLowerCase());
+      }
 
       /* ─────────────────────────────────────────
          SUPABASE
@@ -777,7 +793,7 @@
       let cardLocked   = false;
       let latestRaceId = null;
       let pollTimer    = null;
-      let playerName   = localStorage.getItem(NAME_KEY) || '';
+      let playerName   = cleanPlayerName(localStorage.getItem(NAME_KEY));
       let myRowId      = null;
       let lobbyChannel = null;
       let lobbyPlayers = [];
@@ -1036,6 +1052,7 @@
       }
 
       function updateCount() {
+	  	if (!markedCount) return;  
         const count = state.marked.filter(Boolean).length;
         markedCount.textContent = `${count} / ${CARD_SIZE} marked`;
       }
@@ -1173,6 +1190,7 @@
               const { drawData, drawRef } = await fetchLockedDraw(data, raceId, completedRef);
               if (cardLocked) await applyDraw(drawData.balls, drawData.raceid);
               state.waitingForRaceId = null;
+              cardLocked = false;
               saveState();
               await snapshotAndClearLobby(drawData.raceid, drawRef, drawData.balls);
               setKStatus('live', 'Draw complete — New Card or Lock to play again', gameRef);
@@ -1199,6 +1217,7 @@
                 snapshotBalls  = drawData.balls;
                 await applyDraw(drawData.balls, drawData.raceid);
                 state.waitingForRaceId = null;
+                cardLocked = false;
                 saveState();
               }
             }
@@ -1488,12 +1507,42 @@
          NAME MODAL
       ───────────────────────────────────────── */
       function promptForName(onConfirm) {
-        if (playerName) { onConfirm(); return; }
-        const val = (window.prompt('Enter your name to play:') || '').trim();
-        if (!val) return;
-        playerName = val;
-        localStorage.setItem(NAME_KEY, playerName);
-        onConfirm();
+        if (isValidPlayerName(playerName)) { onConfirm(); return; }
+
+        playerName = '';
+        localStorage.removeItem(NAME_KEY);
+        playerNameInput.value = '';
+        playerNameInput.setCustomValidity('');
+        nameModalBackdrop.classList.add('show');
+        setTimeout(() => playerNameInput.focus(), 50);
+
+        function confirm() {
+          const val = cleanPlayerName(playerNameInput.value);
+          if (!isValidPlayerName(val)) {
+            playerNameInput.setCustomValidity('Enter your real name, not a placeholder.');
+            playerNameInput.reportValidity();
+            playerNameInput.focus();
+            return;
+          }
+          playerNameInput.setCustomValidity('');
+          playerName = val;
+          localStorage.setItem(NAME_KEY, playerName);
+          close(); onConfirm();
+        }
+        function close() {
+          nameModalBackdrop.classList.remove('show');
+          nameModalConfirm.removeEventListener('click', confirm);
+          nameModalCancel.removeEventListener('click', close);
+          playerNameInput.removeEventListener('keydown', onKey);
+          playerNameInput.removeEventListener('input', clearError);
+        }
+        function clearError() { playerNameInput.setCustomValidity(''); }
+        function onKey(e) { if (e.key === 'Enter') confirm(); if (e.key === 'Escape') close(); }
+
+        nameModalConfirm.addEventListener('click', confirm);
+        nameModalCancel.addEventListener('click', close);
+        playerNameInput.addEventListener('keydown', onKey);
+        playerNameInput.addEventListener('input', clearError);
       }
 
       /* ─────────────────────────────────────────
@@ -1546,9 +1595,7 @@
         if (saved) {
           state      = saved;
           myRowId    = saved.myRowId || null;
-          // Don't restore a stuck lock — if waitingForRaceId is null the draw already
-          // resolved but the unlock saveState never ran (e.g. page closed mid-cycle).
-          const wasLocked = saved.locked === true && saved.waitingForRaceId !== null;
+          const wasLocked = saved.locked === true;
           cardLocked = wasLocked;
           render();
           applyLockUI(wasLocked);
@@ -1569,6 +1616,10 @@
             board.append(cell);
           }
           lockCardBtn.disabled = true;
+        }
+
+        if (!isValidPlayerName(playerName)) {
+          promptForName(() => {});
         }
 
         subscribeLobby();
