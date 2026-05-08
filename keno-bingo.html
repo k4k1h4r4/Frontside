@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Keno Bingo — Frontside</title>
-    <link rel="stylesheet" href="bingo.css?v=6">
+    <link rel="stylesheet" href="bingo.css?v=7">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       /* ── 5×5 Keno Bingo overrides & additions ── */
@@ -1297,6 +1297,7 @@
         await sb.from(LOBBY_TABLE).delete().neq('id', '00000000-0000-0000-0000-000000000000');
         myRowId    = null;
         cardLocked = false;
+        saveState();
 
         // 4. Show post-draw button state
         showPostDrawButtons();
