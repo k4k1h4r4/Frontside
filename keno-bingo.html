@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Keno Bingo — Frontside</title>
-    <link rel="stylesheet" href="bingo.css?v=5">
+    <link rel="stylesheet" href="bingo.css?v=6">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       /* ── 5×5 Keno Bingo overrides & additions ── */
@@ -187,12 +187,8 @@
       }
 
       /* ── LOCKED BOARD INDICATOR ── */
-      .bingo-board-wrap.is-locked::after {
-        content: '🔒  Card Locked';
-        position: absolute;
-        bottom: 0; left: 0; right: 0;
-        background: rgba(212,175,55,0.1);
-        border-top: 1px solid var(--accent-dim);
+      .locked-indicator {
+        display: none;
         font-family: 'Oswald', Arial, sans-serif;
         font-size: 0.68rem;
         letter-spacing: 0.3em;
@@ -200,8 +196,11 @@
         color: var(--accent-dim);
         text-align: center;
         padding: 0.35rem;
-        pointer-events: none;
+        background: rgba(212,175,55,0.1);
+        border: 1px solid var(--accent-dim);
+        margin-bottom: 0.5rem;
       }
+      .locked-indicator.show { display: block; }
 
       /* ── VIEW PANELS ── */
       .view-panel { display: none; }
@@ -699,6 +698,7 @@
             <div class="win-banner-sub" id="win-detail">You hit a line!</div>
           </div>
 
+          <div class="locked-indicator" id="locked-indicator">🔒 &nbsp;Card Locked</div>
           <div class="bingo-board-wrap" id="board-wrap">
             <div class="board-waiting-overlay show" id="board-overlay" aria-hidden="true">
               <div class="overlay-title">Generate a Card</div>
@@ -788,6 +788,7 @@
       ───────────────────────────────────────── */
       const board              = document.querySelector('#bingo-board');
       const boardWrap          = document.querySelector('#board-wrap');
+      const lockedIndicator    = document.querySelector('#locked-indicator');
       const markedCount        = document.querySelector('#marked-count');
       const savedStatus        = document.querySelector('#saved-status');
       const newCardBtn         = document.querySelector('#new-card');
@@ -969,7 +970,7 @@
       ───────────────────────────────────────── */
       function applyLockUI(locked) {
         cardLocked = locked;
-        boardWrap.classList.toggle('is-locked', locked);
+        lockedIndicator.classList.toggle('show', locked);
         newCardBtn.disabled     = locked;
         lockCardBtn.disabled    = locked || !state;
         lockCardBtn.textContent = locked ? 'Locked 🔒' : 'Lock';
@@ -986,7 +987,7 @@
         lockCardBtn.disabled    = !state;
         lockCardBtn.textContent = 'Lock';
         lockCardBtn.classList.remove('btn-secondary');
-        boardWrap.classList.remove('is-locked');
+        lockedIndicator.classList.remove('show');
       }
 
       /* ─────────────────────────────────────────
@@ -1137,10 +1138,12 @@
       async function pollKeno() {
         try {
           const data    = await fetchDraw('latest');
-          const raceId  = data.raceid;
-          const gameRef = `Game #${data.racenumber + 1}`;
+          const raceId       = data.raceid;
+          const completedRef = `Game #${data.racenumber}`;
+          const nextRef      = `Game #${data.racenumber + 1}`;
+          const gameRef      = nextRef;
 
-          lobbyDrawRef.textContent = `Next draw · Game #${data.racenumber + 1}`;
+          lobbyDrawRef.textContent = `Next draw · ${nextRef}`;
 
           if (latestRaceId === null) {
             latestRaceId = raceId;
@@ -1151,7 +1154,7 @@
               state.waitingForRaceId = null;
               saveState();
               // Draw already happened — snapshot results and clear lobby now
-              await snapshotAndClearLobby(raceId, gameRef, data.balls);
+              await snapshotAndClearLobby(raceId, completedRef, data.balls);
               setKStatus('live', 'Draw complete — New Card or Lock to play again', gameRef);
             }
             return;
@@ -1172,7 +1175,7 @@
             }
 
             // Snapshot lobby (now contains results) → results table, then clear
-            await snapshotAndClearLobby(raceId, gameRef, data.balls);
+            await snapshotAndClearLobby(raceId, completedRef, data.balls);
 
             if (!state || !cardLocked) {
               setKStatus('live', state ? 'New round — lock your card to play!' : 'Generate and lock a card to play!', gameRef);
@@ -1533,8 +1536,7 @@
           myRowId    = saved.myRowId || null;
           // Restore lock if the card was locked and the draw it was waiting for hasn't fired yet.
           // Once a draw applies (lastAppliedRaceId is set), the lock is cleared as normal.
-          const wasLocked = saved.locked && saved.waitingForRaceId !== null &&
-                            saved.lastAppliedRaceId !== saved.waitingForRaceId;
+          const wasLocked = saved.locked && saved.lastAppliedRaceId !== saved.waitingForRaceId;
           cardLocked = wasLocked;
           render();
           applyLockUI(wasLocked);
