@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket Scan &mdash; Frontside</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css?v=45">
+  <link rel="stylesheet" href="style.css?v=48">
   <style>
     .ticket-page {
       max-width: 980px;
@@ -464,7 +464,7 @@
   <div class="ticket-page">
     <div class="ticket-header">
       <div>
-        <div class="ticket-title">Ticket Scan v10</div>
+        <div class="ticket-title">Ticket Scan v11</div>
         <div class="ticket-subtitle">Ticket lookup and payout summary</div>
       </div>
     </div>
@@ -601,7 +601,7 @@
       // Blue guide: Cloud PIN area, relative to the captured right half of the ticket.
       pinLine: { x: 0.15, y: 0.25, w: 0.68, h: 0.36 }
     };
-    const BARCODE_SCAN_INTERVAL_MS = 120;
+    const BARCODE_SCAN_INTERVAL_MS = 250;
     const BARCODE_ROTATIONS = [0, 90, 270, 180];
 
     const form = document.getElementById('ticket-form');
@@ -867,8 +867,9 @@
         cameraStream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: 'environment' },
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
+            width: { ideal: 2560 },
+            height: { ideal: 1440 },
+  			focusMode: 'continuous'
           },
           audio: false
         });
@@ -1069,9 +1070,7 @@
 
       const hints = new Map();
       hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-        ZXing.BarcodeFormat.CODE_128,
-        ZXing.BarcodeFormat.CODE_39,
-        ZXing.BarcodeFormat.CODE_93,
+        ZXing.BarcodeFormat.CODE_128
       ]);
       hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
 
@@ -1094,9 +1093,9 @@
 
           try {
             const drawn = drawVideoElementCrop(cameraFrame, tempCanvas, {
-              minLongEdge: 640,
-              paddingX: 0.75,
-              paddingY: 0.08
+              minLongEdge: 1200,
+              paddingX: 1.75,
+              paddingY: 0.18
             });
             if (drawn) {
               const rawBarcode = tryDecodeBarcodeFromCanvas(reader, tempCanvas, rotatedCanvas);
