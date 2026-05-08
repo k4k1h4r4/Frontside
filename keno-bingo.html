@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Keno Bingo — Frontside</title>
-    <link rel="stylesheet" href="bingo.css?v=11">
+    <link rel="stylesheet" href="bingo.css?v=12">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       /* ── 5×5 Keno Bingo overrides & additions ── */
@@ -661,7 +661,6 @@
         <header class="bingo-toolbar">
           <div>
             <p class="section-label" id="toolbar-label">Your Card</p>
-            <p id="marked-count" class="bingo-count">0 / 25 marked</p>
           </div>
           <div class="bingo-actions" aria-label="Card controls">
             <button id="new-card"   class="btn btn-secondary" type="button">New Card</button>
@@ -1135,9 +1134,30 @@
         return res.json();
       }
 
+      // Returns the draw data for the race a locked card was actually waiting for.
+      // When the page was closed across multiple draws, the latest draw is NOT the
+      // draw the player locked for — we need to fetch that specific one.
+      async function fetchLockedDraw(currentData, currentRaceId, currentCompletedRef) {
+        if (!state || state.waitingForRaceId === null) {
+          return { drawData: currentData, drawRef: currentCompletedRef };
+        }
+        const targetRaceId = state.waitingForRaceId + 1;
+        if (currentRaceId === targetRaceId) {
+          return { drawData: currentData, drawRef: currentCompletedRef };
+        }
+        // Multiple draws passed since lock — fetch the exact one the card was locked for
+        try {
+          const targetData = await fetchDraw(targetRaceId);
+          return { drawData: targetData, drawRef: `Game #${targetData.racenumber}` };
+        } catch (e) {
+          console.warn('Could not fetch locked draw, falling back to latest:', e.message);
+          return { drawData: currentData, drawRef: currentCompletedRef };
+        }
+      }
+
       async function pollKeno() {
         try {
-          const data    = await fetchDraw('latest');
+          const data         = await fetchDraw('latest');
           const raceId       = data.raceid;
           const completedRef = `Game #${data.racenumber}`;
           const nextRef      = `Game #${data.racenumber + 1}`;
@@ -1150,11 +1170,11 @@
             setKStatus('live', 'Connected — waiting for next draw', gameRef);
             if (state && state.waitingForRaceId !== null && raceId > state.waitingForRaceId) {
               setKStatus('live', 'Applying draw…', gameRef);
-              if (cardLocked) await applyDraw(data.balls, raceId);
+              const { drawData, drawRef } = await fetchLockedDraw(data, raceId, completedRef);
+              if (cardLocked) await applyDraw(drawData.balls, drawData.raceid);
               state.waitingForRaceId = null;
               saveState();
-              // Draw already happened — snapshot results and clear lobby now
-              await snapshotAndClearLobby(raceId, completedRef, data.balls);
+              await snapshotAndClearLobby(drawData.raceid, drawRef, drawData.balls);
               setKStatus('live', 'Draw complete — New Card or Lock to play again', gameRef);
             }
             return;
@@ -1164,18 +1184,26 @@
             latestRaceId = raceId;
             setKStatus('live', 'New draw! Checking cards…', gameRef);
 
+            // Default snapshot target is the draw that just completed
+            let snapshotRaceId = raceId;
+            let snapshotRef    = completedRef;
+            let snapshotBalls  = data.balls;
+
             if (state && cardLocked) {
               const shouldApply = state.waitingForRaceId === null || raceId > state.waitingForRaceId;
               if (shouldApply) {
-                // Apply draw first — this writes results to lobby row
-                await applyDraw(data.balls, raceId);
+                // Resolve the exact draw this card was locked for before applying
+                const { drawData, drawRef } = await fetchLockedDraw(data, raceId, completedRef);
+                snapshotRaceId = drawData.raceid;
+                snapshotRef    = drawRef;
+                snapshotBalls  = drawData.balls;
+                await applyDraw(drawData.balls, drawData.raceid);
                 state.waitingForRaceId = null;
                 saveState();
               }
             }
 
-            // Snapshot lobby (now contains results) → results table, then clear
-            await snapshotAndClearLobby(raceId, completedRef, data.balls);
+            await snapshotAndClearLobby(snapshotRaceId, snapshotRef, snapshotBalls);
 
             if (!state || !cardLocked) {
               setKStatus('live', state ? 'New round — lock your card to play!' : 'Generate and lock a card to play!', gameRef);
