@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Keno Bingo — Frontside</title>
-    <link rel="stylesheet" href="bingo.css?v=4">
+    <link rel="stylesheet" href="bingo.css?v=5">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       /* ── 5×5 Keno Bingo overrides & additions ── */
@@ -1147,10 +1147,12 @@
             setKStatus('live', 'Connected — waiting for next draw', gameRef);
             if (state && state.waitingForRaceId !== null && raceId > state.waitingForRaceId) {
               setKStatus('live', 'Applying draw…', gameRef);
-              await applyDraw(data.balls, raceId);
+              if (cardLocked) await applyDraw(data.balls, raceId);
               state.waitingForRaceId = null;
               saveState();
-              setKStatus('live', 'Draw applied — watching for next', gameRef);
+              // Draw already happened — snapshot results and clear lobby now
+              await snapshotAndClearLobby(raceId, gameRef, data.balls);
+              setKStatus('live', 'Draw complete — New Card or Lock to play again', gameRef);
             }
             return;
           }
@@ -1170,7 +1172,7 @@
             }
 
             // Snapshot lobby (now contains results) → results table, then clear
-            await snapshotAndClearLobby(raceId, gameRef);
+            await snapshotAndClearLobby(raceId, gameRef, data.balls);
 
             if (!state || !cardLocked) {
               setKStatus('live', state ? 'New round — lock your card to play!' : 'Generate and lock a card to play!', gameRef);
@@ -1214,6 +1216,7 @@
         const payload = {
           player_name:     playerName,
           race_id_waiting: state ? state.waitingForRaceId : null,
+          card_numbers:    state ? JSON.stringify(state.numbers) : null,
           best_line:       null,
           matched_count:   0,
           round_complete:  false,
@@ -1240,16 +1243,31 @@
       /* ─────────────────────────────────────────
          SUPABASE — SNAPSHOT → RESULTS, CLEAR LOBBY
       ───────────────────────────────────────── */
-      async function snapshotAndClearLobby(newRaceId, gameRef) {
-        // 1. Read ALL current lobby rows — including round_complete: true results just written
+      async function snapshotAndClearLobby(newRaceId, gameRef, drawnBalls) {
+        // 1. Read ALL current lobby rows, including card_numbers for offline players
         const { data: rows } = await sb
           .from(LOBBY_TABLE)
-          .select('player_name, best_line, matched_count, round_complete');
+          .select('player_name, best_line, matched_count, round_complete, card_numbers');
 
         if (rows && rows.length > 0) {
+          const drawnSet = new Set(drawnBalls);
+
+          // For any player who didn't record their own result (offline / backgrounded),
+          // calculate it now from their stored card_numbers.
+          const resolvedRows = rows.map(r => {
+            if (r.round_complete) return r; // already recorded by the player's own browser
+            if (!r.card_numbers)  return r; // no card data — can't calculate
+            let numbers;
+            try { numbers = JSON.parse(r.card_numbers); } catch (_) { return r; }
+
+            const marked = numbers.map((n, i) => i === FREE_INDEX ? true : (n !== null && drawnSet.has(n)));
+            const progress = bestBingoProgress(marked);
+            return { ...r, best_line: progress.str, matched_count: progress.hits, round_complete: true };
+          });
+
           // Deduplicate by player_name — keep the row with the highest matched_count
           const byName = {};
-          rows.forEach(r => {
+          resolvedRows.forEach(r => {
             const existing = byName[r.player_name];
             if (!existing || (r.matched_count || 0) > (existing.matched_count || 0)) {
               byName[r.player_name] = r;
@@ -1259,7 +1277,7 @@
 
           // 2. Write to results table (single row id=1 — most recent only)
           const winners = dedupedRows
-            .filter(r => r.round_complete && r.best_line === 'BINGO')
+            .filter(r => r.best_line === 'BINGO')
             .map(r => r.player_name);
 
           await sb.from(RESULTS_TABLE).upsert({
@@ -1299,7 +1317,7 @@
       async function fetchLobby() {
         const { data, error } = await sb
           .from(LOBBY_TABLE)
-          .select('id, player_name, best_line, matched_count, round_complete')
+          .select('id, player_name, best_line, matched_count, round_complete, card_numbers')
           .eq('round_complete', false)
           .order('updated_at', { ascending: true });
 
@@ -1513,10 +1531,16 @@
         if (saved) {
           state      = saved;
           myRowId    = saved.myRowId || null;
-          // Never restore lock state from localStorage — lock resets each draw
-          cardLocked = false;
+          // Restore lock if the card was locked and the draw it was waiting for hasn't fired yet.
+          // Once a draw applies (lastAppliedRaceId is set), the lock is cleared as normal.
+          const wasLocked = saved.locked && saved.waitingForRaceId !== null &&
+                            saved.lastAppliedRaceId !== saved.waitingForRaceId;
+          cardLocked = wasLocked;
           render();
-          applyLockUI(false);
+          applyLockUI(wasLocked);
+          if (wasLocked) {
+            setKStatus('waiting', 'Card locked — waiting for next Keno draw…', '');
+          }
         } else {
           // Placeholder ghost board
           board.innerHTML = '';
