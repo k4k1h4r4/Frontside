@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Keno Bingo — Frontside</title>
-    <link rel="stylesheet" href="bingo.css?v=18">
+    <link rel="stylesheet" href="bingo.css?v=19">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       /* ── 5×5 Keno Bingo overrides & additions ── */
@@ -14,18 +14,9 @@
       }
 
       .bingo-cell.free-space {
-        border-color: var(--accent);
-        background:
-          linear-gradient(180deg, rgba(212,175,55,0.22), rgba(140,116,37,0.18)),
-          var(--bg-card);
-        color: var(--accent-bright);
         cursor: default;
-        pointer-events: none;
       }
-      .bingo-cell.free-space .bingo-cell-text {
-        color: var(--accent-bright);
-        font-size: clamp(0.42rem, 1.9vw, 0.78rem);
-      }
+      .bingo-cell.extra-free:not(.is-locked) { cursor: pointer; }
 
       .bingo-cell.is-marked.keno-hit {
         border-color: #3ecf8e;
@@ -599,18 +590,18 @@
         line-height: 1.8;
       }
 
-      .bingo-board .bingo-cell:not(.free-space) .bingo-cell-text {
+      .bingo-board .bingo-cell .bingo-cell-text {
         font-size: clamp(0.96rem, 4.7vw, 1.9rem);
       }
 
       /* ── RESPONSIVE ── */
       @media (max-width: 700px) {
         .bingo-board { gap: 0.28rem; }
-        .bingo-board .bingo-cell:not(.free-space) .bingo-cell-text { font-size: clamp(1.1rem, 6.4vw, 1.8rem); }
+        .bingo-board .bingo-cell .bingo-cell-text { font-size: clamp(1.1rem, 6.4vw, 1.8rem); }
         .view-nav-btn { font-size: 0.62rem; letter-spacing: 0.12em; }
       }
       @media (max-width: 420px) {
-        .bingo-board .bingo-cell:not(.free-space) .bingo-cell-text { font-size: clamp(1rem, 5.6vw, 1.56rem); }
+        .bingo-board .bingo-cell .bingo-cell-text { font-size: clamp(1rem, 5.6vw, 1.56rem); }
         .bingo-cell { padding: clamp(0.18rem, 1.5vw, 0.38rem); }
       }
     </style>
@@ -668,7 +659,7 @@
           </div>
           <div class="bingo-actions" aria-label="Card controls">
             <button id="new-card"   class="btn btn-secondary" type="button">New Card</button>
-            <button id="lock-card"  class="btn"               type="button" disabled>Lock</button>
+            <button id="lock-card"  class="btn"               type="button" disabled style="display:none;">Lock</button>
           </div>
         </header>
 
@@ -761,6 +752,7 @@
       const POLL_MS       = 90_000;
       const CARD_SIZE     = 25;
       const FREE_INDEX    = 12;
+      const EXTRA_FREE_REQUIRED = 2;
       const STORAGE_KEY   = 'frontside-keno-bingo-v2';
       const NAME_KEY      = 'frontside-keno-bingo-player';
       const SUPABASE_URL  = 'https://znqnnaslskjewfxcswxw.supabase.co';
@@ -886,11 +878,51 @@
         return {
           numbers,
           marked,
+          extraFreeIndexes:    [],
           kenoMarked:         Array(CARD_SIZE).fill(false),
           waitingForRaceId,
           lastAppliedRaceId:  null,
           createdAt:          new Date().toISOString()
         };
+      }
+
+      function sanitizeExtraFreeIndexes(indexes) {
+        const seen = new Set();
+        return (Array.isArray(indexes) ? indexes : [])
+          .map(Number)
+          .filter(i => {
+            if (!Number.isInteger(i) || i < 0 || i >= CARD_SIZE || i === FREE_INDEX || seen.has(i)) return false;
+            seen.add(i);
+            return true;
+          })
+          .slice(0, EXTRA_FREE_REQUIRED);
+      }
+
+      function getExtraFreeIndexes() {
+        if (!state) return [];
+        state.extraFreeIndexes = sanitizeExtraFreeIndexes(state.extraFreeIndexes);
+        return state.extraFreeIndexes;
+      }
+
+      function isExtraFreeIndex(index) {
+        return getExtraFreeIndexes().includes(index);
+      }
+
+      function isFreeIndex(index) {
+        return index === FREE_INDEX || isExtraFreeIndex(index);
+      }
+
+      function hasRequiredExtraFreeSquares() {
+        return getExtraFreeIndexes().length === EXTRA_FREE_REQUIRED;
+      }
+
+      function markFreeSquares(marked) {
+        marked[FREE_INDEX] = true;
+        getExtraFreeIndexes().forEach(i => { marked[i] = true; });
+      }
+
+      function getLobbyCardNumbers() {
+        return state.numbers.map((num, i) => isFreeIndex(i) ? null : num);
       }
 
       /* ─────────────────────────────────────────
@@ -903,9 +935,16 @@
           const p = JSON.parse(raw);
           if (Array.isArray(p.numbers) && p.numbers.length === CARD_SIZE &&
               Array.isArray(p.marked)  && p.marked.length  === CARD_SIZE) {
+            const extraFreeIndexes = sanitizeExtraFreeIndexes(
+              p.extraFreeIndexes || p.numbers.map((n, i) => n === null && i !== FREE_INDEX ? i : null).filter(i => i !== null)
+            );
+            const marked = p.marked.map(Boolean);
+            marked[FREE_INDEX] = true;
+            extraFreeIndexes.forEach(i => { marked[i] = true; });
             return {
               numbers:          p.numbers,
-              marked:           p.marked.map(Boolean),
+              marked,
+              extraFreeIndexes,
               kenoMarked:       p.kenoMarked ? p.kenoMarked.map(Boolean) : Array(CARD_SIZE).fill(false),
               waitingForRaceId: p.waitingForRaceId  ?? null,
               lastAppliedRaceId:p.lastAppliedRaceId ?? null,
@@ -939,6 +978,10 @@
 
       function checkWin() {
         return getWinLines().filter(line => line.every(i => state.marked[i])).length;
+      }
+
+      function hasAppliedDrawResults() {
+        return state && state.lastAppliedRaceId !== null;
       }
 
       function updateWinBanner(winCount) {
@@ -983,12 +1026,27 @@
       /* ─────────────────────────────────────────
          LOCK UI
       ───────────────────────────────────────── */
+      function promptForFreeSquares() {
+        if (!state || cardLocked || hasRequiredExtraFreeSquares()) return;
+        const remaining = EXTRA_FREE_REQUIRED - getExtraFreeIndexes().length;
+        const label = remaining === 1 ? 'square' : 'squares';
+        setKStatus('live', `Select ${remaining} more FREE ${label} before locking`, kGameRef.textContent);
+      }
+
+      function updateActionButtons() {
+        newCardBtn.style.display = cardLocked ? 'none' : '';
+        newCardBtn.disabled      = cardLocked;
+
+        const showLock = cardLocked || (state && hasRequiredExtraFreeSquares());
+        lockCardBtn.style.display = showLock ? '' : 'none';
+        lockCardBtn.disabled      = cardLocked || !state || !hasRequiredExtraFreeSquares();
+        lockCardBtn.textContent   = cardLocked ? 'Locked' : 'Lock';
+      }
+
       function applyLockUI(locked) {
         cardLocked = locked;
         lockedIndicator.classList.toggle('show', locked);
-        newCardBtn.disabled     = locked;
-        lockCardBtn.disabled    = locked || !state;
-        lockCardBtn.textContent = locked ? 'Locked 🔒' : 'Lock';
+        updateActionButtons();
         if (locked) {
           lockCardBtn.classList.remove('btn-secondary');
         } else {
@@ -998,8 +1056,8 @@
 
       // After a draw resolves: re-enable New Card and Lock for next round
       function showPostDrawButtons() {
-        newCardBtn.disabled     = false;
-        lockCardBtn.disabled    = !state;
+        cardLocked = false;
+        updateActionButtons();
         lockCardBtn.textContent = 'Lock';
         lockCardBtn.classList.remove('btn-secondary');
         lockedIndicator.classList.remove('show');
@@ -1012,8 +1070,10 @@
         board.replaceChildren();
 
         state.numbers.forEach((num, i) => {
-          const isFree    = i === FREE_INDEX;
-          const isMarked  = state.marked[i];
+          const isCenterFree = i === FREE_INDEX;
+          const isExtraFree  = isExtraFreeIndex(i);
+          const isFree       = isCenterFree || isExtraFree;
+          const isMarked     = isFree || state.marked[i];
           const drawHappened = state.kenoMarked && state.kenoMarked.some(Boolean);
           const isKenoHit = isMarked && state.kenoMarked && (isFree ? drawHappened : state.kenoMarked[i]);
 
@@ -1022,7 +1082,7 @@
 
           let cls = 'bingo-cell';
           if (isFree) {
-            cls += ' free-space is-marked';
+            cls += ' free-space is-marked' + (isCenterFree ? ' center-free' : ' extra-free') + (cardLocked ? ' is-locked' : '');
             if (isKenoHit) cls += ' keno-hit';
           } else if (isMarked) {
             cls += ' is-marked';
@@ -1036,19 +1096,25 @@
           text.textContent = isFree ? 'FREE' : String(num);
           cell.append(text);
 
-          if (!isFree) {
+          if (!isCenterFree) {
             cell.dataset.index = String(i);
-            cell.setAttribute('aria-label', `${num}${isMarked ? ', marked' : ', unmarked'}`);
+            if (!cardLocked) {
+              cell.setAttribute('aria-label', isExtraFree ? 'FREE square selected. Click to remove.' : `${num}, click to make FREE`);
+            } else {
+              cell.setAttribute('aria-label', isFree ? 'FREE square' : `${num}${isMarked ? ', marked' : ', unmarked'}`);
+            }
+          } else {
+            cell.setAttribute('aria-label', 'Center FREE square');
           }
 
           board.append(cell);
         });
 
         updateCount();
-        updateWinBanner(checkWin());
+        updateWinBanner(hasAppliedDrawResults() ? checkWin() : 0);
         overlay.classList.remove('show');
         overlay.setAttribute('aria-hidden', 'true');
-        lockCardBtn.disabled = cardLocked || !state;
+        updateActionButtons();
       }
 
       function updateCount() {
@@ -1062,8 +1128,38 @@
       ───────────────────────────────────────── */
       board.addEventListener('click', e => {
         const cell = e.target.closest('.bingo-cell');
-        if (!cell || cell.classList.contains('free-space')) return;
+        if (!cell || !state) return;
         const idx = Number(cell.dataset.index);
+
+        if (!Number.isInteger(idx) || idx === FREE_INDEX) return;
+
+        if (!cardLocked) {
+          const extraFreeIndexes = getExtraFreeIndexes();
+          const currentIndex = extraFreeIndexes.indexOf(idx);
+
+          if (currentIndex >= 0) {
+            extraFreeIndexes.splice(currentIndex, 1);
+            state.marked[idx] = false;
+          } else {
+            if (extraFreeIndexes.length >= EXTRA_FREE_REQUIRED) {
+              setKStatus('live', 'Turn off a FREE square before choosing another', kGameRef.textContent);
+              return;
+            }
+            extraFreeIndexes.push(idx);
+            state.marked[idx] = true;
+          }
+
+          saveState();
+          render();
+          if (hasRequiredExtraFreeSquares()) {
+            setKStatus('live', 'FREE squares selected - lock when ready', kGameRef.textContent);
+          } else {
+            promptForFreeSquares();
+          }
+          return;
+        }
+
+        if (cell.classList.contains('free-space')) return;
         state.marked[idx] = !state.marked[idx];
         saveState();
         render();
@@ -1075,7 +1171,7 @@
       function renderHitChips(drawnBalls, targetEl, wrapEl) {
         wrapEl.style.display = 'block';
         targetEl.innerHTML   = '';
-        const cardNums = new Set(state.numbers.filter(n => n !== null));
+        const cardNums = new Set(getLobbyCardNumbers().filter(n => n !== null));
         drawnBalls.forEach(n => {
           const chip = document.createElement('span');
           chip.className   = 'hit-chip' + (cardNums.has(n) ? ' matched' : '');
@@ -1093,10 +1189,10 @@
 
         // Reset all marks first — draw result is authoritative
         state.marked = Array(CARD_SIZE).fill(false);
-        state.marked[FREE_INDEX] = true;
+        markFreeSquares(state.marked);
 
         state.numbers.forEach((num, i) => {
-          if (num !== null && drawnSet.has(num)) {
+          if (!isFreeIndex(i) && num !== null && drawnSet.has(num)) {
             state.marked[i] = true;
             kenoMarked[i]   = true;
           }
@@ -1149,6 +1245,18 @@
         const res = await fetch(`${BASE}/${idOrLatest}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
+      }
+
+      async function ensureLatestRaceIdForLock() {
+        if (latestRaceId !== null) return latestRaceId;
+
+        setKStatus('live', 'Connecting to Keno before locking...', kGameRef.textContent);
+        const data = await fetchDraw('latest');
+        latestRaceId = data.raceid;
+        const nextRef = `Game #${data.racenumber + 1}`;
+        lobbyDrawRef.textContent = `Next draw · ${nextRef}`;
+        kGameRef.textContent = nextRef;
+        return latestRaceId;
       }
 
       // Returns the draw data for the race a locked card was actually waiting for.
@@ -1261,12 +1369,12 @@
          SUPABASE — LOBBY
       ───────────────────────────────────────── */
       async function upsertLobbyRow(extra = {}) {
-        if (!playerName || !cardLocked) return;
+        if (!playerName || !cardLocked || !state) return false;
 
         const payload = {
           player_name:     playerName,
-          race_id_waiting: state ? state.waitingForRaceId : null,
-          card_numbers:    state ? JSON.stringify(state.numbers) : null,
+          race_id_waiting: state.waitingForRaceId,
+          card_numbers:    JSON.stringify(getLobbyCardNumbers()),
           best_line:       null,
           matched_count:   0,
           round_complete:  false,
@@ -1275,13 +1383,22 @@
         };
 
         if (myRowId) {
-          const { error } = await sb.from(LOBBY_TABLE).update(payload).eq('id', myRowId);
+          const { data, error } = await sb.from(LOBBY_TABLE).update(payload).eq('id', myRowId).select('id').maybeSingle();
+          if (!error && data) return true;
           if (error) console.warn('Supabase update error', error.message);
-        } else {
-          const { data, error } = await sb.from(LOBBY_TABLE).insert(payload).select('id').single();
-          if (error) { console.warn('Supabase insert error', error.message); }
-          else { myRowId = data.id; saveState(); }
+          myRowId = null;
         }
+
+        const { data, error } = await sb.from(LOBBY_TABLE).insert(payload).select('id').single();
+        if (error) {
+          console.warn('Supabase insert error', error.message);
+          setKStatus('', `Lobby write failed - ${error.message}`, kGameRef.textContent);
+          return false;
+        }
+
+        myRowId = data.id;
+        saveState();
+        return true;
       }
 
       async function removeMyRow() {
@@ -1311,7 +1428,7 @@
               let numbers;
               try { numbers = JSON.parse(r.card_numbers); } catch (_) { return r; }
 
-              const marked = numbers.map((n, i) => i === FREE_INDEX ? true : (n !== null && drawnSet.has(n)));
+              const marked = numbers.map(n => n === null ? true : drawnSet.has(n));
               const progress = bestBingoProgress(marked);
               return { ...r, best_line: progress.str, matched_count: progress.hits, round_complete: true };
             });
@@ -1560,21 +1677,32 @@
           hitChipsWrap.style.display = 'none';
           winBanner.classList.remove('show');
           globalBingoAlert.classList.remove('show');
-          lockCardBtn.disabled    = false;
-          lockCardBtn.textContent = 'Lock';
-          setKStatus('live', 'Card ready — lock in to join the round', kGameRef.textContent);
+          promptForFreeSquares();
         });
       });
 
       // LOCK — clears any previous draw markings, commits card for next round
       lockCardBtn.addEventListener('click', () => {
         if (!state || cardLocked) return;
+        if (!hasRequiredExtraFreeSquares()) {
+          promptForFreeSquares();
+          return;
+        }
         promptForName(async () => {
+          let raceIdToWaitFor;
+          try {
+            raceIdToWaitFor = await ensureLatestRaceIdForLock();
+          } catch (err) {
+            setKStatus('', `Could not lock - Keno feed unavailable (${err.message})`, kGameRef.textContent);
+            return;
+          }
+
           // Always reset markings — draw result is cleared, fresh start
           state.marked     = Array(CARD_SIZE).fill(false);
-          state.marked[FREE_INDEX] = true;
+          markFreeSquares(state.marked);
           state.kenoMarked = Array(CARD_SIZE).fill(false);
-          state.waitingForRaceId = latestRaceId;
+          state.lastAppliedRaceId = null;
+          state.waitingForRaceId = raceIdToWaitFor;
           hitChipsWrap.style.display = 'none';
           winBanner.classList.remove('show');
           globalBingoAlert.classList.remove('show');
@@ -1582,7 +1710,13 @@
           saveState();
           render();
           await removeMyRow();
-          await upsertLobbyRow();
+          const joinedLobby = await upsertLobbyRow();
+          if (!joinedLobby) {
+            applyLockUI(false);
+            saveState();
+            render();
+            return;
+          }
           setKStatus('waiting', 'Card locked — waiting for next Keno draw…', kGameRef.textContent);
         });
       });
@@ -1601,6 +1735,8 @@
           applyLockUI(wasLocked);
           if (wasLocked) {
             setKStatus('waiting', 'Card locked — waiting for next Keno draw…', '');
+          } else {
+            promptForFreeSquares();
           }
         } else {
           // Placeholder ghost board
@@ -1615,7 +1751,7 @@
             cell.append(text);
             board.append(cell);
           }
-          lockCardBtn.disabled = true;
+          updateActionButtons();
         }
 
         if (!isValidPlayerName(playerName)) {
