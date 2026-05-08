@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Keno Bingo — Frontside</title>
-    <link rel="stylesheet" href="bingo.css?v=7">
+    <link rel="stylesheet" href="bingo.css?v=11">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       /* ── 5×5 Keno Bingo overrides & additions ── */
@@ -1535,9 +1535,7 @@
         if (saved) {
           state      = saved;
           myRowId    = saved.myRowId || null;
-          // Restore lock if the card was locked and the draw it was waiting for hasn't fired yet.
-          // Once a draw applies (lastAppliedRaceId is set), the lock is cleared as normal.
-          const wasLocked = saved.locked && saved.lastAppliedRaceId !== saved.waitingForRaceId;
+          const wasLocked = saved.locked === true;
           cardLocked = wasLocked;
           render();
           applyLockUI(wasLocked);
