@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Keno Bingo — Frontside</title>
-    <link rel="stylesheet" href="bingo.css?v=19">
+    <link rel="stylesheet" href="bingo.css?v=20">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       /* ── 5×5 Keno Bingo overrides & additions ── */
@@ -790,6 +790,16 @@
       let lobbyChannel = null;
       let lobbyPlayers = [];
 
+      // Guards for the lobby self-heal / resubscribe logic.
+      // roundResolving is true from the moment a draw starts being applied until the
+      // snapshot has cleared the lobby — self-heal must not re-insert a row during
+      // that window or the player rejoins the round they are currently leaving.
+      let roundResolving   = false;
+      let healingLobby     = false;
+      let lobbyRetryTimer  = null;
+      let lastHealAt       = 0;
+      const HEAL_COOLDOWN_MS = 6000;
+
       /* ─────────────────────────────────────────
          DOM
       ───────────────────────────────────────── */
@@ -882,6 +892,7 @@
           kenoMarked:         Array(CARD_SIZE).fill(false),
           waitingForRaceId,
           lastAppliedRaceId:  null,
+          lockedAt:           null,
           createdAt:          new Date().toISOString()
         };
       }
@@ -948,6 +959,7 @@
               kenoMarked:       p.kenoMarked ? p.kenoMarked.map(Boolean) : Array(CARD_SIZE).fill(false),
               waitingForRaceId: p.waitingForRaceId  ?? null,
               lastAppliedRaceId:p.lastAppliedRaceId ?? null,
+              lockedAt:         p.lockedAt          ?? null,
               createdAt:        p.createdAt || new Date().toISOString(),
               locked:           p.locked    || false,
               myRowId:          p.myRowId   || null
@@ -1216,8 +1228,28 @@
             round_complete:  true,
             updated_at:      new Date().toISOString()
           };
-          const { error } = await sb.from(LOBBY_TABLE).update(payload).eq('id', myRowId);
-          if (error) console.warn('Result write error', error.message);
+          // A plain update against a deleted row succeeds with zero rows and no error,
+          // which is how a wiped player silently scored nothing. Confirm the write
+          // landed, and re-insert the result if the row is gone.
+          const { data, error } = await sb
+            .from(LOBBY_TABLE)
+            .update(payload)
+            .eq('id', myRowId)
+            .select('id')
+            .maybeSingle();
+
+          if (error) {
+            console.warn('Result write error', error.message);
+          } else if (!data) {
+            console.warn('Lobby row vanished before result write — re-inserting');
+            const { data: inserted, error: insertError } = await sb
+              .from(LOBBY_TABLE)
+              .insert({ ...payload, card_numbers: JSON.stringify(getLobbyCardNumbers()) })
+              .select('id')
+              .single();
+            if (insertError) console.warn('Result re-insert failed', insertError.message);
+            else myRowId = inserted.id;
+          }
         }
       }
 
@@ -1247,16 +1279,17 @@
         return res.json();
       }
 
+      // ALWAYS hits the feed. The cached latestRaceId can be up to POLL_MS stale, and
+      // locking against a stale id makes the card wait for a draw that already happened —
+      // the poll then resolves it instantly and the player misses the round they joined.
       async function ensureLatestRaceIdForLock() {
-        if (latestRaceId !== null) return latestRaceId;
-
-        setKStatus('live', 'Connecting to Keno before locking...', kGameRef.textContent);
+        setKStatus('live', 'Checking Keno feed before locking...', kGameRef.textContent);
         const data = await fetchDraw('latest');
         latestRaceId = data.raceid;
         const nextRef = `Game #${data.racenumber + 1}`;
         lobbyDrawRef.textContent = `Next draw · ${nextRef}`;
         kGameRef.textContent = nextRef;
-        return latestRaceId;
+        return { raceId: data.raceid, drawTimestamp: data.timestamp };
       }
 
       // Returns the draw data for the race a locked card was actually waiting for.
@@ -1280,6 +1313,17 @@
         }
       }
 
+      // A draw that was published BEFORE the player locked can never be their draw.
+      // Guards against KenoCloud's /latest lagging a few seconds behind the real draw:
+      // without this the card locks, the lagging id resolves, and the round is lost.
+      function drawPredatesLock(drawData) {
+        if (!state || !state.lockedAt || !drawData || !drawData.timestamp) return false;
+        const drawnAt  = new Date(drawData.timestamp).getTime();
+        const lockedAt = new Date(state.lockedAt).getTime();
+        if (!Number.isFinite(drawnAt) || !Number.isFinite(lockedAt)) return false;
+        return drawnAt <= lockedAt;
+      }
+
       async function pollKeno() {
         try {
           const data         = await fetchDraw('latest');
@@ -1290,19 +1334,50 @@
 
           lobbyDrawRef.textContent = `Next draw · ${nextRef}`;
 
+          // KenoCloud can briefly serve an older id from a lagging cache/replica.
+          // Treating that as a "new draw" would snapshot and clear a round that has
+          // not happened yet, taking every locked player out with it.
+          if (latestRaceId !== null && raceId < latestRaceId) {
+            console.warn('Keno feed returned an older race id', raceId, '<', latestRaceId, '— ignoring');
+            setKStatus(
+              cardLocked ? 'waiting' : 'live',
+              cardLocked ? 'Card locked — waiting for next Keno draw…' : 'Watching for next draw…',
+              gameRef
+            );
+            return;
+          }
+
           if (latestRaceId === null) {
             latestRaceId = raceId;
             setKStatus('live', 'Connected — waiting for next draw', gameRef);
             if (state && state.waitingForRaceId !== null && raceId > state.waitingForRaceId) {
               setKStatus('live', 'Applying draw…', gameRef);
               const { drawData, drawRef } = await fetchLockedDraw(data, raceId, completedRef);
+
+              if (drawPredatesLock(drawData)) {
+                // Feed lag: this draw is older than the lock. Re-target the next one.
+                state.waitingForRaceId = raceId;
+                saveState();
+                await upsertLobbyRow();
+                setKStatus('waiting', 'Card locked — waiting for next Keno draw…', gameRef);
+                return;
+              }
+
+              roundResolving = true;
               if (cardLocked) await applyDraw(drawData.balls, drawData.raceid);
               state.waitingForRaceId = null;
               cardLocked = false;
               saveState();
               await snapshotAndClearLobby(drawData.raceid, drawRef, drawData.balls);
               setKStatus('live', 'Draw complete — New Card or Lock to play again', gameRef);
+              return;
             }
+
+            // No draw missed. Now that latestRaceId is known, re-check the lobby —
+            // this is the first point at which self-heal can safely tell whether a
+            // restored lock is still a live entry. (subscribeLobby's fetch runs
+            // before this and deliberately skips healing.)
+            fetchLobby();
             return;
           }
 
@@ -1314,22 +1389,39 @@
             let snapshotRaceId = raceId;
             let snapshotRef    = completedRef;
             let snapshotBalls  = data.balls;
+            let retargeted     = false;
 
             if (state && cardLocked) {
               const shouldApply = state.waitingForRaceId === null || raceId > state.waitingForRaceId;
               if (shouldApply) {
                 // Resolve the exact draw this card was locked for before applying
                 const { drawData, drawRef } = await fetchLockedDraw(data, raceId, completedRef);
-                snapshotRaceId = drawData.raceid;
-                snapshotRef    = drawRef;
-                snapshotBalls  = drawData.balls;
-                await applyDraw(drawData.balls, drawData.raceid);
-                state.waitingForRaceId = null;
-                cardLocked = false;
-                saveState();
+
+                if (drawPredatesLock(drawData)) {
+                  // Feed lag: this draw is older than the lock. Stay in for the next one.
+                  state.waitingForRaceId = raceId;
+                  saveState();
+                  await upsertLobbyRow();
+                  retargeted = true;
+                } else {
+                  roundResolving = true;
+                  snapshotRaceId = drawData.raceid;
+                  snapshotRef    = drawRef;
+                  snapshotBalls  = drawData.balls;
+                  await applyDraw(drawData.balls, drawData.raceid);
+                  state.waitingForRaceId = null;
+                  cardLocked = false;
+                  saveState();
+                }
               }
             }
 
+            if (retargeted) {
+              setKStatus('waiting', 'Card locked — waiting for next Keno draw…', gameRef);
+              return;
+            }
+
+            roundResolving = true;
             await snapshotAndClearLobby(snapshotRaceId, snapshotRef, snapshotBalls);
 
             if (!state || !cardLocked) {
@@ -1345,6 +1437,7 @@
             );
           }
         } catch (err) {
+          roundResolving = false;   // never strand the self-heal guard on a failed poll
           setKStatus('', `Feed error — retrying… (${err.message})`);
         }
       }
@@ -1357,11 +1450,23 @@
         // Browsers throttle / suspend setInterval while the page is hidden,
         // so without this a player who backgrounds the app would miss the draw.
         document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') {
-            clearInterval(pollTimer);
-            pollKeno();
-            pollTimer = setInterval(pollKeno, POLL_MS);
-          }
+          if (document.visibilityState !== 'visible') return;
+
+          clearInterval(pollTimer);
+          pollKeno();
+          pollTimer = setInterval(pollKeno, POLL_MS);
+
+          // The realtime socket is usually dead after a background stint. Rebuild it
+          // if it did not survive; otherwise just resync the list, which may be stale.
+          if (lobbyChannelIsLive()) fetchLobby();
+          else                      subscribeLobby();
+        });
+
+        // Same treatment when the network comes back on a phone.
+        window.addEventListener('online', () => {
+          pollKeno();
+          if (!lobbyChannelIsLive()) subscribeLobby();
+          else                       fetchLobby();
         });
       }
 
@@ -1412,10 +1517,18 @@
       ───────────────────────────────────────── */
       async function snapshotAndClearLobby(newRaceId, gameRef, drawnBalls) {
         try {
-          // 1. Read ALL current lobby rows, including card_numbers for offline players
+          // 1. Read ONLY the rows belonging to the round this draw resolves.
+          //    race_id_waiting holds the last completed race at the moment that player
+          //    locked, so anyone with race_id_waiting < newRaceId locked before this
+          //    draw and is being resolved by it. Anyone with race_id_waiting >= newRaceId
+          //    locked after it was already known and is waiting for a LATER draw —
+          //    their rows must survive. Every client runs this on its own 90s cycle,
+          //    so an unscoped read/delete lets a lagging client wipe rows that a player
+          //    created for the next round (the "joined but not in the lobby" bug).
           const { data: rows } = await sb
             .from(LOBBY_TABLE)
-            .select('player_name, best_line, matched_count, round_complete, card_numbers');
+            .select('player_name, best_line, matched_count, round_complete, card_numbers, race_id_waiting')
+            .lt('race_id_waiting', newRaceId);
 
           if (rows && rows.length > 0) {
             const drawnSet = new Set(drawnBalls);
@@ -1443,45 +1556,103 @@
             });
             const dedupedRows = Object.values(byName);
 
-            // 2. Write to results table (single row id=1 — most recent only)
+            // 2. Write to results table (single row id=1 — most recent only).
+            //    Every client snapshots independently, so guard the write: never go
+            //    backwards to an older race, and for the same race only overwrite with
+            //    a FULLER set. Without this a client that reads a partly-deleted lobby
+            //    replaces a complete standings table with two players.
             const winners = dedupedRows
               .filter(r => r.best_line === 'BINGO')
               .map(r => r.player_name);
 
-            await sb.from(RESULTS_TABLE).upsert({
-              id:           1,
-              game_ref:     gameRef,
-              race_id:      newRaceId,
-              players:      JSON.stringify(dedupedRows),
-              winner_names: winners.length > 0 ? winners.join(', ') : null,
-              completed_at: new Date().toISOString()
-            }, { onConflict: 'id' });
+            if (await shouldWriteResults(newRaceId, dedupedRows.length)) {
+              await sb.from(RESULTS_TABLE).upsert({
+                id:           1,
+                game_ref:     gameRef,
+                race_id:      newRaceId,
+                players:      JSON.stringify(dedupedRows),
+                winner_names: winners.length > 0 ? winners.join(', ') : null,
+                completed_at: new Date().toISOString()
+              }, { onConflict: 'id' });
+            }
           }
 
-          // 3. Clear entire lobby
-          await sb.from(LOBBY_TABLE).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          // 3. Clear only this round's rows — leave next round's joiners alone
+          await sb.from(LOBBY_TABLE).delete().lt('race_id_waiting', newRaceId);
         } catch (e) {
           console.warn('Snapshot error:', e.message);
         } finally {
-          // Always unlock — even if Supabase failed, the draw happened and the lock must clear
-          myRowId    = null;
-          cardLocked = false;
-          saveState();
-          showPostDrawButtons();
+          // Unlock only if this draw resolved OUR round — waitingForRaceId is set to
+          // null by the caller at the moment our own card is applied. A client that is
+          // snapshotting a round it is not part of (still waiting on a later draw) must
+          // keep its lock, or it silently drops out of the round it just joined.
+          // Within that check, unlock unconditionally: even if Supabase failed, the
+          // draw happened and the lock must clear.
+          if (!state || state.waitingForRaceId === null) {
+            myRowId    = null;
+            cardLocked = false;
+            saveState();
+            showPostDrawButtons();
+          }
+          roundResolving = false;
           fetchLastRound();
+          fetchLobby();
+        }
+      }
+
+      // True when our snapshot is worth persisting over whatever is already stored.
+      async function shouldWriteResults(newRaceId, playerCount) {
+        try {
+          const { data } = await sb
+            .from(RESULTS_TABLE)
+            .select('race_id, players')
+            .eq('id', 1)
+            .maybeSingle();
+
+          if (!data || data.race_id == null) return true;
+          if (newRaceId > data.race_id) return true;
+          if (newRaceId < data.race_id) return false; // stale client resolving an old draw
+
+          // Same race — only replace if we have more players than the stored snapshot
+          let stored = [];
+          try { stored = JSON.parse(data.players) || []; } catch (_) {}
+          return playerCount > stored.length;
+        } catch (e) {
+          console.warn('Results guard error:', e.message);
+          return true;
         }
       }
 
       /* ─────────────────────────────────────────
          SUPABASE — REALTIME LOBBY
       ───────────────────────────────────────── */
+      // The realtime socket dies silently when a phone is backgrounded or the network
+      // blips. Without watching .subscribe()'s status the lobby list freezes for the
+      // rest of the session — the player looks absent to themselves and to nobody else.
       function subscribeLobby() {
+        clearTimeout(lobbyRetryTimer);
         if (lobbyChannel) sb.removeChannel(lobbyChannel);
+
         lobbyChannel = sb
           .channel('keno-bingo-lobby')
           .on('postgres_changes', { event: '*', schema: 'public', table: LOBBY_TABLE }, () => fetchLobby())
-          .subscribe();
+          .subscribe(status => {
+            if (status === 'SUBSCRIBED') {
+              fetchLobby();           // resync anything missed while disconnected
+              return;
+            }
+            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+              console.warn('Lobby channel', status, '— resubscribing');
+              clearTimeout(lobbyRetryTimer);
+              lobbyRetryTimer = setTimeout(subscribeLobby, 4000);
+            }
+          });
+
         fetchLobby();
+      }
+
+      function lobbyChannelIsLive() {
+        return lobbyChannel && lobbyChannel.state === 'joined';
       }
 
       async function fetchLobby() {
@@ -1495,12 +1666,45 @@
         lobbyPlayers = data || [];
         renderLobby();
 
+        await healMyLobbyRow();
+
         // Fire global BINGO alert on Your Card view if any winner
         const winners = lobbyPlayers.filter(p => p.round_complete && p.best_line === 'BINGO');
         if (winners.length > 0) {
           const names  = winners.map(w => w.player_name).join(', ');
           const isSelf = winners.some(w => w.id === myRowId);
           showGlobalBingoAlert(names, isSelf);
+        }
+      }
+
+      // If we believe we are locked in but our row is not in the lobby, put it back.
+      // Covers a lost insert, an RLS hiccup, and any row deleted out from under us by
+      // another client's snapshot. Previously nothing ever noticed and the player sat
+      // out the round while their own UI said "Card locked".
+      async function healMyLobbyRow() {
+        if (healingLobby || roundResolving) return;
+        // Until the first poll lands we do not know the current race, so we cannot tell
+        // a still-valid lock from one whose draw happened while the tab was closed.
+        // Healing here would briefly re-add the player to a round that is already over.
+        if (latestRaceId === null) return;
+        if (!cardLocked || !state || state.waitingForRaceId === null) return;
+        if (!isValidPlayerName(playerName)) return;
+        if (myRowId && lobbyPlayers.some(p => p.id === myRowId)) return;
+        // A just-inserted row can be absent from the very next read (replication lag).
+        // Cool off so that never turns into a second row for the same player.
+        if (Date.now() - lastHealAt < HEAL_COOLDOWN_MS) return;
+
+        healingLobby = true;
+        lastHealAt   = Date.now();
+        try {
+          myRowId = null;                 // force a fresh insert
+          const rejoined = await upsertLobbyRow();
+          if (rejoined) {
+            console.warn('Lobby row was missing — rejoined round', state.waitingForRaceId);
+            setKStatus('waiting', 'Card locked — waiting for next Keno draw…', kGameRef.textContent);
+          }
+        } finally {
+          healingLobby = false;
         }
       }
 
@@ -1691,7 +1895,8 @@
         promptForName(async () => {
           let raceIdToWaitFor;
           try {
-            raceIdToWaitFor = await ensureLatestRaceIdForLock();
+            const { raceId } = await ensureLatestRaceIdForLock();
+            raceIdToWaitFor = raceId;
           } catch (err) {
             setKStatus('', `Could not lock - Keno feed unavailable (${err.message})`, kGameRef.textContent);
             return;
@@ -1703,6 +1908,7 @@
           state.kenoMarked = Array(CARD_SIZE).fill(false);
           state.lastAppliedRaceId = null;
           state.waitingForRaceId = raceIdToWaitFor;
+          state.lockedAt = new Date().toISOString();
           hitChipsWrap.style.display = 'none';
           winBanner.classList.remove('show');
           globalBingoAlert.classList.remove('show');
