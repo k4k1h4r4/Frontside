@@ -7,7 +7,7 @@
   <link rel="icon" href="/favicon.ico" sizes="32x32">
   <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="theme-color" content="#0b0705">	
+  <meta name="theme-color" content="#0b0705">
   <meta property="og:title" content="Frontside Table Gang">
   <meta property="og:description" content="Games, friends, and cold beer at Frontside Table.">
   <meta property="og:type" content="website">
@@ -19,7 +19,7 @@
   <meta name="twitter:title" content="Frontside Table Gang">
   <meta name="twitter:description" content="Games, friends, and cold beer at Frontside Table.">
   <meta name="twitter:image" content="https://frontsidebar.com/images/og-card.jpg">
-  <link rel="stylesheet" href="style.css?v=38">
+  <link rel="stylesheet" href="style.css?v=40">
 </head>
 <body>
 
@@ -44,46 +44,51 @@
     </div>
   </section>
 
-  <!-- Feature cards -->
+  <!-- Quick links: whole tile is the tap target -->
   <section class="features">
-    <div class="features-grid">
+    <div class="features-grid-tiles">
 
-      <div class="feature-card">
+      <a class="feature-tile" href="keno.html">
         <h3>Live Keno</h3>
-        <p>Check your numbers from the bar, the table, or your couch.  Live results auto-updated.</p>
-        <a href="keno.html" class="btn">View Live Results &rarr;</a>
-      </div>
+        <p class="feature-tile-line">Check your numbers from the bar or the couch.</p>
+        <span class="feature-tile-go">Live results <span class="feature-tile-arrow">&rarr;</span></span>
+      </a>
 
-      <div class="feature-card">
+      <a class="feature-tile" href="bingo.html">
         <h3>Bingo</h3>
-        <p>Drink. Mark. Repeat.  <br>Play Bingo, like a badass.</p>
-        <a href="bingo.html" class="btn">Get a Card &rarr;</a>
-      </div>
+        <p class="feature-tile-line">Drink. Mark. Repeat. Play Bingo, like a badass.</p>
+        <span class="feature-tile-go">Get a card <span class="feature-tile-arrow">&rarr;</span></span>
+      </a>
 
-      <div class="feature-card">
+      <a class="feature-tile" href="winner-wall.html">
         <h3>Winner Wall</h3>
-        <p>Submit the big hit, check this week's Top 10, and revisit the loudest cash-outs from past weeks.</p>
-        <a href="winner-wall.html" class="btn">View The Leaderboard &rarr;</a>
-      </div>
+        <p class="feature-tile-line">The week's loudest cash-outs, ranked.</p>
+        <span class="feature-tile-go">Top 10 <span class="feature-tile-arrow">&rarr;</span></span>
+      </a>
 
-      <div class="feature-card">
-        <h3>Cold Beer <br>(and a Paddle, if you've been bad)</h3>
-        <p>Ice cold.  No fuss.  <br>We'll take a Bucket, please.</p>
-		<a href="https://www.facebook.com/Frontsidegrill" class="btn">Facebook Page &rarr;</a>
-      </div>
+      <a class="feature-tile" href="https://www.facebook.com/Frontsidegrill">
+        <h3>Cold Beer</h3>
+        <p class="feature-tile-line">...and a paddle, if you've been bad.</p>
+        <span class="feature-tile-go">Facebook <span class="feature-tile-arrow">&rarr;</span></span>
+      </a>
+
     </div>
-	  
   </section>
+
+
 
   <!-- About -->
   <section class="section">
     <div class="about-grid">
-      <div class="about-stat">
-        <div class="about-stat-num">80</div>
-        <div class="about-stat-label">Balls Floppin' Around</div>
-        <br>
-        <div class="about-stat-num">4</div>
-        <div class="about-stat-label">Machines <br>Hot, Loose n' Ready</div>
+      <div class="about-stat about-stat-compact">
+        <div class="about-stat-item">
+          <div class="about-stat-num">80</div>
+          <div class="about-stat-label">Balls Floppin' Around</div>
+        </div>
+        <div class="about-stat-item">
+          <div class="about-stat-num">5</div>
+          <div class="about-stat-label">Machines Hot,<br>Loose n' Ready</div>
+        </div>
       </div>
 	  <div class="about-text">
         <p class="section-label">The place</p>
@@ -95,23 +100,55 @@
 
     </div>
   </section>
+  
+    <!-- Customer of the Year -->
+  <section class="coty-band" id="customer-of-the-year">
+    <div class="coty-inner">
+      <figure class="coty-photo">
+        <span class="coty-badge">2026</span>
+        <img src="images/lacie-dobbs.jpg"
+             alt="Lacie Dobbs celebrating with a fan of cash at a Frontside machine"
+             loading="lazy" decoding="async">
+      </figure>
 
-  <!-- Atmosphere -->
-  <section class="section atmosphere-section" id="atmosphere">
-    <div class="about-grid atmosphere-grid">
-      <div class="atmosphere-visual">
-        <img src="images/FrontsideAtmosphere.jpg" alt="Frontside bar atmosphere" class="atmosphere-image" loading="lazy" decoding="async">
-        <p class="atmosphere-caption">&ldquo;A place to be yourself.&rdquo;</p>
-      </div>
-      <div class="about-text">
-        <p class="section-label">The vibe</p>
-        <h2 class="section-title">Exactly what it looks like.</h2>
+
+      <div class="coty-copy">
+        <p class="coty-eyebrow">Customer of the Year</p>
+        <h2 class="coty-name">Lacie Dobbs</h2>
         <div class="divider"></div>
-        <p>No velvet ropes. No dress code. No judgment about what you ordered or how long you've been here.</p>
-        <p>Frontside Table is the kind of place where the regulars know each other's names, the keno board is always running, and the beer's always cold. Walk in, find a spot, and stay as long as you like.</p>
-        <p class="atmosphere-quote">This is your place. Come as you are.</p>
+
+        <p>Nobody brings it like Lacie. When you see her walk through the door, you better get a bucket ready.  First one on a machine, last one to call it a night.</p>
+        <p>She's been here through the hot streaks and the cold ones, and she cashes out grinning either way.</p>
+        <p class="coty-quote">The stool's reserved. Congrats, Lacie.</p>
+        <div class="button-row">
+          <a href="winner-wall.html" class="btn">See The Winner Wall &rarr;</a>
+        </div>
       </div>
+
     </div>
+  </section>
+
+  <!-- The Gang: full-bleed, uncropped group photo -->
+  <section class="gang-band" id="the-gang">
+
+    <div class="gang-head">
+      <p class="section-label">The vibe</p>
+      <h2 class="section-title">Get you table gang going.</h2>
+      <div class="divider divider-center"></div>
+    </div>
+
+    <a class="gang-photo" href="images/FrontsideAtmosphere.jpg" target="_blank" rel="noopener"
+       aria-label="Open the full-size group photo">
+      <img src="images/FrontsideAtmosphere.jpg"
+           alt="The Frontside regulars packed together for a group photo under the keno board"
+           width="1892" height="1117" loading="lazy" decoding="async">
+    </a>
+
+    <div class="gang-caption">
+      <p>No velvet ropes. No dress code. No judgment about what you ordered or how long you've been here.</p>
+      <p class="gang-caption-em">This is your place. Come as you are.</p>
+    </div>
+
   </section>
 
   <footer>
