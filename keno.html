@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Keno &mdash; Frontside</title>
-  <link rel="stylesheet" href="style.css?v=38">
+  <link rel="stylesheet" href="style.css?v=39">
 </head>
 <body>
 
@@ -45,7 +45,7 @@
 
     <div id="error-msg" class="error-msg" style="display:none; margin-bottom:1.5rem;"></div>
 
-    <div class="keno-board-wrap" id="board-wrap" style="display:none;">
+    <div class="keno-board-wrap" id="board-wrap">
       <div style="margin-bottom:1.2rem;">      
         <div class="keno-section" id="section-low"></div>
       </div>
@@ -150,7 +150,6 @@
 
       buildSection('section-low', 1, 40);
       buildSection('section-high', 41, 80);
-      document.getElementById('board-wrap').style.display = 'block';
       updateCellDisplay();
     }
 
@@ -453,7 +452,7 @@
       currentGameData = data;
       currentRaceId = data.raceid;
       updateHeaderDisplay();
-      renderBoard();
+      updateCellDisplay();
       renderDrawOrder(data.balls);
       applyHeatMap();
       animateDraw(data.balls);
@@ -603,6 +602,7 @@
 
     (async function init() {
       readHeatMapLinkState();
+	  renderBoard();
       updateHeatMapButton();
       updateSecondaryButton();
       updateHeatMapLegend();
