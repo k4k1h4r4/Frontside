@@ -28,6 +28,7 @@ const OPTIONS = [
 
 const STORAGE_KEY = 'frontside-bingo-card-v1';
 const CARD_SIZE = 16;
+const OPTION_SET = new Set(OPTIONS);
 
 const board = document.querySelector('#bingo-board');
 const markedCount = document.querySelector('#marked-count');
@@ -35,13 +36,21 @@ const savedStatus = document.querySelector('#saved-status');
 const newCardButton = document.querySelector('#new-card');
 const clearMarksButton = document.querySelector('#clear-marks');
 
+// Flipped to false the first time localStorage refuses to work. Some phones block
+// site data outright, in which case even reading it throws — the card still plays,
+// it just will not survive a reload.
+let storageWorks = true;
+
+if (OPTIONS.length < CARD_SIZE) {
+  console.warn(`OPTIONS has ${OPTIONS.length} entries but a card needs ${CARD_SIZE}.`);
+}
+
 let state = loadState();
 
 function createState() {
   return {
     card: shuffle(OPTIONS).slice(0, CARD_SIZE),
-    marked: Array(CARD_SIZE).fill(false),
-    createdAt: new Date().toISOString()
+    marked: Array(CARD_SIZE).fill(false)
   };
 }
 
@@ -56,48 +65,95 @@ function shuffle(items) {
   return shuffled;
 }
 
-function loadState() {
-  const saved = localStorage.getItem(STORAGE_KEY);
+// A saved card is only usable if every square is still a real, unique entry in
+// OPTIONS. Without this check, edits to the list never reach anyone holding an
+// older card — they keep playing retired squares until storage is cleared.
+function cardMatchesCurrentOptions(card) {
+  const seen = new Set();
 
-  if (!saved) {
-    const freshState = createState();
-    saveState(freshState);
-    return freshState;
-  }
-
-  try {
-    const parsed = JSON.parse(saved);
-    const hasValidCard = Array.isArray(parsed.card) && parsed.card.length === CARD_SIZE;
-    const hasValidMarks = Array.isArray(parsed.marked) && parsed.marked.length === CARD_SIZE;
-
-    if (hasValidCard && hasValidMarks) {
-      return {
-        card: parsed.card,
-        marked: parsed.marked.map(Boolean),
-        createdAt: parsed.createdAt || new Date().toISOString()
-      };
+  return card.every((label) => {
+    if (typeof label !== 'string' || !OPTION_SET.has(label) || seen.has(label)) {
+      return false;
     }
+
+    seen.add(label);
+    return true;
+  });
+}
+
+function readStoredCard() {
+  try {
+    return localStorage.getItem(STORAGE_KEY);
   } catch (error) {
-    console.warn('Saved bingo card could not be loaded.', error);
+    storageWorks = false;
+    console.warn('Saved bingo card could not be read.', error);
+    return null;
+  }
+}
+
+function loadState() {
+  const saved = readStoredCard();
+
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      const hasValidCard = Array.isArray(parsed.card) && parsed.card.length === CARD_SIZE;
+      const hasValidMarks = Array.isArray(parsed.marked) && parsed.marked.length === CARD_SIZE;
+
+      if (hasValidCard && hasValidMarks && cardMatchesCurrentOptions(parsed.card)) {
+        return {
+          card: parsed.card,
+          marked: parsed.marked.map(Boolean)
+        };
+      }
+    } catch (error) {
+      console.warn('Saved bingo card could not be loaded.', error);
+    }
   }
 
   const freshState = createState();
-  saveState(freshState);
+  saveState(freshState, { announce: false });
   return freshState;
 }
 
-function saveState(nextState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
-  announceSaved();
+function saveState(nextState, { announce = true } = {}) {
+  let persisted = false;
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+    persisted = true;
+  } catch (error) {
+    storageWorks = false;
+    console.warn('Bingo card could not be saved.', error);
+  }
+
+  if (announce) {
+    announceSaved(persisted);
+  }
 }
 
-function announceSaved() {
+function announceSaved(persisted) {
+  if (!persisted) {
+    setSavedStatus('Not saved — this browser is blocking storage');
+    return;
+  }
+
   const time = new Date().toLocaleTimeString([], {
     hour: 'numeric',
     minute: '2-digit'
   });
 
-  savedStatus.textContent = `Saved ${time}`;
+  setSavedStatus(`Saved ${time}`);
+}
+
+// #saved-status is aria-live, so only touch it when the text actually changes —
+// otherwise every tap re-announces the same string to a screen reader.
+function setSavedStatus(message) {
+  if (!savedStatus || savedStatus.textContent === message) {
+    return;
+  }
+
+  savedStatus.textContent = message;
 }
 
 function render() {
@@ -111,7 +167,6 @@ function render() {
     cell.className = `bingo-cell${isMarked ? ' is-marked' : ''}`;
     cell.type = 'button';
     cell.setAttribute('aria-pressed', String(isMarked));
-    cell.setAttribute('aria-label', `${label}${isMarked ? ', marked' : ', unmarked'}`);
     cell.dataset.index = String(index);
 
     text.className = 'bingo-cell-text';
@@ -125,14 +180,30 @@ function render() {
 }
 
 function updateCount() {
+  if (!markedCount) {
+    return;
+  }
+
   const count = state.marked.filter(Boolean).length;
   markedCount.textContent = `${count} / ${CARD_SIZE} marked`;
 }
 
+// Updates the one cell in place rather than rebuilding the board. A full re-render
+// destroys the button the player just activated, which throws keyboard focus back
+// to the top of the page on every single mark.
 function toggleCell(index) {
+  const cell = board.children[index];
+
+  if (!cell) {
+    return;
+  }
+
   state.marked[index] = !state.marked[index];
   saveState(state);
-  render();
+
+  cell.classList.toggle('is-marked', state.marked[index]);
+  cell.setAttribute('aria-pressed', String(state.marked[index]));
+  updateCount();
 }
 
 board.addEventListener('click', (event) => {
@@ -142,7 +213,13 @@ board.addEventListener('click', (event) => {
     return;
   }
 
-  toggleCell(Number(cell.dataset.index));
+  const index = Number(cell.dataset.index);
+
+  if (!Number.isInteger(index) || index < 0 || index >= CARD_SIZE) {
+    return;
+  }
+
+  toggleCell(index);
 });
 
 clearMarksButton.addEventListener('click', () => {
@@ -152,9 +229,19 @@ clearMarksButton.addEventListener('click', () => {
 });
 
 newCardButton.addEventListener('click', () => {
+  const hasMarks = state.marked.some(Boolean);
+
+  if (hasMarks && !confirm('Start a new card? Your current card and marks will be lost.')) {
+    return;
+  }
+
   state = createState();
   saveState(state);
   render();
 });
 
 render();
+
+if (!storageWorks) {
+  announceSaved(false);
+}
