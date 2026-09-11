@@ -1859,7 +1859,8 @@ footer a:hover { color: var(--accent); }
   margin: 0 auto;
   padding: 1.5rem 2rem;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;   /* every row matches, so the block reads as a unit */
   gap: 10px;
 }
 
@@ -1925,6 +1926,25 @@ footer a:hover { color: var(--accent); }
 }
 
 .feature-tile:hover .feature-tile-go { color: var(--accent-bright); }
+
+/* Placeholder tile — no destination yet, so it must not look tappable. */
+.feature-tile-soon {
+  border-style: dashed;
+  border-color: var(--border-accent);
+  background: rgba(255,255,255,0.02);
+  box-shadow: none;
+  cursor: default;
+}
+
+.feature-tile-soon:hover {
+  border-color: var(--border-accent);
+  background: rgba(255,255,255,0.02);
+  transform: none;
+}
+
+.feature-tile-soon::before { content: none; }
+.feature-tile-soon h3 { color: var(--text-muted); }
+.feature-tile-soon .feature-tile-line { color: var(--text-muted); font-style: italic; }
 .feature-tile-arrow { color: var(--accent); font-size: 0.95rem; }
 
 /* ── The Gang: full-bleed, uncropped group photo ── */
