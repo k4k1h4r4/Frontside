@@ -362,6 +362,119 @@ nav {
   line-height: 1.8;
 }
 
+/* ── Customer of the Year ── */
+.coty-band {
+  position: relative;
+  z-index: 3;
+  background:
+    radial-gradient(circle at 22% 0%, rgba(212,175,55,0.10), transparent 45%),
+    linear-gradient(180deg, rgba(20,14,10,0.97), rgba(11,7,5,0.98));
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.coty-band::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+.coty-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.75rem 2rem;
+  display: grid;
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+  gap: 2.5rem;
+  align-items: center;
+}
+
+.coty-photo {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 4 / 5;
+  border: 1px solid var(--accent-dim);
+  box-shadow: var(--shadow-heavy), 0 0 44px rgba(212,175,55,0.10);
+  overflow: hidden;
+}
+
+.coty-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 18%;
+  filter: saturate(0.95) contrast(1.02);
+}
+
+.coty-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  padding: 0.42rem 0.95rem;
+  background: var(--accent);
+  color: #130d09;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.coty-photo-tag {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  z-index: 2;
+  padding: 1.6rem 1rem 0.75rem;
+  background: linear-gradient(180deg, transparent, rgba(10,7,5,0.88));
+  font-family: 'Oswald', sans-serif;
+  font-weight: 300;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.coty-eyebrow {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 400;
+  font-size: 0.78rem;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--accent-bright);
+  margin-bottom: 0.4rem;
+}
+
+.coty-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.6rem, 7vw, 4.6rem);
+  letter-spacing: 0.05em;
+  line-height: 0.95;
+  color: #f4e3c7;
+  text-shadow: 0 0 40px rgba(212,175,55,0.18), 0 8px 20px rgba(0,0,0,0.7);
+  margin-bottom: 1rem;
+}
+
+.coty-copy p {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+.coty-copy .coty-eyebrow { margin-bottom: 0.4rem; }
+
+.coty-quote {
+  color: var(--accent-bright) !important;
+  font-style: italic;
+}
+
+.coty-copy .button-row { margin-top: 1rem; }
+
 .btn {
   display: inline-block;
   font-family: 'Oswald', sans-serif;
@@ -1563,6 +1676,21 @@ footer a:hover { color: var(--accent); }
 
   .nav-links { gap: 1.1rem; }
   .about-grid { grid-template-columns: 1fr; gap: 2rem; }
+
+  .coty-inner {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 2rem 1.25rem;
+  }
+
+  .coty-photo {
+    aspect-ratio: 3 / 4;
+    max-height: 60vh;
+  }
+
+  .coty-name {
+    font-size: clamp(2.2rem, 12vw, 3.4rem);
+  }
   .skill-intro-grid { grid-template-columns: 1fr; }
   .winner-card,
   .winner-card-feature,
@@ -1718,4 +1846,195 @@ footer a:hover { color: var(--accent); }
     margin-left: auto;
     flex: 0 0 auto;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Homepage restructure — additive only.
+   Nothing above this line was changed.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Quick-link tiles (replaces .feature-card on index) ── */
+.features-grid-tiles {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.feature-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1.15rem 1.2rem;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(26,19,14,0.96), rgba(18,13,9,0.98));
+  box-shadow: var(--shadow-heavy);
+  position: relative;
+  transition: border-color 0.25s, background 0.25s, transform 0.25s;
+}
+
+.feature-tile::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.feature-tile:hover::before { opacity: 1; }
+
+.feature-tile:hover {
+  border-color: var(--brown-light);
+  background: linear-gradient(180deg, rgba(35,25,18,0.98), rgba(20,14,9,0.98));
+  transform: translateY(-3px);
+}
+
+.feature-tile h3 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.55rem;
+  letter-spacing: 0.07em;
+  line-height: 1.02;
+  color: var(--accent-bright);
+}
+
+.feature-tile-line {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  flex: 1 1 auto;
+}
+
+.feature-tile-go {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color 0.25s;
+}
+
+.feature-tile:hover .feature-tile-go { color: var(--accent-bright); }
+.feature-tile-arrow { color: var(--accent); font-size: 0.95rem; }
+
+/* ── The Gang: full-bleed, uncropped group photo ── */
+.gang-band {
+  position: relative;
+  z-index: 3;
+  padding: 2.5rem 0 0;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(212,175,55,0.08), transparent 45%),
+    linear-gradient(180deg, rgba(20,14,10,0.97), rgba(11,7,5,0.98));
+  border-top: 1px solid var(--border);
+}
+
+.gang-head {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 2rem 1.6rem;
+  text-align: center;
+}
+
+.gang-head .section-title { margin-bottom: 1.1rem; }
+
+.divider-center { margin-left: auto; margin-right: auto; }
+
+/* Full width, natural aspect ratio — the photo is never cropped. */
+.gang-photo {
+  display: block;
+  width: 100%;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  line-height: 0;
+}
+
+.gang-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: saturate(0.95) contrast(1.02);
+}
+
+.gang-caption {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 2.5rem;
+  text-align: center;
+}
+
+.gang-caption p {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  line-height: 1.8;
+  margin-bottom: 0.8rem;
+}
+
+.gang-caption-em {
+  color: var(--accent-bright) !important;
+  font-style: italic;
+  font-size: clamp(1.05rem, 2.4vw, 1.35rem) !important;
+  margin-bottom: 0 !important;
+}
+
+@media (max-width: 700px) {
+  .features-grid-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 1fr;   /* both rows match, so the block reads as a unit */
+    gap: 8px;
+    padding: 1rem 0.9rem;
+  }
+
+  .feature-tile { padding: 0.9rem 0.9rem; gap: 0.4rem; }
+  .feature-tile h3 { font-size: 1.3rem; }
+
+  /* Blurb stays on mobile, sized for a ~140px-wide tile. */
+  .feature-tile-line {
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .feature-tile-go { font-size: 0.62rem; letter-spacing: 0.12em; }
+
+  .gang-band { padding-top: 1.75rem; }
+  .gang-head { padding: 0 1.25rem 1.2rem; }
+  .gang-caption { padding: 1.25rem 1.25rem 2rem; }
+}
+
+/* ── Stat block: two across instead of stacked ── */
+.about-stat-compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 1.15rem 0.9rem;
+}
+
+.about-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.35rem 0.55rem;
+}
+
+.about-stat-item + .about-stat-item { border-left: 1px solid var(--border); }
+
+.about-stat-compact .about-stat-num {
+  font-size: clamp(2.2rem, 8vw, 3rem);
+}
+
+.about-stat-compact .about-stat-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  line-height: 1.55;
+  margin-top: 0.35rem;
 }
