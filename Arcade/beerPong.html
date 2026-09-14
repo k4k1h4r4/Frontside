@@ -246,7 +246,7 @@ function drawTable(){
   // Frontside logo, faded into the felt at centre court
   if(tableLogo.complete && tableLogo.naturalWidth){
     const lw=Math.min(W*.62,W-70), lh=lw*tableLogo.naturalHeight/tableLogo.naturalWidth;
-    ctx.save();ctx.globalAlpha=.78;
+    ctx.save();ctx.globalAlpha=.28;
     ctx.drawImage(tableLogo,(W-lw)/2,H*.5-lh/2,lw,lh);
     ctx.restore();
   } else {
