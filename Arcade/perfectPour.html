@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#21160f">
+<title>Perfect Pour &mdash; Frontside Arcade</title>
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--cream:#f2e4c8;--amber:#e6a52f;--muted:#b7a88f}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;color:var(--cream);font-family:Georgia,'Times New Roman',serif;background:radial-gradient(ellipse at 50% 40%,#49301a66,transparent 60%),repeating-linear-gradient(90deg,#ffffff03 0 2px,transparent 2px 80px),linear-gradient(145deg,#21160f,#0e0906 80%);min-height:100vh;min-height:100dvh}
+main{max-width:520px;margin:auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding:max(20px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(22px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left))}
+
+.heading{text-align:center;margin-top:30px}.eyebrow{font:10px Arial,sans-serif;letter-spacing:3px;color:var(--amber)}h1{font:clamp(34px,8vw,46px) Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif;letter-spacing:2px;margin:8px 0} .instructions{font-size:14px;color:var(--muted);margin:0}
+.stage{flex:1;min-height:220px;display:flex;align-items:center;justify-content:center}svg{width:100%;max-height: min(48dvh,440px);min-height:220px;overflow:visible}.stream{display:none}.pouring .stream{display:block}.spill{opacity:0}.spilled .spill{opacity:1}.mug-logo{opacity:.99;pointer-events:none}.glass-line{fill:none;stroke:#f2e4c8;stroke-width:5;stroke-linejoin:round}.bubble{fill:#fff2bf;opacity:.4}.result{text-align:center;min-height:65px}h2{font:25px Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif;letter-spacing:1px;margin:0 0 6px}.result p{font-size:14px;color:var(--muted);margin:0;line-height:1.4}
+button{display:block;width:100%;min-height:60px;margin:15px 0 0;border:1px solid #f6c967;border-radius:10px;background:var(--amber);box-shadow:0 4px 0 #83571a;color:#21160f;font:bold 18px Arial,sans-serif;letter-spacing:2px;cursor:pointer;touch-action:manipulation}button:active{transform:translateY(2px);box-shadow:0 2px 0 #83571a}button:focus-visible{outline:3px solid var(--cream);outline-offset:5px}.pouring button{background:#c84b39;border-color:#df7563;color:#fff2de;box-shadow:0 4px 0 #762a21}.footer{display:flex;justify-content:space-between;margin-top:22px;font:10px Arial,sans-serif;letter-spacing:1.5px;color:var(--muted)}.footer b{color:var(--cream);font-weight:normal}
+@media(max-height:700px){main{padding-top:12px;padding-bottom:16px}.heading{margin-top:16px}h1{font-size:32px}.footer{margin-top:16px}.stage{min-height:190px}svg{min-height:190px;max-height:42dvh}}
+@media(orientation:landscape) and (max-height:550px){main{max-width:760px;display:grid;grid-template-columns:1fr 1fr;gap:10px 28px;min-height:100dvh}header{grid-column:1/-1}.heading{margin:0;align-self:end}.stage{grid-column:1;grid-row:2/5;min-height:160px}svg{max-height:65dvh;min-height:160px}.heading,.result,button{grid-column:2}button{margin:0;align-self:start}.footer{grid-column:1/-1;margin:4px 0}}
+</style>
+<style>button[aria-disabled="true"]{opacity:.5;cursor:wait;transform:none}</style>
+<style>
+/* Site header — matches the frontsidebar.com nav bar */
+.site-head{display:flex;align-items:center;gap:clamp(10px,4vw,22px);width:100%;flex:0 0 auto;padding:2px 2px 8px;border-bottom:1px solid #8c7425}
+.site-head .logo{display:block;flex:0 0 auto;line-height:0}
+.site-head .logo img{display:block;width:clamp(100px,30vw,150px);height:34px;object-fit:contain;object-position:left center;filter:drop-shadow(0 4px 18px rgba(0,0,0,.55))}
+.site-head .back{font:400 12px/1 'Oswald','Arial Narrow',sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#aab0bd;text-decoration:none;white-space:nowrap;padding:8px 0 6px;border-bottom:1px solid transparent;transition:color .2s,border-color .2s}
+.site-head .back:hover,.site-head .back:focus-visible{color:#f5d76e;border-bottom-color:#d4af37}
+.site-head .tag{margin-left:auto;text-align:right;font:600 11px/1.25 'Oswald','Arial Narrow',sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#f5d76e}
+.site-head .tag small{display:block;font-weight:400;font-size:9.5px;letter-spacing:.16em;color:#aab0bd;margin-top:3px}
+@media(max-width:380px){.site-head{gap:10px}.site-head .back{font-size:11px;letter-spacing:.12em}.site-head .tag{font-size:10px}}
+</style>
+</head>
+<body>
+<main id="app">
+<header class="site-head"><a class="logo" href="../index.html" aria-label="Frontside home"><img src="../images/Frontside-nav.webp" alt="Frontside Table Gang" width="150" height="34"></a><a class="back" href="arcade.html">&#8592; Arcade</a><span class="tag">Arcade<small>Game 02</small></span></header>
+<div class="heading"><div class="eyebrow">A LITTLE TIMING. A LOT OF FOAM.</div><h1>PERFECT POUR</h1><p class="instructions">Fill to the rim. Stop before it spills.</p></div>
+<div class="stage">
+<svg viewBox="0 0 360 380" role="img" aria-label="Beer mug, empty" id="mug">
+<defs>
+ <linearGradient id="beer" x1="0" x2="1"><stop stop-color="#bd640b"/><stop offset=".45" stop-color="#f7b52c"/><stop offset="1" stop-color="#d78612"/></linearGradient>
+ <linearGradient id="glass" x1="0" x2="1"><stop stop-color="#fff4d3" stop-opacity=".12"/><stop offset=".5" stop-color="#fff4d3" stop-opacity=".02"/><stop offset="1" stop-color="#fff4d3" stop-opacity=".13"/></linearGradient>
+ <clipPath id="inside"><path d="M79 83H261L252 316Q251 331 235 331H105Q89 331 88 316Z"/></clipPath>
+</defs>
+<ellipse cx="180" cy="351" rx="119" ry="12" fill="#000" opacity=".3"/>
+<path d="M263 127H283Q310 127 310 154V231Q310 258 281 258H258" fill="none" stroke="#f2e4c8" stroke-opacity=".6" stroke-width="13"/>
+<path d="M76 80H264L255 321Q254 339 235 339H105Q86 339 85 321Z" fill="url(#glass)"/>
+<g class="stream"><path id="streamBody" d="M161 0H179L183 332H157Z" fill="url(#beer)"/><path id="streamHighlight" d="M165 0L164 332" stroke="#ffe397" stroke-width="3" opacity=".6"/></g>
+<g clip-path="url(#inside)">
+ <g id="liquid" transform="translate(0 332)"><rect x="77" y="0" width="187" height="265" fill="url(#beer)"/><path d="M77 0Q99 -5 124 0T171 0T218 0T265 0V12Q244 16 218 12T171 12T124 12T77 12Z" fill="#fff0ce"/><g class="bubble"><circle cx="109" cy="33" r="3"/><circle cx="207" cy="63" r="2"/><circle cx="147" cy="97" r="3"/><circle cx="231" cy="125" r="2"/><circle cx="123" cy="161" r="2"/><circle cx="183" cy="194" r="3"/></g></g>
+ <path d="M99 110L106 306M124 110L129 311M222 110L217 307M243 110L237 303" stroke="#fff9de" stroke-width="7" opacity=".12" stroke-linecap="round"/>
+</g>
+<image class="mug-logo" href="../images/Frontside.webp" x="95" y="157" width="150" height="100"
+       preserveAspectRatio="xMidYMid meet" clip-path="url(#inside)"/>
+<path class="glass-line" d="M76 80H264L255 321Q254 339 235 339H105Q86 339 85 321Z" stroke-opacity=".7"/>
+<path d="M77 82H263" stroke="#fff5d9" stroke-width="6" stroke-linecap="round"/>
+<path d="M53 83H69M272 83H288" stroke="#e6a52f" stroke-width="2"/>
+<text x="291" y="70" fill="#b7a88f" font-family="Arial,sans-serif" font-size="9" letter-spacing="1">RIM</text>
+<g class="spill" fill="#fff0ce"><path d="M74 83Q84 72 101 83L97 152Q91 165 86 152L83 108Q72 113 72 102Z"/><path d="M243 84Q258 71 270 85L271 131Q264 143 259 130L256 99Q242 104 243 84Z"/><ellipse cx="99" cy="348" rx="29" ry="5"/><ellipse cx="262" cy="345" rx="20" ry="4"/></g>
+</svg>
+</div>
+<div class="result" role="status" aria-live="polite" aria-atomic="true"><h2 id="resultTitle">STEADY HANDS?</h2><p id="resultText">Tap Start, then Stop to nail the pour.</p></div>
+<button id="control" type="button">START</button>
+<div class="footer"><span id="progress">GLASS 1 / 10</span><span>TOTAL <b id="total">0.0</b></span><span>BEST <b id="best">—</b></span></div>
+</main>
+<script>
+'use strict';
+const app=document.getElementById('app'),control=document.getElementById('control'),liquid=document.getElementById('liquid'),mug=document.getElementById('mug'),title=document.getElementById('resultTitle'),description=document.getElementById('resultText'),bestEl=document.getElementById('best');
+const streamBody=document.getElementById('streamBody'),streamHighlight=document.getElementById('streamHighlight'),progress=document.getElementById('progress'),totalEl=document.getElementById('total');
+const STORAGE_KEY='frontsidebar.perfectPour.roundBest.v2',GLASSES=10;
+let state='ready',started=0,duration=3000/1.1,frame=0,best=0,glass=1,totalTenths=0,lockedUntil=0;
+try{const saved=Number(localStorage.getItem(STORAGE_KEY));if(Number.isFinite(saved)&&saved>=0&&saved<=1000)best=saved;}catch{}
+function showBest(){bestEl.textContent=best?best.toFixed(1):'—';}
+showBest();
+function draw(fill){
+ const surface=332-249*Math.max(0,Math.min(fill,1));
+ liquid.setAttribute('transform',`translate(0 ${surface})`);
+ streamBody.setAttribute('d',`M161 0H179L183 ${surface}H157Z`);
+ streamHighlight.setAttribute('d',`M165 0L164 ${surface}`);
+}
+function finish(fill){
+ if(state!=='pouring')return;
+ cancelAnimationFrame(frame);state='done';app.classList.remove('pouring');draw(fill);
+ const scoreTenths=fill>=1?0:Math.floor(Math.max(0,fill)*1000),score=scoreTenths/10;
+ totalTenths+=scoreTenths;totalEl.textContent=(totalTenths/10).toFixed(1);
+ if(fill>=1){app.classList.add('spilled');title.textContent='OVER THE TOP!';description.textContent='Spilled it. +0.0 points.';mug.setAttribute('aria-label','Full beer mug, overflowing.');}
+ else{
+  title.textContent=score>=98?'PERFECT POUR!':score>=90?'NICE POUR!':score>=70?'ROOM FOR A LITTLE MORE':'A LITTLE SHORT';
+  description.textContent=score.toFixed(1)+'% full · +'+score.toFixed(1)+' points.';
+  mug.setAttribute('aria-label',`Beer mug ${score.toFixed(1)} percent full.`);
+ }
+ if(glass===GLASSES){
+  state='roundOver';const total=totalTenths/10;
+  const lastResult=fill>=1?'Glass 10 spilled (+0.0).':`Glass 10: +${score.toFixed(1)}.`;
+  title.textContent=`FINAL SCORE: ${total.toFixed(1)}`;
+  description.textContent=lastResult+' All 10 glasses poured!';
+  if(total>best){best=total;showBest();try{localStorage.setItem(STORAGE_KEY,String(best));}catch{}}
+  control.textContent='PLAY AGAIN';
+ }else{control.textContent=`START GLASS ${glass+1}`;}
+ if(fill>=1){
+  lockedUntil=performance.now()+1000;
+  control.setAttribute('aria-disabled','true');
+  setTimeout(()=>control.setAttribute('aria-disabled','false'),1000);
+ }
+}
+function tick(now){if(state!=='pouring')return;const fill=(now-started)/duration;if(fill>=1){finish(fill);return;}draw(fill);frame=requestAnimationFrame(tick);}
+function activate(){
+ if(performance.now()<lockedUntil)return;
+ if(state==='pouring'){finish((performance.now()-started)/duration);return;}
+ if(state==='roundOver'){glass=1;totalTenths=0;totalEl.textContent='0.0';}
+ else if(state==='done'){glass++;}
+ progress.textContent=`GLASS ${glass} / ${GLASSES}`;
+ control.setAttribute('aria-disabled','false');
+ app.classList.remove('spilled');draw(0);state='pouring';duration=(3000-(glass-1)*220)/1.1;started=performance.now();app.classList.add('pouring');control.textContent='STOP';title.textContent='WATCH THE RIM…';description.textContent=`Glass ${glass} of ${GLASSES} · Stop before it spills.`;mug.setAttribute('aria-label','Beer mug filling.');frame=requestAnimationFrame(tick);
+}
+// Pointer-down makes touch timing immediate. Keyboard and assistive clicks still work.
+control.addEventListener('pointerdown',event=>{if(!event.isPrimary||event.button!==0)return;event.preventDefault();control.focus({preventScroll:true});activate();});
+control.addEventListener('click',event=>{if(event.detail===0)activate();});
+// Switching apps cancels the attempt instead of making an unseen spill.
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='pouring'){cancelAnimationFrame(frame);state='ready';app.classList.remove('pouring');draw(0);control.textContent='START';title.textContent='READY WHEN YOU ARE';description.textContent='Pour paused while you were away. Start fresh.';mug.setAttribute('aria-label','Beer mug, empty.');}});
+</script>
+</body>
+</html>
