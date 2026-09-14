@@ -279,10 +279,14 @@ function drawBall(){
 }
 function drawAim(){
   if(!dragging)return;
-  const dx=ball.x-dragX,dy=ball.y-dragY,len=Math.hypot(dx,dy),max=Math.min(W*.52,190);
+  const dx=ball.x-dragX,dy=ball.y-dragY,len=Math.hypot(dx,dy);
+  if(len<1)return;
+  const max=H*.25;  // same pull cap the throw itself uses
   const p=Math.min(len,max),ux=dx/len,uy=dy/len;
   ctx.save();ctx.strokeStyle='rgba(244,190,67,.85)';ctx.lineWidth=2;ctx.setLineDash([5,7]);
-  ctx.beginPath();ctx.moveTo(ball.x,ball.y);ctx.lineTo(ball.x+ux*(120+p*.8),ball.y+uy*(120+p*.8));ctx.stroke();
+  // Guide grows out of the ball as you pull instead of starting long.
+  const guide=14+p*1.35;
+  ctx.beginPath();ctx.moveTo(ball.x,ball.y);ctx.lineTo(ball.x+ux*guide,ball.y+uy*guide);ctx.stroke();
   ctx.setLineDash([]);ctx.strokeStyle='rgba(255,255,255,.5)';ctx.beginPath();
   ctx.arc(ball.x,ball.y,Math.min(30,8+p*.13),0,Math.PI*2);ctx.stroke();ctx.restore();
 }
