@@ -156,7 +156,7 @@ function resetRound(){
   roundEl.innerHTML=`ROUND ${round}<small>${balls} BALL${balls===1?'':'S'} • ${maxRounds} ROUNDS</small>`;
   hint.innerHTML=`<strong>DRAG</strong> from the ball toward where you want to throw. Release to fire.`;
 }
-function resetBall(){ball.x=W/2;ball.y=H*.84;ball.r=Math.max(7,Math.min(10,W*.022))}
+function resetBall(){ball.x=W/2;ball.y=H*.75;ball.r=Math.max(7,Math.min(10,W*.022))}
 function updateHUD(){cupsEl.textContent=cups.filter(c=>c.alive).length;ballsEl.textContent=balls;scoreEl.textContent=score}
 
 function pos(e){const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}}
