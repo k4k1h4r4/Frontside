@@ -176,7 +176,7 @@ canvas.addEventListener('pointerup',e=>{
   const power=Math.min(len,Math.min(W*.52,190));
   const ux=dx/len,uy=dy/len;
   balls--; updateHUD();
-  shot={x:ball.x,y:ball.y,vx:ux*(250+power*3.1),vy:uy*(250+power*3.1),t:0,duration:0.82+power/520,
+  shot={x:ball.x,y:ball.y,vx:ux*(210+power*2.6),vy:uy*(210+power*2.6),t:0,duration:0.82+power/520,
         startX:ball.x,startY:ball.y};
   e.preventDefault();
 });
