@@ -2058,3 +2058,34 @@ footer a:hover { color: var(--accent); }
   line-height: 1.55;
   margin-top: 0.35rem;
 }
+
+/* ── Keno: Check Tickets call-to-action ──
+   Sits under the drawn numbers. Fills the width of a phone screen and
+   stays capped at that width on tablet/desktop. */
+.keno-check-row {
+  display: flex;
+  justify-content: center;
+  margin: 0.25rem 0 2.5rem;
+}
+
+.btn-check-tickets {
+  display: block;
+  width: 100%;
+  max-width: 430px;
+  text-align: center;
+  font-size: 0.95rem;
+  letter-spacing: 0.26em;
+  padding: 1rem 1.2rem;
+  color: #130d09;
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 18px var(--accent-glow);
+}
+
+.btn-check-tickets:hover,
+.btn-check-tickets:focus-visible {
+  background: var(--accent-bright);
+  border-color: var(--accent-bright);
+  color: #130d09;
+  box-shadow: 0 0 24px var(--accent-glow);
+}
