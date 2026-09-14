@@ -17,7 +17,7 @@
     --ink:#17110d; --muted:#b7a88f;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;width:100%;height:100vh;height:100dvh;overflow:hidden;background:#120d09;color:var(--cream);
+  html,body{margin:0;width:100%;height:100vh;height:100svh;overflow:hidden;background:#120d09;color:var(--cream);
     font-family:Georgia,"Times New Roman",serif;touch-action:none;overscroll-behavior:none}
   body{
     background:
@@ -25,7 +25,7 @@
       repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 2px,transparent 2px 80px),
       linear-gradient(145deg,var(--wood),#0e0906 70%);
   }
-  #app{height:100vh;height:100dvh;display:flex;flex-direction:column;align-items:center;
+  #app{height:100vh;height:100svh;display:flex;flex-direction:column;align-items:center;
     padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
   #gameWrap{position:relative;width:min(680px,100%);flex:1;min-height:0;display:flex;justify-content:center}
   canvas{display:block;aspect-ratio:.62;width:min(100%,430px);height:100%;border:5px solid #7d593a;border-radius:14px;
@@ -35,9 +35,9 @@
   @media (orientation:landscape){
     canvas{width:auto;max-width:100%}
   }
-  #hud{position:absolute;left:50%;transform:translateX(-50%);top:8px;width:min(92%,400px);
+  #hud{position:absolute;left:50%;transform:translateX(-50%);top:8px;width:min(94%,400px);max-width:100%;
     display:flex;justify-content:space-between;pointer-events:none;text-shadow:0 2px 2px #000}
-  .stat{text-align:center;background:rgba(14,9,6,.72);border:1px solid rgba(242,228,200,.2);border-radius:9px;padding:5px 11px;min-width:84px}
+  .stat{text-align:center;background:rgba(14,9,6,.72);border:1px solid rgba(242,228,200,.2);border-radius:9px;padding:5px 9px;min-width:74px}
   .stat b{display:block;font:700 18px/1 Impact,Arial,sans-serif;color:var(--amber)}
   .stat small{font:10px Georgia,serif;color:#d6c6aa;letter-spacing:1px}
   #message{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);width:82%;
@@ -45,8 +45,8 @@
   #message.show{opacity:1}
   #message h1{margin:0;font:700 40px Impact,Arial,sans-serif;letter-spacing:1px;color:#fff0cb}
   #message p{margin:6px 0 0;font-size:16px}
-  #controls{width:min(680px,100%);padding-top:7px;text-align:center}
-  #hint{font-size:13px;color:#cbbba0;min-height:18px}
+  #hint{position:absolute;left:50%;bottom:15px;transform:translateX(-50%);width:min(90%,380px);max-width:100%;
+    text-align:center;font-size:13px;line-height:1.35;color:#cbbba0;pointer-events:none;text-shadow:0 2px 4px #000}
   #hint strong{color:var(--amber)}
   button{border:0;border-radius:9px;padding:13px 20px;min-height:46px;display:inline-flex;align-items:center;
     justify-content:center;background:var(--amber);color:#20140b;
@@ -62,8 +62,8 @@
   .card p{color:#d0c0a6;line-height:1.45;margin:8px 0 20px}
   .score{font:bold 22px Arial,sans-serif;margin:12px 0 20px}
   @media (max-height:650px){
-    .stat{padding:3px 8px}.stat b{font-size:15px}
-    #controls{padding-top:3px}#hint{font-size:11px}
+    .stat{padding:3px 7px;min-width:66px}.stat b{font-size:15px}
+    #hint{font-size:11px;bottom:10px}
   }
 </style>
 <style>
@@ -90,6 +90,7 @@
   <div id="gameWrap">
     <canvas id="game"></canvas>
     <div id="hud">
+      <div class="stat"><b id="score">0</b><small>SCORE</small></div>
       <div class="stat"><b id="cups">10</b><small>CUPS LEFT</small></div>
       <div class="stat"><b id="balls">20</b><small>BALLS LEFT</small></div>
     </div>
@@ -103,21 +104,23 @@
         <button id="overButton">NEXT ROUND</button>
       </div>
     </div>
+    <div id="hint"><strong>DRAG</strong> from the ball toward where you want to throw. Release to fire.</div>
   </div>
-  <div id="controls"><div id="hint"><strong>DRAG</strong> from the ball toward where you want to throw. Release to fire.</div></div>
 </div>
 
 <script>
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 const wrap=document.getElementById('gameWrap');
-const cupsEl=document.getElementById('cups'), ballsEl=document.getElementById('balls');
-const roundEl=document.getElementById('roundLabel'), hint=document.getElementById('hint');
+const cupsEl=document.getElementById('cups'), ballsEl=document.getElementById('balls'),
+      scoreEl=document.getElementById('score');
+const roundEl=document.getElementById('roundLabel'), hint=document.getElementById('hint'),
+      hud=document.getElementById('hud');
 const overlay=document.getElementById('overlay'), overTitle=document.getElementById('overTitle'),
       overText=document.getElementById('overText'), overScore=document.getElementById('overScore'),
       overEyebrow=document.getElementById('overEyebrow'), overButton=document.getElementById('overButton');
 
 const tableLogo=new Image();tableLogo.src='../images/Frontside.webp';
-let W=0,H=0,dpr=1, round=1, balls=20, cups=[], ball={x:0,y:0,r:9};
+let W=0,H=0,dpr=1, round=1, balls=20, cups=[], ball={x:0,y:0,r:9}, score=0;
 let dragging=false, dragX=0,dragY=0, shot=null, last=0, paused=false;
 const maxRounds=11;
 
@@ -125,6 +128,7 @@ function resize(){
   const r=canvas.getBoundingClientRect(); dpr=Math.min(devicePixelRatio||1,2);
   W=r.width; H=r.height; canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr);
   ctx.setTransform(dpr,0,0,dpr,0,0);
+  hud.style.width=Math.round(W*.94)+'px'; hint.style.width=Math.round(W*.9)+'px';
   // Reflow cups to the real canvas size (existing alive/dead state is preserved).
   cups = cupLayout(cups);
   resetBall();
@@ -153,7 +157,7 @@ function resetRound(){
   hint.innerHTML=`<strong>DRAG</strong> from the ball toward where you want to throw. Release to fire.`;
 }
 function resetBall(){ball.x=W/2;ball.y=H*.84;ball.r=Math.max(7,Math.min(10,W*.022))}
-function updateHUD(){cupsEl.textContent=cups.filter(c=>c.alive).length;ballsEl.textContent=balls}
+function updateHUD(){cupsEl.textContent=cups.filter(c=>c.alive).length;ballsEl.textContent=balls;scoreEl.textContent=score}
 
 function pos(e){const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}}
 canvas.addEventListener('pointerdown',e=>{
@@ -174,19 +178,17 @@ canvas.addEventListener('pointerup',e=>{
   balls--; updateHUD();
   shot={x:ball.x,y:ball.y,vx:ux*(250+power*3.1),vy:uy*(250+power*3.1),t:0,duration:0.82+power/520,
         startX:ball.x,startY:ball.y};
-  hint.innerHTML='<strong>IN THE AIR...</strong>';
   e.preventDefault();
 });
 
 function finishShot(hit){
-  if(hit){ hit.alive=false; hit.shake=1; showFlash("SUNK!","Nice shot."); }
+  if(hit){ hit.alive=false; hit.shake=1; score++; showFlash("SUNK!","+1 point."); }
   else if(Math.random()<.15) showFlash("RIM!","So close.");
   else showFlash("MISS","Back to the bar.");
   shot=null; resetBall(); updateHUD();
   const remaining=cups.filter(c=>c.alive).length;
   if(remaining===0){ setTimeout(winRound,500); }
   else if(balls===0){ setTimeout(loseRound,500); }
-  else hint.innerHTML='<strong>DRAG</strong> from the ball toward where you want to throw. Release to fire.';
 }
 function showFlash(t,p){
   document.getElementById('msgTitle').textContent=t;
@@ -195,18 +197,21 @@ function showFlash(t,p){
 }
 function winRound(){
   paused=true;
+  // Clearing the table banks a bonus point for every ball you did not need.
+  const bonus=Math.max(0,balls); score+=bonus; updateHUD();
+  const roundTotal=10+bonus;
   if(round===maxRounds){
     overEyebrow.textContent="LAST CALL";
     overTitle.textContent="YOU CLEARED THE BAR";
-    overScore.textContent="ALL 11 ROUNDS COMPLETE";
-    overText.textContent="20 balls down to 10. You never left a cup standing.";
+    overScore.textContent=`FINAL SCORE ${score}`;
+    overText.textContent=`All 11 rounds, every cup sunk. Round 11 paid 10 cups + ${bonus} ball${bonus===1?'':'s'} left over.`;
     overButton.textContent="PLAY AGAIN";
-    overButton.onclick=()=>{round=1;overlay.classList.remove('show');resetRound()};
+    overButton.onclick=()=>{round=1;score=0;overlay.classList.remove('show');resetRound()};
   }else{
     overEyebrow.textContent=`ROUND ${round} CLEARED`;
     overTitle.textContent="NICE POUR";
-    overScore.textContent=`10 CUPS • ${balls} BALL${balls===1?'':'S'} LEFT`;
-    overText.textContent=`Round ${round+1} gets one ball tougher. Sink all 10 again.`;
+    overScore.textContent=`+${roundTotal} THIS ROUND • SCORE ${score}`;
+    overText.textContent=`10 cups + ${bonus} ball${bonus===1?'':'s'} left over. Round ${round+1} gets one ball tougher.`;
     overButton.textContent="NEXT ROUND";
     overButton.onclick=()=>{round++;overlay.classList.remove('show');resetRound()};
   }
@@ -214,14 +219,15 @@ function winRound(){
 }
 function loseRound(){
   paused=true;
-  const used=21-round-balls;
+  // Out of balls, so there is no leftover-ball bonus — only the cups already banked.
+  const used=21-round, sunk=10-cups.filter(c=>c.alive).length;
   overEyebrow.textContent=`ROUND ${round} OVER`;
   overTitle.textContent="LAST CALL";
-  overScore.textContent=`${10-cups.filter(c=>c.alive).length} CUPS SUNK`;
-  overText.textContent=round===maxRounds ? "Ten balls means perfection. Better luck next run." :
-    `You used all ${used} shots. Missed too many to advance.`;
+  overScore.textContent=`FINAL SCORE ${score}`;
+  overText.textContent=round===maxRounds ? `Ten balls means perfection. You sank ${sunk} before the rack ran dry.` :
+    `You used all ${used} shots and sank ${sunk}. No balls left over, so no bonus.`;
   overButton.textContent="START OVER";
-  overButton.onclick=()=>{round=1;overlay.classList.remove('show');resetRound()};
+  overButton.onclick=()=>{round=1;score=0;overlay.classList.remove('show');resetRound()};
   overlay.classList.add('show');
 }
 
@@ -240,7 +246,7 @@ function drawTable(){
   // Frontside logo, faded into the felt at centre court
   if(tableLogo.complete && tableLogo.naturalWidth){
     const lw=Math.min(W*.62,W-70), lh=lw*tableLogo.naturalHeight/tableLogo.naturalWidth;
-    ctx.save();ctx.globalAlpha=.28;
+    ctx.save();ctx.globalAlpha=.78;
     ctx.drawImage(tableLogo,(W-lw)/2,H*.5-lh/2,lw,lh);
     ctx.restore();
   } else {
