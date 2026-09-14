@@ -156,6 +156,7 @@ function resetRound(){
   roundEl.innerHTML=`ROUND ${round}<small>${balls} BALL${balls===1?'':'S'} • ${maxRounds} ROUNDS</small>`;
   hint.innerHTML=`<strong>DRAG</strong> from the ball toward where you want to throw. Release to fire.`;
 }
+// Sit the ball mid-way down the shooter's half so there is room to pull back.
 function resetBall(){ball.x=W/2;ball.y=H*.75;ball.r=Math.max(7,Math.min(10,W*.022))}
 function updateHUD(){cupsEl.textContent=cups.filter(c=>c.alive).length;ballsEl.textContent=balls;scoreEl.textContent=score}
 
@@ -172,11 +173,14 @@ canvas.addEventListener('pointerup',e=>{
   if(!dragging)return; dragging=false; const p=pos(e);dragX=p.x;dragY=p.y;
   const dx=ball.x-p.x,dy=ball.y-p.y,len=Math.hypot(dx,dy);
   if(len<12)return;
-  // Drag farther = more power; cap for consistent mobile play.
-  const power=Math.min(len,Math.min(W*.52,190));
+  // Power is a share of the table, not a pixel count, so the throw feels the same
+  // on every screen. The pull caps at the room behind the ball; roughly 55% of
+  // that pull reaches the front cup and 80% reaches the back row.
+  const power=Math.min(len,H*.25);
   const ux=dx/len,uy=dy/len;
   balls--; updateHUD();
-  shot={x:ball.x,y:ball.y,vx:ux*(210+power*2.6),vy:uy*(210+power*2.6),t:0,duration:0.82+power/520,
+  const reach=H*.225+power*1.86, dur=0.85+power/900;
+  shot={x:ball.x,y:ball.y,vx:ux*reach/dur,vy:uy*reach/dur,t:0,duration:dur,
         startX:ball.x,startY:ball.y};
   e.preventDefault();
 });
@@ -246,7 +250,7 @@ function drawTable(){
   // Frontside logo, faded into the felt at centre court
   if(tableLogo.complete && tableLogo.naturalWidth){
     const lw=Math.min(W*.62,W-70), lh=lw*tableLogo.naturalHeight/tableLogo.naturalWidth;
-    ctx.save();ctx.globalAlpha=.28;
+    ctx.save();ctx.globalAlpha=.28;//Opacity of logo
     ctx.drawImage(tableLogo,(W-lw)/2,H*.5-lh/2,lw,lh);
     ctx.restore();
   } else {
