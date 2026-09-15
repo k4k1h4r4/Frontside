@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400&display=swap');
+
+.site-nav {
+  background: rgba(10, 7, 5, 0.88);
+  border-bottom: 1px solid #8c7425;
+  backdrop-filter: blur(8px);
+  padding: 0 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 72px;
+  position: sticky;
+  top: 0;
+  z-index: 500;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.28);
+}
+
+.site-nav .nav-logo {
+  width: 190px;
+  height: 48px;
+  display: block;
+  text-decoration: none;
+  background-image: url("images/Frontside-nav.webp");
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: left center;
+  color: transparent;
+  text-indent: -9999px;
+  overflow: hidden;
+  filter: drop-shadow(0 4px 18px rgba(0,0,0,0.55));
+}
+
+.site-nav .nav-links {
+  display: flex;
+  gap: 2.5rem;
+  list-style: none;
+}
+
+.site-nav .nav-links a {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 400;
+  font-size: 0.85rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #aab0bd;
+  text-decoration: none;
+  transition: color 0.2s;
+  position: relative;
+  padding-bottom: 3px;
+}
+
+.site-nav .nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: #d4af37;
+  transform: scaleX(0);
+  transition: transform 0.25s;
+  transform-origin: left;
+}
+
+.site-nav .nav-links a:hover { color: #e6e8ee; }
+.site-nav .nav-links a.active { color: #f5d76e; }
+.site-nav .nav-links a:hover::after,
+.site-nav .nav-links a.active::after { transform: scaleX(1); }
+
+.site-nav { flex-shrink: 0; line-height: normal; }
+.site-nav, .site-nav * { box-sizing: border-box; margin: 0; padding: 0; }
+.site-nav { padding: 0 2.5rem; }
+.site-nav .nav-logo { flex-shrink: 0; }
+.site-nav .nav-links a { padding-bottom: 3px; }
+.site-nav a:focus-visible { outline: 2px solid #f5d76e; outline-offset: 5px; }
+@media (max-width: 700px) {
+  .site-nav { padding: .8rem 1rem; height: auto; min-height: 72px; flex-direction: column; gap: .75rem; justify-content: center; }
+  .site-nav .nav-logo { width: 160px; height: 40px; background-position: center; }
+  .site-nav .nav-links { gap: 1.1rem; }
+}
