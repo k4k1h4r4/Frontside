@@ -68,8 +68,6 @@ body::after {
   pointer-events: none;
   z-index: 2;
 }
-
-nav,
 .hero,
 .features,
 .section,
@@ -78,71 +76,6 @@ footer {
   position: relative;
   z-index: 3;
 }
-
-nav {
-  background: rgba(10, 7, 5, 0.88);
-  border-bottom: 1px solid var(--accent-dim);
-  backdrop-filter: blur(8px);
-  padding: 0 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 72px;
-  position: sticky;
-  top: 0;
-  z-index: 500;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.28);
-}
-
-.nav-logo {
-  width: 190px;
-  height: 48px;
-  display: block;
-  text-decoration: none;
-  background-image: url("images/Frontside-nav.webp");
-  background-repeat: no-repeat;
-  background-size: contain;
-  background-position: left center;
-  color: transparent;
-  text-indent: -9999px;
-  overflow: hidden;
-  filter: drop-shadow(0 4px 18px rgba(0,0,0,0.55));
-}
-
-.nav-links {
-  display: flex;
-  gap: 2.5rem;
-  list-style: none;
-}
-
-.nav-links a {
-  font-family: 'Oswald', sans-serif;
-  font-weight: 400;
-  font-size: 0.85rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  text-decoration: none;
-  transition: color 0.2s;
-  position: relative;
-  padding-bottom: 3px;
-}
-
-.nav-links a::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 1px;
-  background: var(--accent);
-  transform: scaleX(0);
-  transition: transform 0.25s;
-  transform-origin: left;
-}
-
-.nav-links a:hover { color: var(--text); }
-.nav-links a.active { color: var(--accent-bright); }
-.nav-links a:hover::after,
-.nav-links a.active::after { transform: scaleX(1); }
 
 .hero {
   position: relative;
@@ -1623,16 +1556,6 @@ footer a:hover { color: var(--accent); }
 }
 
 @media (max-width: 700px) {
-  nav {
-    padding: 0 1rem;
-    height: auto;
-    min-height: 72px;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    justify-content: center;
-    padding-top: 0.8rem;
-    padding-bottom: 0.8rem;
-  }
 
   .keno-page {
     max-width: 100%;
@@ -1667,14 +1590,6 @@ footer a:hover { color: var(--accent); }
   .heatmap-legend-bar {
     gap: 0.3rem;
   }
-
-  .nav-logo {
-    width: 160px;
-    height: 40px;
-    background-position: center;
-  }
-
-  .nav-links { gap: 1.1rem; }
   .about-grid { grid-template-columns: 1fr; gap: 2rem; }
 
   .coty-inner {
@@ -2088,4 +2003,21 @@ footer a:hover { color: var(--accent); }
   border-color: var(--accent-bright);
   color: #130d09;
   box-shadow: 0 0 24px var(--accent-glow);
+}
+
+/* Mobile: Check Tickets spans the full screen width, breaking out of
+   the .keno-page side padding (1rem) so it runs edge to edge. */
+@media (max-width: 700px) {
+  /* Full-bleed regardless of the page's side padding. */
+  .keno-check-row {
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+
+  .btn-check-tickets {
+    max-width: none;
+    border-left: 0;
+    border-right: 0;
+    padding: 1.05rem 1rem;
+  }
 }
