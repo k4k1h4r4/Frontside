@@ -70,80 +70,12 @@ body::after {
 button {
   font: inherit;
 }
-
 .bingo-app,
-nav,
 .hero,
 .bingo-page {
   position: relative;
   z-index: 3;
 }
-
-nav {
-  height: 72px;
-  padding: 0 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 500;
-  border-bottom: 1px solid var(--accent-dim);
-  background: rgba(10, 7, 5, 0.88);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
-  backdrop-filter: blur(8px);
-}
-
-.nav-logo {
-  width: 190px;
-  height: 48px;
-  display: block;
-  flex: 0 0 auto;
-  overflow: hidden;
-  color: transparent;
-  text-decoration: none;
-  text-indent: -9999px;
-  background-image: url("images/Frontside.png");
-  background-position: left center;
-  background-repeat: no-repeat;
-  background-size: contain;
-  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.55));
-}
-
-.nav-links {
-  display: flex;
-  gap: 2.5rem;
-  list-style: none;
-}
-
-.nav-links a {
-  font-family: 'Oswald', sans-serif;
-  font-weight: 400;
-  font-size: 0.85rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  text-decoration: none;
-  transition: color 0.2s;
-  position: relative;
-  padding-bottom: 3px;
-}
-
-.nav-links a::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 1px;
-  background: var(--accent);
-  transform: scaleX(0);
-  transition: transform 0.25s;
-  transform-origin: left;
-}
-
-.nav-links a:hover { color: var(--text); }
-.nav-links a.active { color: var(--accent-bright); }
-.nav-links a:hover::after,
-.nav-links a.active::after { transform: scaleX(1); }
 
 .hero {
   width: 100%;
@@ -429,22 +361,6 @@ nav {
 }
 
 @media (max-width: 700px) {
-  nav {
-    height: auto;
-    min-height: 72px;
-    padding: 0.8rem 1rem;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    justify-content: center;
-  }
-
-  .nav-logo {
-    width: 160px;
-    height: 40px;
-    background-position: center;
-  }
-
-  .nav-links { gap: 1.1rem; }
 
   .hero {
     height: 28vh;
