@@ -446,7 +446,7 @@ button {
     line-height: 1.04;
   }
 }
-.bingo-landing #bingo-hero { height: auto; min-height: 0; padding: 30px 0 25px; border-bottom: 0; }
+.hero.bingo-header { height: auto; min-height: 0; padding: 30px 0 25px; border-bottom: 0; }
 .bingo-landing .bingo-chooser { position: relative; z-index: 3; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; width: min(100%,980px); margin: 0 auto; padding: 0 28px calc(36px + env(safe-area-inset-bottom)); }
 .bingo-landing .chooser-btn { --card-accent: #91b99a; position: relative; display: flex; flex-direction: column; width: 100%; min-width: 0; padding: 20px 28px 24px; border: 1px solid #736349; border-top: 3px solid var(--card-accent); border-radius: 5px; background: radial-gradient(ellipse at 50% 15%,#4a614638,transparent 65%),#191c19; box-shadow: 0 14px 30px #0004; color: var(--text); text-align: left; text-decoration: none; cursor: pointer; touch-action: manipulation; transition: transform .2s,border-color .2s,box-shadow .2s; }
 .bingo-landing .chooser-frontside { --card-accent: #e18d70; background: radial-gradient(ellipse at 50% 15%,#9c493334,transparent 65%),#241b18; }
@@ -461,7 +461,7 @@ button {
 .bingo-landing .chooser-btn:hover { transform: translateY(-4px); border-color: var(--card-accent); box-shadow: 0 20px 36px #0007; }
 .bingo-landing .chooser-btn:focus-visible { outline: 3px solid var(--accent-bright); outline-offset: 5px; }
 @media(max-width:700px) {
-  .bingo-landing #bingo-hero { padding: 25px 0 22px; }
+  .hero.bingo-header { padding: clamp(10px,2.5svh,25px) 0; }
   .bingo-landing .bingo-chooser { grid-template-columns: 1fr; gap: 16px; padding-inline: 16px; }
   .bingo-landing .chooser-btn { display: grid; grid-template-columns: 38% minmax(0,1fr); align-items: center; gap: 12px; padding: 18px 16px 18px 8px; min-height: 192px; }
   .bingo-landing .chooser-art svg { height: auto; }
@@ -469,6 +469,23 @@ button {
   .bingo-landing .chooser-title { font-size: clamp(27px,6vw,38px); }
   .bingo-landing .chooser-description { font-size: 12px; margin-top: 7px; }
   .bingo-landing .chooser-action { font-size: 10px; letter-spacing: .07em; margin-top: 16px; padding-top: 11px; }
+}
+/* Fit the mobile game chooser to the available viewport; the game can scroll. */
+@media(max-width:700px) {
+  html:has(.bingo-landing .bingo-chooser:not(.is-hidden)) { height: 100svh; overflow: hidden; }
+  .bingo-landing:has(.bingo-chooser:not(.is-hidden)) { height: 100svh; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .bingo-landing:has(.bingo-chooser:not(.is-hidden)) #bingo-hero { flex: none; }
+  .bingo-landing .bingo-chooser { flex: 1; min-height: 0; max-height: 540px; grid-template-rows: repeat(2,minmax(0,1fr)); gap: clamp(10px,2svh,16px); padding-bottom: max(12px,env(safe-area-inset-bottom)); }
+  .bingo-landing .chooser-btn { min-height: 0; padding-block: clamp(8px,1.8svh,18px); }
+  .bingo-landing .chooser-art { min-height: 0; height: 100%; display: flex; align-items: center; }
+  .bingo-landing .chooser-art svg { max-height: 100%; }
+  .bingo-landing .chooser-action { margin-top: clamp(7px,1.8svh,16px); padding-top: clamp(6px,1.2svh,11px); }
+}
+@media(max-width:700px) and (max-height:450px) {
+  .bingo-landing .bingo-chooser { grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: minmax(0,1fr); gap: 12px; }
+  .bingo-landing .chooser-btn { grid-template-columns: 30% minmax(0,1fr); padding-right: 8px; gap: 8px; }
+  .bingo-landing .chooser-title { font-size: 24px; }
+  .bingo-landing .chooser-kicker { margin-bottom: 4px; }
 }
 @media(prefers-reduced-motion:reduce) {
   .bingo-landing .chooser-btn,.bingo-landing .hero-content { transition: none; }
