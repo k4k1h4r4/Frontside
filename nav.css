@@ -1,63 +1,91 @@
+/* Frontside site nav
+   Load the font from your page <head> instead of @import for faster paint:
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400&display=swap">
+   If you'd rather keep it here, the @import below still works. */
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400&display=swap');
 
+.site-nav,
+.site-nav * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 .site-nav {
-  background: rgba(10, 7, 5, 0.88);
-  border-bottom: 1px solid #8c7425;
-  backdrop-filter: blur(8px);
-  padding: 0 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 72px;
   position: sticky;
   top: 0;
   z-index: 500;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.28);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+
+  /* fluid instead of a stacking breakpoint */
+  height: clamp(56px, 13vw, 72px);
+  padding-inline: clamp(0.9rem, 4vw, 2.5rem);
+  /* keep clear of notches in landscape */
+  padding-left: max(clamp(0.9rem, 4vw, 2.5rem), env(safe-area-inset-left));
+  padding-right: max(clamp(0.9rem, 4vw, 2.5rem), env(safe-area-inset-right));
+
+  line-height: normal;
+  background: rgba(10, 7, 5, 0.88);
+  border-bottom: 1px solid #8c7425;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
 }
 
 .site-nav .nav-logo {
-  width: 190px;
-  height: 48px;
+  flex-shrink: 0;
   display: block;
-  text-decoration: none;
+  width: clamp(120px, 32vw, 190px);
+  height: clamp(32px, 8.5vw, 48px);
   background-image: url("images/Frontside-nav.webp");
   background-repeat: no-repeat;
   background-size: contain;
   background-position: left center;
-  color: transparent;
+  text-decoration: none;
   text-indent: -9999px;
+  color: transparent;
   overflow: hidden;
-  filter: drop-shadow(0 4px 18px rgba(0,0,0,0.55));
+  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.55));
 }
 
 .site-nav .nav-links {
   display: flex;
-  gap: 2.5rem;
+  align-items: center;
+  gap: clamp(0.85rem, 4vw, 2.5rem);
   list-style: none;
 }
 
 .site-nav .nav-links a {
-  font-family: 'Oswald', sans-serif;
+  position: relative;
+  display: block;
+  padding-bottom: 3px;
+  font-family: 'Oswald', 'Arial Narrow', sans-serif;
   font-weight: 400;
-  font-size: 0.85rem;
-  letter-spacing: 0.22em;
+  font-size: clamp(0.68rem, 2.6vw, 0.85rem);
+  letter-spacing: clamp(0.07em, 0.7vw, 0.22em);
   text-transform: uppercase;
+  white-space: nowrap;
   color: #aab0bd;
   text-decoration: none;
   transition: color 0.2s;
-  position: relative;
-  padding-bottom: 3px;
 }
 
 .site-nav .nav-links a::after {
   content: '';
   position: absolute;
-  bottom: 0; left: 0; right: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: 1px;
   background: #d4af37;
   transform: scaleX(0);
-  transition: transform 0.25s;
   transform-origin: left;
+  transition: transform 0.25s;
 }
 
 .site-nav .nav-links a:hover { color: #e6e8ee; }
@@ -65,14 +93,48 @@
 .site-nav .nav-links a:hover::after,
 .site-nav .nav-links a.active::after { transform: scaleX(1); }
 
-.site-nav { flex-shrink: 0; line-height: normal; }
-.site-nav, .site-nav * { box-sizing: border-box; margin: 0; padding: 0; }
-.site-nav { padding: 0 2.5rem; }
-.site-nav .nav-logo { flex-shrink: 0; }
-.site-nav .nav-links a { padding-bottom: 3px; }
-.site-nav a:focus-visible { outline: 2px solid #f5d76e; outline-offset: 5px; }
-@media (max-width: 700px) {
-  .site-nav { padding: .8rem 1rem; height: auto; min-height: 72px; flex-direction: column; gap: .75rem; justify-content: center; }
-  .site-nav .nav-logo { width: 160px; height: 40px; background-position: center; }
-  .site-nav .nav-links { gap: 1.1rem; }
+.site-nav a:focus-visible {
+  outline: 2px solid #f5d76e;
+  outline-offset: 5px;
+  border-radius: 2px;
 }
+
+/* Bigger tap targets on touch devices without changing the visual height */
+@media (hover: none) {
+  .site-nav .nav-links a {
+    padding-block: 0.75rem;
+    padding-bottom: calc(0.75rem + 3px);
+    margin-block: -0.75rem;
+  }
+  .site-nav .nav-links a:hover { color: #aab0bd; }
+  .site-nav .nav-links a:hover::after { transform: scaleX(0); }
+  .site-nav .nav-links a.active { color: #f5d76e; }
+  .site-nav .nav-links a.active::after { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-nav .nav-links a,
+  .site-nav .nav-links a::after {
+    transition: none;
+  }
+}
+
+/* Skip link — pairs with the <a class="skip-link"> snippet in your page template */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 600;
+  padding: 0.6rem 1rem;
+  background: #0a0705;
+  color: #f5d76e;
+  font-family: 'Oswald', sans-serif;
+  text-decoration: none;
+}
+.skip-link:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+}
+
+/* So sticky nav doesn't cover in-page anchor targets */
+html { scroll-padding-top: 80px; }
