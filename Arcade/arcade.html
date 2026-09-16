@@ -20,6 +20,42 @@ main{max-width:1080px;margin:0 auto;padding:32px 28px 22px}.cabinet{position:rel
 .cabinet-base{height:68px;display:flex;align-items:center;justify-content:center;gap:22px;background:linear-gradient(90deg,#21170f,#302116 50%,#21170f);border-top:7px solid #100b08}.coin{font:11px var(--label);letter-spacing:2px;color:#d9be76;border:3px solid #0d0c0a;box-shadow:0 0 0 1px #6b5540;background:#171611;padding:7px 12px}.coin:before{content:'';display:inline-block;vertical-align:middle;width:5px;height:15px;background:#030303;margin-right:10px;box-shadow:1px 0 #7c7057}.vents{width:60px;height:26px;background:repeating-linear-gradient(0deg,transparent 0 4px,#080705 4px 6px);opacity:.7}
 @media(max-width:700px){html{height:100svh;overflow:hidden}body{height:100svh;min-height:0;display:flex;flex-direction:column;overflow:hidden}main{flex:1;min-height:0;display:flex;overflow:hidden;padding:clamp(6px,1.4svh,14px) 10px}.cabinet{flex:1;min-height:0;display:flex;flex-direction:column;padding:clamp(6px,1.1svh,11px) 12px 0;border-radius:20px 20px 8px 8px}.cabinet:before{left:5px}.cabinet:after{right:5px;bottom:clamp(74px,13svh,110px)}.cabinet:before{bottom:clamp(74px,13svh,110px)}.marquee{flex:none;padding:clamp(5px,1.1svh,12px) 6px clamp(4px,.9svh,10px);border-width:4px;border-radius:14px 14px 4px 4px}.marquee h1{font-size:clamp(34px,6.4svh,58px);letter-spacing:6px;margin:2px 0}.marquee .brand{font-size:clamp(9px,1.3svh,12px);letter-spacing:4px}.marquee p{font-size:clamp(9px,1.2svh,11px);margin-top:clamp(2px,.6svh,7px)}.marquee:before,.marquee:after{width:15%}.bezel{flex:1;min-height:0;display:flex;margin-top:clamp(5px,1svh,11px);padding:clamp(8px,1.6svh,16px) 10px}.screen{flex:1;min-height:0;display:flex;flex-direction:column;padding:clamp(9px,1.7svh,16px) 12px;border-radius:20px}.screen-header{flex:none;margin-bottom:clamp(7px,1.3svh,13px);padding-bottom:clamp(6px,1.1svh,11px)}.screen-header h2{font-size:clamp(17px,2.6svh,22px)}.screen-header span{font-size:10px;letter-spacing:1px}.games{flex:1;min-height:0;grid-template-columns:1fr;grid-auto-rows:minmax(0,1fr);gap:clamp(6px,1.1svh,11px)}.game{display:grid;grid-template-columns:clamp(54px,14vw,74px) minmax(0,1fr);column-gap:12px;align-content:center;min-height:0;overflow:hidden;padding:clamp(6px,1.1svh,12px) 12px}.game-top{grid-column:2;font-size:9.5px;letter-spacing:1px}.art{grid-column:1;grid-row:1/4;height:clamp(42px,7.4svh,74px);align-self:center;margin:0}.game h3{grid-column:2;font-size:clamp(19px,2.9svh,26px);margin:clamp(1px,.4svh,5px) 0}.game p{grid-column:2;font-size:clamp(11px,1.6svh,13px);line-height:1.35;margin:0}.screen-footer{flex:none;font-size:9.5px;letter-spacing:1px;margin-top:clamp(7px,1.3svh,14px)}.control-deck{flex:none;height:clamp(52px,8.6svh,84px);padding:8px 7%;border-top-width:4px}.deck-label{font-size:clamp(9px,1.4svh,11px);letter-spacing:2px}.deck-label small{font-size:9px;margin-top:2px}.buttons{gap:7px}.buttons i{width:clamp(22px,4svh,30px);height:clamp(22px,4svh,30px);border-width:3px}.joystick{transform:scale(.7);transform-origin:left center;width:60px}.cabinet-base{flex:none;height:clamp(30px,5svh,50px);border-top-width:5px}.coin{font-size:10px;padding:5px 10px}.vents{height:18px}}
 @media(max-width:700px) and (max-height:600px){.marquee h1{font-size:clamp(30px,6svh,44px)}.game p{display:none}.game h3{margin:2px 0}.art{grid-row:1/3;height:clamp(38px,7svh,60px)}.screen-footer{font-size:9px;margin-top:8px}}
+/* Painted cabinet, raised control shelf, and a recessed kick panel. */
+body{background:radial-gradient(ellipse at 50% 35%,#33434b 0,transparent 68%),#0d141a}
+main{max-width:1000px;padding-top:28px;padding-bottom:36px}
+.cabinet{padding:16px 28px 0;border:2px solid #e5bc7b;border-bottom:10px solid #171818;border-radius:18px 18px 6px 6px;background:linear-gradient(90deg,#72291f,#c7583e 3%,#a63b2d 7%,#923126 93%,#d06847 97%,#70251d);box-shadow:0 28px 65px #000a,0 0 45px #b9552720,inset 0 0 0 5px #55241e}
+.cabinet:before,.cabinet:after{top:16px;bottom:94px;width:5px;background:#f0cf8c;box-shadow:1px 0 0 #fff0c9,3px 0 0 #62261e;border-radius:3px}
+.cabinet:before{left:10px}.cabinet:after{right:10px}
+.marquee{border-radius:8px 8px 3px 3px;border-color:#211b17;background:radial-gradient(ellipse,#b67537,#754223 65%,#4a291b);box-shadow:inset 0 0 0 2px #f5d99b,inset 0 0 26px #ffcb6440,0 7px 0 #54251e}
+.bezel{margin:16px 7px 0;padding:28px 24px 26px;border-color:#6f6658;border-bottom:8px solid #090c0c;background:linear-gradient(125deg,#343635,#171c1c 48%,#272b29);box-shadow:inset 0 0 0 6px #121717,inset 0 12px 20px #0009}
+.control-deck{isolation:isolate;z-index:1;height:130px;margin:0 -39px;padding:10px 8% 23px;gap:14px;border:0;border-radius:5px 5px 9px 9px;background:none;box-shadow:0 12px 14px -8px #000b}
+.control-deck:before{content:'';position:absolute;inset:0 0 17px;z-index:-1;clip-path:polygon(3% 0,97% 0,100% 100%,0 100%);background:linear-gradient(180deg,#eed6a0 0 3px,#6f766e 3px 6px,#283634 7px,#43534b 100%)}
+.control-deck:after{content:'';position:absolute;inset:auto 0 0;height:20px;z-index:-1;border-radius:0 0 8px 8px;border-top:4px solid #f3d69c;border-bottom:4px solid #53251f;background:#b84833;box-shadow:0 3px 0 #151a19}
+.joystick{width:100px;height:90px;flex:none;background:none;border-radius:0;box-shadow:none;transform:none}
+.joystick:before,.joystick:after{content:none}
+.joystick svg{display:block;width:100%;height:100%;overflow:visible}
+.deck-label{color:#f4ddb0;font-size:13px;letter-spacing:3px;text-shadow:0 2px 1px #0008}
+.deck-label small{color:#b9c8bb;font-size:10px}
+.buttons{gap:12px;transform:none;flex:none;align-items:center;padding-top:15px}
+.buttons i{position:relative;width:46px;height:35px;border:3px solid #111b1b;border-radius:50%;background:linear-gradient(#fce598,#dba83d);box-shadow:0 5px 0 #947029,0 8px 0 3px #111b1b,0 10px 5px #0008,inset 0 2px 0 #fff2bd}
+.buttons i:nth-child(2){margin-top:-15px;background:linear-gradient(#f78c69,#ce4930);box-shadow:0 5px 0 #883124,0 8px 0 3px #111b1b,0 10px 5px #0008,inset 0 2px 0 #ffc5a0}
+.buttons i:last-child{background:linear-gradient(#9ac7ba,#4c9888);box-shadow:0 5px 0 #32695f,0 8px 0 3px #111b1b,0 10px 5px #0008,inset 0 2px 0 #d4ede0}
+.cabinet-base{height:106px;margin:0 10px;gap:28px;border-top:8px solid #55251e;background:linear-gradient(90deg,#63291f,#a44130 12%,#a44130 88%,#63291f);box-shadow:inset 0 12px 16px #0005}
+.coin{padding:12px 17px;border:5px solid #161d1c;border-radius:4px;background:linear-gradient(#343d39,#1c2523);box-shadow:0 0 0 1px #b18964,0 3px 5px #0006}
+.vents{width:68px;height:32px;opacity:1;background:repeating-linear-gradient(0deg,transparent 0 5px,#321b17 5px 8px)}
+@media(max-width:700px){
+ main{padding:clamp(6px,1.4svh,14px) 17px}
+ .cabinet{padding:clamp(6px,1.1svh,11px) 12px 0;border-radius:12px 12px 5px 5px;border-bottom-width:6px}
+ .cabinet:before,.cabinet:after{width:3px;top:12px;bottom:62px}.cabinet:before{left:4px}.cabinet:after{right:4px}
+ .marquee{border-radius:6px 6px 2px 2px}
+ .bezel{margin:clamp(7px,1.2svh,12px) 0 0;padding:clamp(8px,1.6svh,16px) 10px;border-bottom-width:5px}
+ .control-deck{height:clamp(66px,11svh,94px);margin:0 -21px;padding:2px 7% 16px;gap:8px}
+ .control-deck:before{bottom:13px}.control-deck:after{height:16px;border-top-width:3px;border-bottom-width:3px}
+ .joystick{width:clamp(55px,10svh,76px);height:clamp(50px,9svh,70px);transform:none}
+ .deck-label{font-size:clamp(9px,1.4svh,11px);letter-spacing:1px}.deck-label small{font-size:8px;letter-spacing:1px}
+ .buttons{gap:8px;padding-top:8px}.buttons i{width:clamp(23px,6vw,34px);height:clamp(19px,4.6vw,26px);border-width:2px}.buttons i:nth-child(2){margin-top:-10px}
+ .cabinet-base{height:clamp(40px,6.5svh,58px);margin:0 3px;gap:18px;border-top-width:5px}.coin{font-size:9px;padding:4px 8px;border-width:3px}.vents{width:38px;height:24px}
+}
 @media(prefers-reduced-motion:reduce){.game{transition:none}.game:hover{transform:none}}
 </style>
 
@@ -52,9 +88,23 @@ main{max-width:1080px;margin:0 auto;padding:32px 28px 22px}.cabinet{position:rel
      <svg class="art" viewBox="0 0 180 120" aria-hidden="true"><g stroke="#fff2cf" stroke-width="1"><path d="M29 104H153V112H29Z" fill="#e8d5ab"/><path d="M36 92H153V100H36Z" fill="#f5d99e"/><path d="M36 80H141V88H36Z" fill="#ebc886"/><path d="M44 68H141V76H44Z" fill="#fff0c4"/><path d="M44 56H130V64H44Z" fill="#f5d99e"/><path d="M52 44H130V52H52Z" fill="#e8d5ab"/><path d="M74 20H152V28H74Z" fill="#fff0c4"/></g><path d="M34 23H60M39 18L34 23L39 28" fill="none" stroke="#f5d76e" stroke-width="2"/></svg>
      <h3>COASTER STACKING</h3><p>Keep the overlap. Lose the edge. Stack it high.</p>
     </a>
-   </div><p class="screen-footer">NO COINS. NO DOWNLOADS. JUST ONE MORE GAME.</p>
+   </div>
   </div></div>
-  <div class="control-deck" aria-hidden="true"><div class="joystick"></div><div class="deck-label">PULL UP. PLAY.<small>FRONTSIDE ARCADE</small></div><div class="buttons"><i></i><i></i></div></div>
+  <div class="control-deck" aria-hidden="true">
+   <div class="joystick"><svg viewBox="0 0 100 90" focusable="false">
+    <defs>
+     <radialGradient id="stick-ball" cx="32%" cy="24%" r="75%"><stop stop-color="#ffbe91"/><stop offset=".3" stop-color="#ef6b46"/><stop offset=".7" stop-color="#bf3525"/><stop offset="1" stop-color="#6d211c"/></radialGradient>
+     <linearGradient id="stick-shaft"><stop stop-color="#657a79"/><stop offset=".4" stop-color="#eff5dc"/><stop offset=".65" stop-color="#a6b7ae"/><stop offset="1" stop-color="#465c5a"/></linearGradient>
+    </defs>
+    <ellipse cx="51" cy="77" rx="37" ry="10" fill="#0b1717" opacity=".5"/>
+    <ellipse cx="50" cy="72" rx="32" ry="12" fill="#111b1c" stroke="#859389" stroke-width="2"/>
+    <ellipse cx="50" cy="70" rx="21" ry="7" fill="#303f3b" stroke="#080f10" stroke-width="3"/>
+    <rect x="45" y="29" width="10" height="42" rx="4" fill="url(#stick-shaft)" stroke="#152321" stroke-width="1.5"/>
+    <circle cx="50" cy="26" r="21" fill="url(#stick-ball)" stroke="#71271e" stroke-width="1.5"/>
+    <ellipse cx="43" cy="17" rx="7" ry="4" fill="#ffe0b1" opacity=".55" transform="rotate(-30 43 17)"/>
+   </svg></div>
+   <div class="buttons"><i></i><i></i><i></i></div>
+  </div>
   <div class="cabinet-base" aria-hidden="true"><div class="vents"></div><div class="coin">FREE PLAY</div><div class="vents"></div></div>
  </section>
 </main>
