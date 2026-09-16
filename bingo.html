@@ -10,63 +10,6 @@
     <meta name="theme-color" content="#0b0705">	   
     <link rel="stylesheet" href="bingo.css?v=2026-09-15-02">
     <style>
-      /* ── Landing chooser ── */
-      .bingo-chooser {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 2rem 1.25rem calc(3rem + env(safe-area-inset-bottom));
-        width: min(100%, 780px);
-        margin: 0 auto;
-      }
-
-      .chooser-btn {
-        width: 100%;
-        max-width: 480px;
-        min-height: 3.6rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid var(--accent-dim);
-        background: rgba(178, 122, 70, 0.05);
-        color: var(--accent-bright);
-        cursor: pointer;
-        font-family: 'Oswald', Arial, sans-serif;
-        font-size: 1rem;
-        font-weight: 600;
-        letter-spacing: 0.22em;
-        text-transform: uppercase;
-        text-decoration: none;
-        transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.18s;
-        touch-action: manipulation;
-      }
-
-      .chooser-btn:hover,
-      .chooser-btn:focus-visible {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: #130d09;
-        box-shadow: 0 0 22px var(--accent-glow);
-        outline: none;
-      }
-
-      .chooser-btn:active {
-        transform: translateY(1px);
-      }
-
-      @media (max-width: 700px) {
-        .bingo-chooser {
-          padding-left: 0.85rem;
-          padding-right: 0.85rem;
-          gap: 0.6rem;
-        }
-
-        .chooser-btn {
-          max-width: 100%;
-        }
-      }
-
       /* ── Hero transition ── */
       .hero-content {
         transition: opacity 0.35s ease;
@@ -92,7 +35,7 @@
   <script defer src="nav.js?v=2026-09-15-02"></script>
   <script defer src="site-update.js?v=2026-09-15-02"></script>
 </head>
-  <body>
+  <body class="bingo-landing">
     <nav class="site-nav" data-site-nav aria-label="Main navigation"></nav>
   <noscript><a href="index.html">Frontside home</a></noscript>
 
@@ -110,8 +53,45 @@
 
     <!-- Chooser buttons -->
     <div class="bingo-chooser" id="bingo-chooser" role="group" aria-label="Choose bingo game">
-      <a href="keno-bingo.html" class="chooser-btn">Keno Bingo</a>
-      <button id="btn-frontside-bingo" class="chooser-btn" type="button">Frontside Bingo</button>
+      <a href="keno-bingo.html" class="chooser-btn chooser-keno" aria-label="Play Keno Bingo">
+        <span class="chooser-art" aria-hidden="true">
+          <svg viewBox="0 0 290 250" focusable="false">
+            <g transform="rotate(-8 130 125)">
+              <rect x="25" y="17" width="208" height="217" rx="5" fill="#000" opacity=".3" transform="translate(4 7)"/>
+              <rect x="25" y="17" width="208" height="217" rx="5" fill="#d8c38f"/>
+              <path d="M25 22Q25 17 30 17H228Q233 17 233 22V49H25Z" fill="#32644f"/>
+              <text x="129" y="40" text-anchor="middle" fill="#fff0c8" font-size="19" letter-spacing="11">BINGO</text>
+              <g font-family="Oswald, sans-serif" font-size="15"><rect x="35" y="57" width="34" height="28" rx="2" fill="#42876b"/><text x="52" y="76" text-anchor="middle" fill="#fff5d6">2</text><rect x="73" y="57" width="34" height="28" rx="2" fill="#efe0b8"/><text x="90" y="76" text-anchor="middle" fill="#4d3b29">5</text><rect x="111" y="57" width="34" height="28" rx="2" fill="#efe0b8"/><text x="128" y="76" text-anchor="middle" fill="#4d3b29">8</text><rect x="149" y="57" width="34" height="28" rx="2" fill="#efe0b8"/><text x="166" y="76" text-anchor="middle" fill="#4d3b29">11</text><rect x="187" y="57" width="34" height="28" rx="2" fill="#efe0b8"/><text x="204" y="76" text-anchor="middle" fill="#4d3b29">14</text><rect x="35" y="89" width="34" height="28" rx="2" fill="#efe0b8"/><text x="52" y="108" text-anchor="middle" fill="#4d3b29">17</text><rect x="73" y="89" width="34" height="28" rx="2" fill="#42876b"/><text x="90" y="108" text-anchor="middle" fill="#fff5d6">20</text><rect x="111" y="89" width="34" height="28" rx="2" fill="#efe0b8"/><text x="128" y="108" text-anchor="middle" fill="#4d3b29">23</text><rect x="149" y="89" width="34" height="28" rx="2" fill="#efe0b8"/><text x="166" y="108" text-anchor="middle" fill="#4d3b29">26</text><rect x="187" y="89" width="34" height="28" rx="2" fill="#efe0b8"/><text x="204" y="108" text-anchor="middle" fill="#4d3b29">29</text><rect x="35" y="121" width="34" height="28" rx="2" fill="#efe0b8"/><text x="52" y="140" text-anchor="middle" fill="#4d3b29">32</text><rect x="73" y="121" width="34" height="28" rx="2" fill="#efe0b8"/><text x="90" y="140" text-anchor="middle" fill="#4d3b29">35</text><rect x="111" y="121" width="34" height="28" rx="2" fill="#42876b"/><text x="128" y="140" text-anchor="middle" fill="#fff5d6">38</text><rect x="149" y="121" width="34" height="28" rx="2" fill="#efe0b8"/><text x="166" y="140" text-anchor="middle" fill="#4d3b29">41</text><rect x="187" y="121" width="34" height="28" rx="2" fill="#efe0b8"/><text x="204" y="140" text-anchor="middle" fill="#4d3b29">44</text><rect x="35" y="153" width="34" height="28" rx="2" fill="#efe0b8"/><text x="52" y="172" text-anchor="middle" fill="#4d3b29">47</text><rect x="73" y="153" width="34" height="28" rx="2" fill="#efe0b8"/><text x="90" y="172" text-anchor="middle" fill="#4d3b29">50</text><rect x="111" y="153" width="34" height="28" rx="2" fill="#efe0b8"/><text x="128" y="172" text-anchor="middle" fill="#4d3b29">53</text><rect x="149" y="153" width="34" height="28" rx="2" fill="#42876b"/><text x="166" y="172" text-anchor="middle" fill="#fff5d6">56</text><rect x="187" y="153" width="34" height="28" rx="2" fill="#efe0b8"/><text x="204" y="172" text-anchor="middle" fill="#4d3b29">59</text><rect x="35" y="185" width="34" height="28" rx="2" fill="#efe0b8"/><text x="52" y="204" text-anchor="middle" fill="#4d3b29">62</text><rect x="73" y="185" width="34" height="28" rx="2" fill="#efe0b8"/><text x="90" y="204" text-anchor="middle" fill="#4d3b29">65</text><rect x="111" y="185" width="34" height="28" rx="2" fill="#efe0b8"/><text x="128" y="204" text-anchor="middle" fill="#4d3b29">68</text><rect x="149" y="185" width="34" height="28" rx="2" fill="#efe0b8"/><text x="166" y="204" text-anchor="middle" fill="#4d3b29">71</text><rect x="187" y="185" width="34" height="28" rx="2" fill="#42876b"/><text x="204" y="204" text-anchor="middle" fill="#fff5d6">74</text></g>
+            </g>
+            <circle cx="238" cy="183" r="29" fill="#000" opacity=".25"/>
+            <circle cx="238" cy="177" r="28" fill="#cfa747" stroke="#f5d98a" stroke-width="2"/>
+            <circle cx="238" cy="177" r="18" fill="#fff1cb"/>
+            <text x="238" y="184" text-anchor="middle" fill="#4d3b29" font-size="21">21</text>
+            <circle cx="49" cy="222" r="22" fill="#b74932" stroke="#ec9670" stroke-width="2"/>
+            <circle cx="49" cy="222" r="14" fill="#fff1cb"/>
+            <text x="49" y="228" text-anchor="middle" fill="#4d3b29" font-size="17">7</text>
+          </svg>
+        </span>
+        <span class="chooser-copy"><span class="chooser-kicker">BY THE NUMBERS</span><span class="chooser-title">Keno Bingo</span><span class="chooser-description">Follow the draw.</span><span class="chooser-action">Play Keno Bingo <span aria-hidden="true">↗</span></span></span>
+      </a>
+      <button id="btn-frontside-bingo" class="chooser-btn chooser-frontside" type="button" aria-label="Play Frontside Bingo">
+        <span class="chooser-art" aria-hidden="true">
+          <svg viewBox="0 0 290 250" focusable="false">
+            <g transform="rotate(7 135 125)">
+              <rect x="25" y="17" width="208" height="217" rx="5" fill="#000" opacity=".3" transform="translate(4 7)"/>
+              <rect x="25" y="17" width="208" height="217" rx="5" fill="#e8d3a3"/>
+              <path d="M25 22Q25 17 30 17H228Q233 17 233 22V49H25Z" fill="#963e31"/>
+              <text x="129" y="40" text-anchor="middle" fill="#fff0c8" font-size="18" letter-spacing="4">FRONTSIDE</text>
+              <rect x="36" y="57" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="83" y="57" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="130" y="57" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="177" y="57" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="36" y="96" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="83" y="96" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="130" y="96" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="177" y="96" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="36" y="135" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="83" y="135" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="130" y="135" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="177" y="135" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="36" y="174" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="83" y="174" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="130" y="174" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/><rect x="177" y="174" width="43" height="35" rx="2" fill="#ecdbb3" stroke="#b79b6b"/>
+              <g fill="#775c3d" font-size="9" text-anchor="middle"><text x="57" y="71">SHOTS<tspan x="57" dy="11">ORDERED</tspan></text><text x="104" y="110">KENO<tspan x="104" dy="11">ALARM</tspan></text><text x="151" y="149">DRINK<tspan x="151" dy="11">SPILLED</tspan></text><text x="198" y="188">BIG<tspan x="198" dy="11">WIN</tspan></text></g>
+              <g fill="#b93e31" opacity=".65"><circle cx="57" cy="74" r="16"/><circle cx="104" cy="113" r="16"/><circle cx="151" cy="152" r="16"/><circle cx="198" cy="191" r="16"/></g>
+              <path d="M58 215H198" stroke="#b69767" stroke-width="2"/>
+            </g>
+            <g transform="rotate(22 248 186)"><rect x="236" y="143" width="25" height="79" rx="8" fill="#a5372b" stroke="#e07b59" stroke-width="2"/><rect x="235" y="139" width="27" height="21" rx="5" fill="#e4ba80"/><path d="M243 170V206" stroke="#d6684c" stroke-width="4"/></g>
+          </svg>
+        </span>
+        <span class="chooser-copy"><span class="chooser-kicker">AROUND THE BAR</span><span class="chooser-title">Frontside Bingo</span><span class="chooser-description">Spot it. Mark it.</span><span class="chooser-action">Play Frontside Bingo <span aria-hidden="true">→</span></span></span>
+      </button>
     </div>
 
     <!-- Full bingo game (hidden until Frontside Bingo chosen) -->

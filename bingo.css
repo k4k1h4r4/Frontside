@@ -446,3 +446,31 @@ button {
     line-height: 1.04;
   }
 }
+.bingo-landing #bingo-hero { height: auto; min-height: 0; padding: 30px 0 25px; border-bottom: 0; }
+.bingo-landing .bingo-chooser { position: relative; z-index: 3; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; width: min(100%,980px); margin: 0 auto; padding: 0 28px calc(36px + env(safe-area-inset-bottom)); }
+.bingo-landing .chooser-btn { --card-accent: #91b99a; position: relative; display: flex; flex-direction: column; width: 100%; min-width: 0; padding: 20px 28px 24px; border: 1px solid #736349; border-top: 3px solid var(--card-accent); border-radius: 5px; background: radial-gradient(ellipse at 50% 15%,#4a614638,transparent 65%),#191c19; box-shadow: 0 14px 30px #0004; color: var(--text); text-align: left; text-decoration: none; cursor: pointer; touch-action: manipulation; transition: transform .2s,border-color .2s,box-shadow .2s; }
+.bingo-landing .chooser-frontside { --card-accent: #e18d70; background: radial-gradient(ellipse at 50% 15%,#9c493334,transparent 65%),#241b18; }
+.bingo-landing .chooser-art { display: block; width: 100%; }
+.bingo-landing .chooser-art svg { display: block; width: 100%; height: 235px; font-family: 'Oswald',sans-serif; filter: drop-shadow(0 10px 12px #0004); }
+.bingo-landing .chooser-copy { display: flex; flex: 1; flex-direction: column; width: 100%; }
+.bingo-landing .chooser-kicker { margin: 18px 0 8px; font: 11px 'Oswald',sans-serif; letter-spacing: .22em; color: var(--card-accent); }
+.bingo-landing .chooser-title { font: clamp(32px,4vw,44px)/1.05 'Bebas Neue',Impact,sans-serif; color: #f5dfac; }
+.bingo-landing .chooser-description { display: block; margin-top: 10px; font: 14px/1.5 'Special Elite',Georgia,serif; color: #c6bca8; }
+.bingo-landing .chooser-action { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 24px; padding-top: 17px; border-top: 1px solid #d9b77536; font: 12px 'Oswald',sans-serif; letter-spacing: .13em; text-transform: uppercase; color: #f5dfac; }
+.bingo-landing .chooser-action > span { font-size: 22px; color: var(--card-accent); }
+.bingo-landing .chooser-btn:hover { transform: translateY(-4px); border-color: var(--card-accent); box-shadow: 0 20px 36px #0007; }
+.bingo-landing .chooser-btn:focus-visible { outline: 3px solid var(--accent-bright); outline-offset: 5px; }
+@media(max-width:700px) {
+  .bingo-landing #bingo-hero { padding: 25px 0 22px; }
+  .bingo-landing .bingo-chooser { grid-template-columns: 1fr; gap: 16px; padding-inline: 16px; }
+  .bingo-landing .chooser-btn { display: grid; grid-template-columns: 38% minmax(0,1fr); align-items: center; gap: 12px; padding: 18px 16px 18px 8px; min-height: 192px; }
+  .bingo-landing .chooser-art svg { height: auto; }
+  .bingo-landing .chooser-kicker { margin: 0 0 8px; font-size: 9px; letter-spacing: .15em; }
+  .bingo-landing .chooser-title { font-size: clamp(27px,6vw,38px); }
+  .bingo-landing .chooser-description { font-size: 12px; margin-top: 7px; }
+  .bingo-landing .chooser-action { font-size: 10px; letter-spacing: .07em; margin-top: 16px; padding-top: 11px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .bingo-landing .chooser-btn,.bingo-landing .hero-content { transition: none; }
+  .bingo-landing .chooser-btn:hover { transform: none; }
+}
