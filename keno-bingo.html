@@ -800,6 +800,9 @@
       let lobbyRetryTimer  = null;
       let lastHealAt       = 0;
       const HEAL_COOLDOWN_MS = 6000;
+      // How long a lobby row with no race to wait for is tolerated before it is
+      // treated as corrupt. Comfortably longer than a Keno draw interval.
+      const GHOST_ROW_MS     = 15 * 60 * 1000;
 
       /* ─────────────────────────────────────────
          DOM
@@ -1374,10 +1377,16 @@
               return;
             }
 
-            // No draw missed. Now that latestRaceId is known, re-check the lobby —
-            // this is the first point at which self-heal can safely tell whether a
-            // restored lock is still a live entry. (subscribeLobby's fetch runs
-            // before this and deliberately skips healing.)
+            // No draw missed for US — but other players' rounds may have gone
+            // unresolved while every tab was closed. Sweep them now: without this a
+            // stranded card sits in the waiting room until the next live draw, and is
+            // then scored against the wrong balls.
+            await sweepStaleRounds();
+
+            // Now that latestRaceId is known, re-check the lobby — this is the first
+            // point at which self-heal can safely tell whether a restored lock is still
+            // a live entry. (subscribeLobby's fetch runs before this and deliberately
+            // skips healing.)
             fetchLobby();
             return;
           }
@@ -1513,73 +1522,156 @@
         myRowId = null;
       }
 
+      // Balls + game ref for one specific race. Cached so cleaning up several stale
+      // rounds in one pass does not re-fetch the same draw once per round.
+      const drawCache = new Map();
+      async function getDrawForRace(raceId) {
+        if (drawCache.has(raceId)) return drawCache.get(raceId);
+        const data = await fetchDraw(raceId);
+        drawCache.set(raceId, data);
+        return data;
+      }
+
+      // Score one round's lobby rows against the balls THAT round was drawn for,
+      // filling in results for players whose own browser never recorded one.
+      function resolveRoundRows(rows, drawnBalls) {
+        const drawnSet = new Set(drawnBalls);
+
+        const resolvedRows = rows.map(r => {
+          if (r.round_complete) return r; // already recorded by the player's own browser
+          if (!r.card_numbers)  return r; // no card data — can't calculate
+          let numbers;
+          try { numbers = JSON.parse(r.card_numbers); } catch (_) { return r; }
+
+          const marked   = numbers.map(n => n === null ? true : drawnSet.has(n));
+          const progress = bestBingoProgress(marked);
+          return { ...r, best_line: progress.str, matched_count: progress.hits, round_complete: true };
+        });
+
+        // Deduplicate by player_name — keep the row with the highest matched_count
+        const byName = {};
+        resolvedRows.forEach(r => {
+          const existing = byName[r.player_name];
+          if (!existing || (r.matched_count || 0) > (existing.matched_count || 0)) {
+            byName[r.player_name] = r;
+          }
+        });
+        return Object.values(byName);
+      }
+
       /* ─────────────────────────────────────────
          SUPABASE — SNAPSHOT → RESULTS, CLEAR LOBBY
       ───────────────────────────────────────── */
-      async function snapshotAndClearLobby(newRaceId, gameRef, drawnBalls) {
-        try {
-          // 1. Read ONLY the rows belonging to the round this draw resolves.
-          //    race_id_waiting holds the last completed race at the moment that player
-          //    locked, so anyone with race_id_waiting < newRaceId locked before this
-          //    draw and is being resolved by it. Anyone with race_id_waiting >= newRaceId
-          //    locked after it was already known and is waiting for a LATER draw —
-          //    their rows must survive. Every client runs this on its own 90s cycle,
-          //    so an unscoped read/delete lets a lagging client wipe rows that a player
-          //    created for the next round (the "joined but not in the lobby" bug).
-          const { data: rows } = await sb
-            .from(LOBBY_TABLE)
-            .select('player_name, best_line, matched_count, round_complete, card_numbers, race_id_waiting')
-            .lt('race_id_waiting', newRaceId);
+      // Resolves EVERY round whose draw has already been published, not just our own.
+      //
+      // race_id_waiting holds the last completed race at the moment that player locked,
+      // so their draw is race_id_waiting + 1. Any row with race_id_waiting < boundary
+      // is waiting for a draw that has already happened and can be scored; rows at or
+      // above the boundary are waiting for a FUTURE draw and must survive untouched
+      // (that is the "joined but not in the lobby" guard).
+      //
+      // The boundary is the newest race we know of — NOT the race we personally just
+      // resolved. Scoping it to our own race is what stranded players: two people who
+      // lock either side of a draw land in different rounds, and when both tabs are
+      // closed the later round has no live client to resolve it. Whoever came back
+      // swept only their own round, so the other card sat in the waiting room forever
+      // and its results were never published.
+      //
+      // `known` is the draw we already hold in hand ({ raceId, ref, balls }), so the
+      // common single-round case costs no extra feed request.
+      async function resolveLobbyRounds(boundary, known = null) {
+        if (!Number.isFinite(boundary)) return;
 
-          if (rows && rows.length > 0) {
-            const drawnSet = new Set(drawnBalls);
+        const { data: rows, error } = await sb
+          .from(LOBBY_TABLE)
+          .select('player_name, best_line, matched_count, round_complete, card_numbers, race_id_waiting')
+          .lt('race_id_waiting', boundary);
 
-            // For any player who didn't record their own result (offline / backgrounded),
-            // calculate it now from their stored card_numbers.
-            const resolvedRows = rows.map(r => {
-              if (r.round_complete) return r; // already recorded by the player's own browser
-              if (!r.card_numbers)  return r; // no card data — can't calculate
-              let numbers;
-              try { numbers = JSON.parse(r.card_numbers); } catch (_) { return r; }
+        if (error) { console.warn('Lobby snapshot read error', error.message); return; }
 
-              const marked = numbers.map(n => n === null ? true : drawnSet.has(n));
-              const progress = bestBingoProgress(marked);
-              return { ...r, best_line: progress.str, matched_count: progress.hits, round_complete: true };
-            });
+        // A row with no race_id_waiting can never be scored and is invisible to every
+        // .lt() filter, so it would haunt the waiting room forever. Any that survive a
+        // few draws' worth of time are corrupt — clear them.
+        const ghostCutoff = new Date(Date.now() - GHOST_ROW_MS).toISOString();
+        await sb.from(LOBBY_TABLE).delete().is('race_id_waiting', null).lt('updated_at', ghostCutoff);
 
-            // Deduplicate by player_name — keep the row with the highest matched_count
-            const byName = {};
-            resolvedRows.forEach(r => {
-              const existing = byName[r.player_name];
-              if (!existing || (r.matched_count || 0) > (existing.matched_count || 0)) {
-                byName[r.player_name] = r;
-              }
-            });
-            const dedupedRows = Object.values(byName);
+        if (!rows || rows.length === 0) return;
 
-            // 2. Write to results table (single row id=1 — most recent only).
-            //    Every client snapshots independently, so guard the write: never go
-            //    backwards to an older race, and for the same race only overwrite with
-            //    a FULLER set. Without this a client that reads a partly-deleted lobby
-            //    replaces a complete standings table with two players.
-            const winners = dedupedRows
-              .filter(r => r.best_line === 'BINGO')
-              .map(r => r.player_name);
+        // Rows can span several rounds after an offline gap. Group them by the draw
+        // they were actually waiting for — scoring an old round against the newest
+        // balls invents a result the player never played for.
+        const groups = new Map();
+        rows.forEach(r => {
+          const waiting = Number(r.race_id_waiting);
+          if (!Number.isFinite(waiting)) return;
+          if (!groups.has(waiting)) groups.set(waiting, []);
+          groups.get(waiting).push(r);
+        });
 
-            if (await shouldWriteResults(newRaceId, dedupedRows.length)) {
-              await sb.from(RESULTS_TABLE).upsert({
-                id:           1,
-                game_ref:     gameRef,
-                race_id:      newRaceId,
-                players:      JSON.stringify(dedupedRows),
-                winner_names: winners.length > 0 ? winners.join(', ') : null,
-                completed_at: new Date().toISOString()
-              }, { onConflict: 'id' });
+        const clearedWaitingIds = [];
+        let newest = null;
+
+        for (const [waiting, groupRows] of [...groups].sort((a, b) => a[0] - b[0])) {
+          const targetRaceId = waiting + 1;
+          let balls, ref;
+
+          if (known && known.raceId === targetRaceId) {
+            balls = known.balls;
+            ref   = known.ref;
+          } else {
+            try {
+              const d = await getDrawForRace(targetRaceId);
+              balls = d.balls;
+              ref   = `Game #${d.racenumber}`;
+            } catch (e) {
+              // Leave the round in place rather than score it against the wrong draw —
+              // the next pass picks it up once the feed answers.
+              console.warn('Could not fetch draw', targetRaceId, '—', e.message);
+              continue;
             }
           }
 
-          // 3. Clear only this round's rows — leave next round's joiners alone
-          await sb.from(LOBBY_TABLE).delete().lt('race_id_waiting', newRaceId);
+          const resolved = resolveRoundRows(groupRows, balls);
+          clearedWaitingIds.push(waiting);
+          if (!newest || targetRaceId > newest.raceId) {
+            newest = { raceId: targetRaceId, ref, rows: resolved };
+          }
+        }
+
+        // Only the most recent resolved round is "Last Round". Older rounds swept up in
+        // the same pass are already history; they still get cleared from the lobby.
+        if (newest) {
+          const winners = newest.rows
+            .filter(r => r.best_line === 'BINGO')
+            .map(r => r.player_name);
+
+          // Every client snapshots independently, so guard the write: never go
+          // backwards to an older race, and for the same race only overwrite with a
+          // FULLER set. Without this a client that reads a partly-deleted lobby
+          // replaces a complete standings table with two players.
+          if (await shouldWriteResults(newest.raceId, newest.rows.length)) {
+            await sb.from(RESULTS_TABLE).upsert({
+              id:           1,
+              game_ref:     newest.ref,
+              race_id:      newest.raceId,
+              players:      JSON.stringify(newest.rows),
+              winner_names: winners.length > 0 ? winners.join(', ') : null,
+              completed_at: new Date().toISOString()
+            }, { onConflict: 'id' });
+          }
+        }
+
+        // Clear only the rounds we actually scored — leave next round's joiners, and
+        // any round whose draw we could not fetch, alone.
+        if (clearedWaitingIds.length > 0) {
+          await sb.from(LOBBY_TABLE).delete().in('race_id_waiting', clearedWaitingIds);
+        }
+      }
+
+      async function snapshotAndClearLobby(newRaceId, gameRef, drawnBalls) {
+        try {
+          const boundary = Math.max(newRaceId, Number.isFinite(latestRaceId) ? latestRaceId : newRaceId);
+          await resolveLobbyRounds(boundary, { raceId: newRaceId, ref: gameRef, balls: drawnBalls });
         } catch (e) {
           console.warn('Snapshot error:', e.message);
         } finally {
@@ -1595,6 +1687,23 @@
             saveState();
             showPostDrawButtons();
           }
+          roundResolving = false;
+          fetchLastRound();
+          fetchLobby();
+        }
+      }
+
+      // Catch-up sweep for rounds nobody was online to resolve. Safe to run when we are
+      // not locked in ourselves: rows waiting for a future draw sit at or above the
+      // boundary and are never touched.
+      async function sweepStaleRounds() {
+        if (!Number.isFinite(latestRaceId)) return;
+        try {
+          roundResolving = true;
+          await resolveLobbyRounds(latestRaceId);
+        } catch (e) {
+          console.warn('Stale round sweep error:', e.message);
+        } finally {
           roundResolving = false;
           fetchLastRound();
           fetchLobby();
