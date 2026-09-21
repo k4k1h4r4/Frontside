@@ -73,16 +73,14 @@
 .site-head .logo img{display:block;width:clamp(100px,30vw,150px);height:34px;object-fit:contain;object-position:left center;filter:drop-shadow(0 4px 18px rgba(0,0,0,.55))}
 .site-head .back{font:400 12px/1 'Oswald','Arial Narrow',sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#aab0bd;text-decoration:none;white-space:nowrap;padding:8px 0 6px;border-bottom:1px solid transparent;transition:color .2s,border-color .2s}
 .site-head .back:hover,.site-head .back:focus-visible{color:#f5d76e;border-bottom-color:#d4af37}
-.site-head .tag{margin-left:auto;text-align:right;font:600 11px/1.25 'Oswald','Arial Narrow',sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#f5d76e}
-.site-head .tag small{display:block;font-weight:400;font-size:9.5px;letter-spacing:.16em;color:#aab0bd;margin-top:3px}
 .site-head{width:min(680px,100%)}
 @media (max-height:650px){.site-head{padding-bottom:4px}.site-head .logo img{height:28px}}
-@media(max-width:380px){.site-head{gap:10px}.site-head .back{font-size:11px;letter-spacing:.12em}.site-head .tag{font-size:10px}}
+@media(max-width:380px){.site-head{gap:10px}.site-head .back{font-size:11px;letter-spacing:.12em}}
 </style>
 
   <meta name="site-version" content="2026-09-15-02">
   <script defer src="../site-update.js?v=2026-09-15-02"></script>
-<link rel="stylesheet" href="leaderboard.css?v=1">
+<link rel="stylesheet" href="leaderboard.css?v=2">
 <script defer src="leaderboard.js?v=3"></script>
 </head>
 <body data-leaderboard-game="beer-pong">
@@ -90,7 +88,6 @@
   <header class="site-head">
     <a class="logo" href="../index.html" aria-label="Frontside home"><img src="../images/Frontside-nav.webp" alt="Frontside Table Gang" width="150" height="34"></a>
     <a class="back" href="arcade.html">&#8592; Arcade</a>
-    <div class="tag" id="roundLabel">Round 1<small>20 Balls</small></div>
   </header>
   <div id="gameWrap">
     <canvas id="game"></canvas>
@@ -118,7 +115,7 @@ const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 const wrap=document.getElementById('gameWrap');
 const cupsEl=document.getElementById('cups'), ballsEl=document.getElementById('balls'),
       scoreEl=document.getElementById('score');
-const roundEl=document.getElementById('roundLabel'), hint=document.getElementById('hint'),
+const hint=document.getElementById('hint'),
       hud=document.getElementById('hud');
 const overlay=document.getElementById('overlay'), overTitle=document.getElementById('overTitle'),
       overText=document.getElementById('overText'), overScore=document.getElementById('overScore'),
@@ -158,7 +155,6 @@ function cupLayout(existing){
 function resetRound(){
   balls=21-round; cups=cupLayout(); shot=null; paused=false; resetBall();
   updateHUD();
-  roundEl.innerHTML=`ROUND ${round}<small>${balls} BALL${balls===1?'':'S'} • ${maxRounds} ROUNDS</small>`;
   hint.innerHTML=`<strong>DRAG</strong> from the ball toward where you want to throw. Release to fire.`;
 }
 // Sit the ball mid-way down the shooter's half so there is room to pull back.
