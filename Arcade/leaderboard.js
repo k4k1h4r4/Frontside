@@ -73,7 +73,7 @@
     select.setAttribute('aria-label','Game');
     for (const [key,title] of Object.entries(games)) { const option = node('option',title,select); option.value = key; }
     select.value = game; select.onchange = () => show(select.value);
-    node('p','Weekly: Sunday–Saturday · Mountain Time. One best score per name. Ties go to the earlier score.');
+    node('p','Weekly: Sunday–Saturday · One best score per name.');
     for (const [period,title] of [['weekly','Weekly High Scores'],['all-time','All-Time High Scores']]) {
       node('h3',title);
       const entries = data.filter(row => row.period === period);
