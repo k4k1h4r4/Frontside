@@ -67,8 +67,9 @@
     return flushing;
   }
   async function rows(game) { return await rpc('arcade_leaderboard',{p_game:game,p_name:player}) || []; }
-  function render(game, data, congratulations = false) {
-    dialog.replaceChildren(); node('h2',congratulations ? 'You made the Top 5!' : 'High Scores');
+  const formatScore = (game, score) => Number(score).toLocaleString(undefined,{minimumFractionDigits:game==='perfect-pour'?1:0,maximumFractionDigits:1});
+  function render(game, data, currentScore = null) {
+    dialog.replaceChildren(); node('h2',currentScore !== null ? `Score: ${formatScore(game,currentScore)}` : 'High Scores');
     const label = node('label','Game'), select = node('select','',label);
     select.setAttribute('aria-label','Game');
     for (const [key,title] of Object.entries(games)) { const option = node('option',title,select); option.value = key; }
@@ -85,7 +86,7 @@
       for (const entry of entries) {
         const row = node('tr','',body); if (entry.is_player) row.className = 'lb-you';
         node('td',`#${entry.rank}`,row); node('td',entry.name + (entry.is_player ? ' (you)' : ''),row);
-        node('td',Number(entry.score).toLocaleString(undefined,{minimumFractionDigits:game==='perfect-pour'?1:0,maximumFractionDigits:1}),row);
+        node('td',formatScore(game,entry.score),row);
       }
     }
     closeButton(); open();
@@ -116,7 +117,7 @@
       // A prior background flush may have started before this run was queued.
       if (queue.some(item => item.id === entry.id)) await flush();
       const data = await rows(game);
-      if (data.some(row => row.is_player)) render(game,data,true);
+      if (data.some(row => row.is_player)) render(game,data,score);
       else { dialog.close(); toast('Score saved. Keep playing for a Top 5 spot!'); }
     } catch {
       dialog.close();
