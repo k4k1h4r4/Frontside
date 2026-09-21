@@ -82,8 +82,10 @@
 
   <meta name="site-version" content="2026-09-15-02">
   <script defer src="../site-update.js?v=2026-09-15-02"></script>
+<link rel="stylesheet" href="leaderboard.css?v=1">
+<script defer src="leaderboard.js?v=2"></script>
 </head>
-<body>
+<body data-leaderboard-game="beer-pong">
 <div id="app">
   <header class="site-head">
     <a class="logo" href="../index.html" aria-label="Frontside home"><img src="../images/Frontside-nav.webp" alt="Frontside Table Gang" width="150" height="34"></a>
@@ -194,8 +196,8 @@ function finishShot(hit){
   else showFlash("MISS","Back to the bar.");
   shot=null; resetBall(); updateHUD();
   const remaining=cups.filter(c=>c.alive).length;
-  if(remaining===0){ setTimeout(winRound,500); }
-  else if(balls===0){ setTimeout(loseRound,500); }
+  if(remaining===0){ paused=true; setTimeout(winRound,500); }
+  else if(balls===0){ paused=true; setTimeout(loseRound,500); }
 }
 function showFlash(t,p){
   document.getElementById('msgTitle').textContent=t;
@@ -208,6 +210,7 @@ function winRound(){
   const bonus=Math.max(0,balls); score+=bonus; updateHUD();
   const roundTotal=10+bonus;
   if(round===maxRounds){
+    window.ArcadeLeaderboard?.complete('beer-pong',score);
     overEyebrow.textContent="LAST CALL";
     overTitle.textContent="YOU CLEARED THE BAR";
     overScore.textContent=`FINAL SCORE ${score}`;
@@ -226,6 +229,7 @@ function winRound(){
 }
 function loseRound(){
   paused=true;
+  window.ArcadeLeaderboard?.complete('beer-pong',score);
   // Out of balls, so there is no leftover-ball bonus — only the cups already banked.
   const used=21-round, sunk=10-cups.filter(c=>c.alive).length;
   overEyebrow.textContent=`ROUND ${round} OVER`;

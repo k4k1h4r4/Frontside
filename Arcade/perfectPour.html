@@ -37,8 +37,10 @@ button{display:block;flex:none;width:100%;min-height:clamp(46px,6.8svh,60px);mar
 
   <meta name="site-version" content="2026-09-15-02">
   <script defer src="../site-update.js?v=2026-09-15-02"></script>
+<link rel="stylesheet" href="leaderboard.css?v=1">
+<script defer src="leaderboard.js?v=2"></script>
 </head>
-<body>
+<body data-leaderboard-game="perfect-pour">
 <main id="app">
 <header class="site-head"><a class="logo" href="../index.html" aria-label="Frontside home"><img src="../images/Frontside-nav.webp" alt="Frontside Table Gang" width="150" height="34"></a><a class="back" href="arcade.html">&#8592; Arcade</a><span class="tag">Arcade<small>Game 02</small></span></header>
 <div class="heading"><div class="eyebrow">A LITTLE TIMING. A LOT OF FOAM.</div><h1>PERFECT POUR</h1><p class="instructions">Fill to the rim. Stop before it spills.</p></div>
@@ -98,6 +100,7 @@ function finish(fill){
  }
  if(glass===GLASSES){
   state='roundOver';const total=totalTenths/10;
+  window.ArcadeLeaderboard?.complete('perfect-pour',total);
   const lastResult=fill>=1?'Glass 10 spilled (+0.0).':`Glass 10: +${score.toFixed(1)}.`;
   title.textContent=`FINAL SCORE: ${total.toFixed(1)}`;
   description.textContent=lastResult+' All 10 glasses poured!';

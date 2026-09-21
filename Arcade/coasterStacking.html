@@ -37,8 +37,10 @@ button{width:100%;flex:none;min-height:clamp(46px,6.8svh,60px);margin:clamp(7px,
 
   <meta name="site-version" content="2026-09-15-02">
   <script defer src="../site-update.js?v=2026-09-15-02"></script>
+<link rel="stylesheet" href="leaderboard.css?v=1">
+<script defer src="leaderboard.js?v=2"></script>
 </head>
-<body>
+<body data-leaderboard-game="coaster-stacking">
 <main>
 <header class="site-head"><a class="logo" href="../index.html" aria-label="Frontside home"><img src="../images/Frontside-nav.webp" alt="Frontside Table Gang" width="150" height="34"></a><a class="back" href="arcade.html">&#8592; Arcade</a><span class="tag">Arcade<small>Game 03</small></span></header>
 <div class="heading"><div class="eyebrow">ONE MORE. JUST ONE MORE.</div><h1>COASTER STACKING</h1><p class="instructions">Stop over the stack. Keep the overlap.</p></div>
@@ -61,7 +63,7 @@ function next(now){const top=stack[stack.length-1];active={x:LEFT,w:top.w,fromRi
 function stop(now){
  active.x=movingX(now);const top=stack[stack.length-1],kept=overlap(active,top),y=baseY()-stack.length*STEP;
  control.classList.remove('moving');
- if(kept.w<=0){cut={x:active.x,w:active.w,y,side:active.x<top.x?-1:1,time:now};active=null;state='over';unlockAt=now+1000;control.textContent='PLAY AGAIN';control.setAttribute('aria-disabled','true');$('title').textContent='STACK DOWN!';$('message').textContent=`${score} coaster${score===1?'':'s'} stacked. Give it another shot.`;canvas.setAttribute('aria-label',`Game over. ${score} coasters stacked.`);return;}
+ if(kept.w<=0){cut={x:active.x,w:active.w,y,side:active.x<top.x?-1:1,time:now};active=null;state='over';window.ArcadeLeaderboard?.complete('coaster-stacking',score);unlockAt=now+1000;control.textContent='PLAY AGAIN';control.setAttribute('aria-disabled','true');$('title').textContent='STACK DOWN!';$('message').textContent=`${score} coaster${score===1?'':'s'} stacked. Give it another shot.`;canvas.setAttribute('aria-label',`Game over. ${score} coasters stacked.`);return;}
  const lost=active.w-kept.w;
  if(lost>0){cut={x:active.x<top.x?active.x:kept.x+kept.w,w:lost,y,side:active.x<top.x?-1:1,time:now};}
  stack.push(kept);score++;active=null;state='settling';settleAt=now+600;control.textContent='STACKING…';control.setAttribute('aria-disabled','true');
