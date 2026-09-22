@@ -1926,9 +1926,12 @@ footer a:hover { color: var(--accent); }
 .gang-photo {
   display: block;
   width: 100%;
+  max-width: 800px;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   line-height: 0;
+  margin-left: auto;  /* Explicitly pushes from the left */
+  margin-right: auto; /* Explicitly pushes from the right */
 }
 
 .gang-photo img {
