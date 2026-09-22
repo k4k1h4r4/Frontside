@@ -3,6 +3,7 @@
   const SUPABASE_URL = 'https://znqnnaslskjewfxcswxw.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_0pVZp5JcAc9lSIClZD5eqQ_9Q33F7Uf';
   const MOUNTAIN_TIME_ZONE = 'America/Denver';
+  const POST_WINDOW_MS = 24 * 60 * 60 * 1000;
   function sortEntries(entries) {
     return [...entries].sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp) || a.id.localeCompare(b.id));
   }
@@ -38,6 +39,9 @@
     feedback.classList.add('is-visible');
   }
   function render() {
+    // Drop posts that have aged out of the 24-hour window since they were loaded.
+    const cutoff = Date.now() - POST_WINDOW_MS;
+    for (const [id, post] of posts) if (Date.parse(post.created_at) < cutoff) posts.delete(id);
     const entries = [...posts.values()].map(post => {
       const node = document.createElement('li');
       node.className = 'live-event';
@@ -72,7 +76,9 @@
     if (loading || document.hidden) return;
     loading = true;
     try {
-      const rows = await request('?select=id,message,created_at&order=created_at.desc,id.desc&limit=100');
+      const since = new Date(Date.now() - POST_WINDOW_MS).toISOString();
+      const rows = await request('?select=id,message,created_at' +
+        `&created_at=gte.${encodeURIComponent(since)}&order=created_at.desc,id.desc&limit=100`);
       // Keep posts saved while this request was in flight.
       rows.forEach(post => posts.set(post.id, post));
       render();

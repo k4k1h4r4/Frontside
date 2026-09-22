@@ -107,10 +107,10 @@
     padding-right: max(0.75rem, env(safe-area-inset-right));
   }
   .site-nav .nav-logo { width: clamp(80px, 24vw, 140px); }
-  .site-nav .nav-links { gap: clamp(0.5rem, 2vw, 0.85rem); }
+  .site-nav .nav-links { gap: clamp(0.9rem, 4vw, 1.25rem); }
   .site-nav .nav-links a {
-    font-size: clamp(1rem, 3.75vw, 1.125rem);
-    letter-spacing: 0.03em;
+    font-size: clamp(0.9rem, 3.4vw, 1.05rem);
+    letter-spacing: 0.05em;
   }
 }
 

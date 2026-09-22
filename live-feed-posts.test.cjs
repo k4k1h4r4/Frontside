@@ -3,6 +3,33 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
 const { sortEntries } = require('./live-feed-posts.js');
+const NOW = '2026-09-22T18:30:00Z';
+function element() {
+  return { children: [], value: '', disabled: false, classList: { add() {} }, handlers: {},
+    append(...nodes) { this.children.push(...nodes); },
+    setAttribute(name, value) { this[name] = value; },
+    replaceChildren(...nodes) { this.children = nodes; },
+    addEventListener(type, handler) { this.handlers[type] = handler; }, focus() {} };
+}
+// Loads the page script against a fake DOM with the clock pinned to NOW.
+async function load(respond) {
+  const nodes = new Map();
+  const document = { hidden: false, getElementById(id) {
+    if (!nodes.has(id)) nodes.set(id, element());
+    return nodes.get(id);
+  }, createElement: element, addEventListener() {} };
+  const calls = [];
+  const context = vm.createContext({ document, setInterval() {}, AbortSignal,
+    fetch: async (url, options) => {
+      calls.push({ url, options });
+      return respond(url, options);
+    }
+  });
+  vm.runInContext(`Date.now = () => Date.parse('${NOW}');`, context);
+  vm.runInContext(fs.readFileSync('./live-feed-posts.js', 'utf8'), context);
+  await new Promise(resolve => setImmediate(resolve));
+  return { nodes, calls, context };
+}
 test('posts and Keno sort by occurrence time, including different offsets', () => {
   const entries = [
     { id: 'post:1', timestamp: '2026-09-22T18:00:00Z' },
@@ -13,30 +40,12 @@ test('posts and Keno sort by occurrence time, including different offsets', () =
   assert.equal(entries[0].id, 'post:1');
 });
 test('posting uses server timestamp, literal text, and preserves Keno entries', async () => {
-  function element() {
-    return { children: [], value: '', disabled: false, classList: { add() {} }, handlers: {},
-      append(...nodes) { this.children.push(...nodes); },
-      setAttribute(name, value) { this[name] = value; },
-      replaceChildren(...nodes) { this.children = nodes; },
-      addEventListener(type, handler) { this.handlers[type] = handler; }, focus() {} };
-  }
-  const nodes = new Map();
-  const document = { hidden: false, getElementById(id) {
-    if (!nodes.has(id)) nodes.set(id, element());
-    return nodes.get(id);
-  }, createElement: element, addEventListener() {} };
-  const calls = [];
   let fail = false;
-  const context = vm.createContext({ document, setInterval() {}, AbortSignal,
-    fetch: async (url, options) => {
-      calls.push({ url, options });
-      return { ok: !fail, status: 503, json: async () => options.method === 'POST' ? [
-        { id: 'saved', message: '<img src=x onerror=alert(1)>', created_at: '2026-09-22T18:00:00Z' }
-      ] : [] };
-    }
-  });
-  vm.runInContext(fs.readFileSync('./live-feed-posts.js', 'utf8'), context);
-  await new Promise(resolve => setImmediate(resolve));
+  const { nodes, calls, context } = await load((url, options) => ({
+    ok: !fail, status: 503, json: async () => options.method === 'POST' ? [
+      { id: 'saved', message: '<img src=x onerror=alert(1)>', created_at: '2026-09-22T18:00:00Z' }
+    ] : []
+  }));
   const keno = element();
   context.liveFeed.setSource('keno', [{ id: 'keno:1', timestamp: '2026-09-22T17:00:00Z', node: keno }]);
   const input = nodes.get('live-feed-message');
@@ -58,4 +67,17 @@ test('posting uses server timestamp, literal text, and preserves Keno entries', 
   assert.equal(input.value, 'Keep my message');
   assert.equal(nodes.get('live-feed-submit').disabled, false);
   assert.match(nodes.get('live-feed-submit-message').textContent, /Could not confirm/);
+});
+test('only posts from the last 24 hours are requested and shown', async () => {
+  const { nodes, calls } = await load(() => ({
+    ok: true, json: async () => [
+      { id: 'recent', message: 'just now', created_at: '2026-09-22T18:00:00Z' },
+      { id: 'edge', message: 'exactly 24h', created_at: '2026-09-21T18:30:00Z' },
+      { id: 'old', message: 'yesterday', created_at: '2026-09-21T18:29:59Z' }
+    ]
+  }));
+  const query = new URL(calls[0].url).searchParams;
+  assert.equal(query.get('created_at'), 'gte.2026-09-21T18:30:00.000Z');
+  const shown = nodes.get('live-feed-list').children.map(node => node.children[1].children[1].textContent);
+  assert.deepEqual(shown, ['just now', 'exactly 24h']);
 });
