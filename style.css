@@ -197,6 +197,44 @@ footer {
   padding: 0.5rem 1rem;
 }
 
+/* Home hero: sized by the logo, never clipped. The logo is capped so it
+   always fits on screen below the nav with the tagline band. */
+.hero.hero-home {
+  height: auto;
+  min-height: 0;
+  padding-block: clamp(0.5rem, 2vw, 1.25rem);
+}
+
+.hero-home .hero-content { padding: 0 0.75rem; }
+
+.hero-home .hero-logo {
+  display: block;
+  margin: 0 auto;
+  max-width: none;
+  width: min(92vw, 600px, max(240px, (100svh - 72px - 8rem) * 1.5));
+  height: auto;
+}
+
+.home-tagline {
+  position: relative;
+  z-index: 3;
+  margin: 0;
+  padding: 0.7rem 1rem 0.7rem calc(1rem + 0.32em);
+  text-align: center;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 300;
+  font-size: clamp(0.8rem, 2vw, 1.05rem);
+  line-height: 1.5;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  background: rgba(18, 13, 9, 0.96);
+}
+
+@media (min-width: 900px) {
+  .home-tagline br { display: none; }
+}
+
 .hero-image {
   display: block;
   width: min(1000px, 92vw);
