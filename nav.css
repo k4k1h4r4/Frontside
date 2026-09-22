@@ -99,6 +99,14 @@
   border-radius: 2px;
 }
 
+/* Keep all four menu items alongside the logo on small screens. */
+@media (max-width: 480px) {
+  .site-nav { gap: 0.5rem; }
+  .site-nav .nav-logo { width: clamp(96px, 27vw, 120px); }
+  .site-nav .nav-links { gap: clamp(0.5rem, 2.4vw, 0.85rem); }
+  .site-nav .nav-links a { letter-spacing: 0.06em; }
+}
+
 /* Bigger tap targets on touch devices without changing the visual height */
 @media (hover: none) {
   .site-nav .nav-links a {

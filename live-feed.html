@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Live Feed | Frontside Table Gang</title>
+
+  <link rel="icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f1115">
+
+  <meta property="og:title" content="Live Feed | Frontside Table Gang">
+  <meta property="og:description" content="What just happened at Frontside?">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://frontsidebar.com/live-feed.html">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Live Feed | Frontside Table Gang">
+  <meta name="twitter:description" content="What just happened at Frontside?">
+
+  <link rel="stylesheet" href="style.css?v=2026-09-17-01">
+  <link rel="stylesheet" href="nav.css?v=2026-09-22-01">
+
+  <style>
+    /* =========================================================
+       LIVE FEED — ALTERNATE TIMELINE DESIGN
+       Page-specific styles only
+       ========================================================= */
+
+    .live-feed-page {
+      padding-bottom: 3rem;
+    }
+
+    /* ---------------------------------------------------------
+       Intro
+       --------------------------------------------------------- */
+
+    .live-feed-intro {
+      padding: 2rem 1.25rem 1.5rem;
+      text-align: center;
+    }
+
+    .live-feed-kicker {
+      margin: 0 0 0.35rem;
+      color: var(--accent);
+      font-family: "Oswald", sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .live-feed-title {
+      margin: 0;
+      font-family: "Bebas Neue", sans-serif;
+      font-size: clamp(3rem, 16vw, 5rem);
+      line-height: 0.9;
+      letter-spacing: 0.02em;
+      color: var(--sand);
+    }
+
+    .live-feed-subtitle {
+      margin: 0.8rem 0 0;
+      color: var(--sand-dim);
+      font-family: "Special Elite", serif;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    /* ---------------------------------------------------------
+       Submission area
+       --------------------------------------------------------- */
+
+    .live-report {
+      margin: 0 1rem 2.25rem;
+      padding: 1.15rem;
+      background:
+        linear-gradient(
+          145deg,
+          rgba(30, 34, 43, 0.98),
+          rgba(23, 26, 33, 0.98)
+        );
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-heavy);
+    }
+
+    .live-report-label {
+      display: block;
+      margin-bottom: 0.65rem;
+      color: var(--sand);
+      font-family: "Oswald", sans-serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .live-report-label span {
+      color: var(--accent);
+    }
+
+    .live-report textarea {
+      display: block;
+      width: 100%;
+      min-height: 86px;
+      box-sizing: border-box;
+      padding: 0.85rem;
+      resize: vertical;
+
+      background: var(--bg-dark);
+      border: 1px solid var(--border-accent);
+      border-radius: 0;
+
+      color: var(--sand);
+      font-family: "Special Elite", serif;
+      font-size: 0.95rem;
+      line-height: 1.45;
+
+      outline: none;
+      transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+    }
+
+    .live-report textarea::placeholder {
+      color: var(--sand-muted);
+    }
+
+    .live-report textarea:focus {
+      border-color: var(--accent-dim);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    .live-report-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 0.7rem;
+    }
+
+    .live-report-count {
+      color: var(--sand-muted);
+      font-family: "Oswald", sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+    }
+
+    .live-report-button {
+      appearance: none;
+      border: 1px solid var(--accent);
+      border-radius: 0;
+      padding: 0.65rem 1.15rem;
+
+      background: var(--accent);
+      color: var(--bg-dark);
+
+      font-family: "Bebas Neue", sans-serif;
+      font-size: 1.15rem;
+      letter-spacing: 0.08em;
+
+      cursor: pointer;
+      transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        transform 0.1s ease;
+    }
+
+    .live-report-button:hover {
+      background: var(--accent-bright);
+    }
+
+    .live-report-button:active {
+      transform: translateY(1px);
+    }
+
+    /* ---------------------------------------------------------
+       Feed heading
+       --------------------------------------------------------- */
+
+    .live-stream {
+      margin: 0 1rem;
+    }
+
+    .live-stream-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+
+      margin-bottom: 1.1rem;
+      padding-bottom: 0.65rem;
+
+      border-bottom: 1px solid var(--border);
+    }
+
+    .live-stream-title {
+      margin: 0;
+      font-family: "Bebas Neue", sans-serif;
+      font-size: 1.75rem;
+      line-height: 1;
+      letter-spacing: 0.04em;
+      color: var(--sand);
+    }
+
+    .live-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+
+      color: var(--red);
+      font-family: "Oswald", sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .live-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 8px rgba(196, 69, 54, 0.55);
+    }
+
+    /* ---------------------------------------------------------
+       Timeline
+       --------------------------------------------------------- */
+
+    .live-timeline {
+      position: relative;
+      margin: 0;
+      padding: 0 0 0 1.1rem;
+      list-style: none;
+    }
+
+    .live-timeline::before {
+      content: "";
+      position: absolute;
+      top: 0.3rem;
+      bottom: 0.3rem;
+      left: 0.18rem;
+      width: 1px;
+      background: var(--brown-light);
+    }
+
+    .live-event {
+      position: relative;
+      display: grid;
+      grid-template-columns: 3.65rem 1fr;
+      column-gap: 0.9rem;
+      padding: 0 0 1.55rem;
+    }
+
+    .live-event:last-child {
+      padding-bottom: 0;
+    }
+
+    .live-event::before {
+      content: "";
+      position: absolute;
+      top: 0.27rem;
+      left: -0.99rem;
+
+      width: 7px;
+      height: 7px;
+
+      border: 2px solid var(--bg);
+      border-radius: 50%;
+      background: var(--brown-light);
+    }
+
+    .live-event:first-child::before {
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    .live-event-time {
+      padding-top: 0.02rem;
+
+      color: var(--sand-muted);
+      font-family: "Oswald", sans-serif;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      line-height: 1.3;
+      text-transform: uppercase;
+    }
+
+    .live-event:first-child .live-event-time {
+      color: var(--accent);
+    }
+
+    .live-event-message {
+      margin: 0;
+
+      color: var(--sand);
+      font-family: "Special Elite", serif;
+      font-size: 0.96rem;
+      line-height: 1.5;
+    }
+
+    .live-user-message {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.7rem 0.8rem;
+      border-left: 3px solid #ffffff;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.10);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      min-width: 0;
+    }
+    .live-report-button:disabled { opacity: 0.6; cursor: wait; }
+    .keno-draw {
+      min-width: 0;
+    }
+
+    .keno-draw-heading {
+      margin: 0 0 0.6rem;
+      color: var(--sand-muted);
+      font-family: "Oswald", sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .keno-streak {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.7rem 0.8rem;
+      border-left: 3px solid;
+      overflow-wrap: anywhere;
+    }
+
+    .keno-streak + .keno-streak {
+      margin-top: 0.5rem;
+    }
+
+    .keno-streak--hot {
+      color: #ffb4a8;
+      border-color: #ff654f;
+      background: rgba(255, 80, 55, 0.10);
+    }
+
+    .keno-streak--cold {
+      color: #a9ddff;
+      border-color: #55baff;
+      background: rgba(55, 160, 255, 0.10);
+    }
+
+    /* ---------------------------------------------------------
+       Empty state
+       --------------------------------------------------------- */
+
+    .live-empty {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--sand-muted);
+      font-family: "Special Elite", serif;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    /* ---------------------------------------------------------
+       Submission feedback
+       --------------------------------------------------------- */
+
+    .live-report-message {
+      display: none;
+      margin-top: 0.7rem;
+      color: var(--accent);
+      font-family: "Oswald", sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+    }
+
+    .live-report-message.is-visible {
+      display: block;
+    }
+
+    /* ---------------------------------------------------------
+       Small-screen adjustments
+       --------------------------------------------------------- */
+
+    @media (max-width: 360px) {
+      .live-feed-intro {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+      .live-report,
+      .live-stream {
+        margin-left: 0.75rem;
+        margin-right: 0.75rem;
+      }
+
+      .live-event {
+        grid-template-columns: 3.3rem 1fr;
+        column-gap: 0.7rem;
+      }
+
+      .live-report-footer {
+        align-items: flex-end;
+      }
+
+      .live-report-button {
+        padding-left: 0.9rem;
+        padding-right: 0.9rem;
+      }
+    }
+  </style>
+
+</head>
+
+<body>
+
+  <!-- Shared site navigation -->
+
+  <nav
+    class="site-nav"
+    data-site-nav
+    aria-label="Main navigation">
+  </nav>
+
+  <main class="live-feed-page">
+
+
+<!-- =====================================================
+     INTRO
+     ===================================================== -->
+<header class="live-feed-intro">
+
+  <p class="live-feed-kicker">What's the haps?</p>
+
+  <h1 class="live-feed-title">
+    Live Feed
+  </h1>
+
+  <p class="live-feed-subtitle">
+    What the hell is goin' on over there?
+  </p>
+
+</header>
+
+
+<!-- =====================================================
+     CUSTOMER SUBMISSION
+     ===================================================== -->
+<section
+  class="live-report"
+  aria-labelledby="report-heading">
+
+  <label
+    id="report-heading"
+    class="live-report-label"
+    for="live-feed-message">
+    <span>WHAT JUST HAPPENED</span> AT FRONTSIDE?
+  </label>
+
+  <textarea
+    id="live-feed-message"
+    name="message"
+    maxlength="280"
+    rows="3"
+    placeholder="Tell us what just happened..."
+    autocomplete="off"></textarea>
+
+  <div class="live-report-footer">
+
+    <span
+      id="live-feed-count"
+      class="live-report-count">
+      280 characters
+    </span>
+
+    <button
+      id="live-feed-submit"
+      class="live-report-button"
+      type="button">
+      POST IT
+    </button>
+
+  </div>
+
+  <div
+    id="live-feed-submit-message"
+    class="live-report-message"
+    role="status"
+    aria-live="polite">
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     LIVE STREAM
+     ===================================================== -->
+<section
+  class="live-stream"
+  aria-labelledby="stream-heading">
+
+  <div class="live-stream-header">
+
+    <h2
+      id="stream-heading"
+      class="live-stream-title">
+      What's Happening
+    </h2>
+
+    <div class="live-status">
+      <span
+        class="live-status-dot"
+        aria-hidden="true"></span>
+      Live
+    </div>
+
+  </div>
+
+
+<p id="posts-feed-status" class="live-feed-subtitle" role="status"></p><p id="keno-feed-status" class="live-feed-subtitle" role="status">Checking Keno streaks…</p><br><ol id="live-feed-list" class="live-timeline" aria-label="Live feed events"></ol>
+
+</section>
+
+
+  </main>
+
+  <script defer src="live-feed-posts.js?v=2026-09-22-02"></script>
+  <script defer src="keno-feed.js?v=2026-09-22-06"></script>
+  <!-- Shared site scripts -->
+
+  <script src="nav.js?v=2026-09-22-01"></script>
+
+  <script src="site-update.js?v=2026-09-17-01"></script>
+
+
+
+</body>
+</html>
