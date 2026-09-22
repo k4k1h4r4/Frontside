@@ -138,7 +138,7 @@
       if (root.liveFeed) root.liveFeed.setSource('keno', entries);
       else list.replaceChildren(...entries.map(entry => entry.node));
       loaded = true;
-      status.textContent = events.length ? 'Keno streaks from the latest 50 games. Updates while this page is visible.' : 'No qualifying Keno streaks in the latest 50 games.';
+      status.textContent = events.length ? 'Keno streaks from the latest 50 games.' : 'No qualifying Keno streaks in the latest 50 games.';
     } catch (error) {
       status.textContent = `${loaded ? 'Showing previous results. ' : ''}${error.message} Retrying automatically.`;
     } finally {
