@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { analyze, groupByDraw } = require('./keno-feed.js');
+const { analyze, groupByDraw } = require('../keno-feed.js');
 function games(hits) {
   return hits.map((hit, i) => ({ raceid: i + 1, balls: hit ? [1] : [], timestamp: '2026-09-22T12:00:00Z' }));
 }

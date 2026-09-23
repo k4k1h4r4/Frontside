@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
-const { sortEntries } = require('./live-feed-posts.js');
+const { sortEntries } = require('../live-feed-posts.js');
 const NOW = '2026-09-22T18:30:00Z';
 function element() {
   return { children: [], value: '', disabled: false, classList: { add() {} }, handlers: {},
