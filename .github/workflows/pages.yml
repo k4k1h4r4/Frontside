@@ -38,8 +38,7 @@ jobs:
           node --check site-update.js
           node --check keno-feed.js
           node --check live-feed-posts.js
-          node --test site-update.test.cjs
-          node --test keno-feed.test.cjs live-feed-posts.test.cjs
+          node --test tests/site-update.test.cjs tests/keno-feed.test.cjs tests/live-feed-posts.test.cjs
 
       - name: Stamp a unique release
         env:
