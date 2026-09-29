@@ -27,6 +27,7 @@
           raceid: game.raceid,
           racenumber: game.racenumber,
           kind,
+          number,
           timestamp: game.timestamp,
           title: `${kind} STREAK on ${number}!`,
           detail: `${hit ? 'Drawn' : 'No draws'} for ${state.count} straight games!`
@@ -123,13 +124,22 @@
           const icon = document.createElement('span');
           icon.setAttribute('aria-hidden', 'true');
           icon.textContent = alert.kind === 'HOT' ? '🔥' : '🧊';
+          const ball = document.createElement('span');
+          ball.className = 'keno-streak-ball';
+          ball.setAttribute('role', 'img');
+          ball.setAttribute('aria-label', `Keno number ${alert.number}`);
+          const ballNumber = document.createElement('span');
+          ballNumber.setAttribute('aria-hidden', 'true');
+          ballNumber.textContent = alert.number;
+          ball.append(ballNumber);
           const text = document.createElement('span');
+          text.className = 'keno-streak-text';
           const title = document.createElement('strong');
-          title.textContent = alert.title;
+          title.append(icon, ` ${alert.kind} STREAK`);
           const detail = document.createElement('span');
           detail.textContent = alert.detail;
           text.append(title, document.createElement('br'), detail);
-          message.append(icon, text);
+          message.append(ball, text);
           body.append(message);
         });
         item.append(time, body);
