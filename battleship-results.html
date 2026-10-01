@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Start the LCP image and imported font styles before the main CSS is parsed. -->
+  <link rel="preload" as="image" href="images/Frontside.webp" fetchpriority="high">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Special+Elite&amp;family=Oswald:wght@300;400;600;700&amp;display=swap">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400&amp;display=swap">
+  <title>Battleship Results | Frontside Table Gang</title>
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0b0705">
+  <meta property="og:title" content="Frontside Table Gang">
+  <meta property="og:description" content="Get off your backside, come to the Frontside.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://frontsidebar.com/images/og-card.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Frontside logo">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Frontside Table Gang">
+  <meta name="twitter:description" content="Get off your backside, come to the Frontside.">
+  <meta name="twitter:image" content="https://frontsidebar.com/images/og-card.jpg">
+  <link rel="stylesheet" href="style.css?v=2026-09-22-01">
+
+  <meta name="site-version" content="2026-09-15-02">
+  <link rel="stylesheet" href="nav.css?v=2026-09-15-02">
+  <script defer src="nav.js?v=2026-09-15-02"></script>
+  <script defer src="site-update.js?v=2026-09-15-02"></script>
+  <link rel="stylesheet" href="battleship/battleship.css?v=2026-09-30-01">
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script type="module" src="battleship/live.js?v=2026-09-30-01"></script>
+</head>
+<body>
+  <nav class="site-nav" data-site-nav aria-label="Main navigation"></nav>
+  <noscript><a href="index.html">Frontside home</a></noscript>
+
+<main class="battle-page" data-results="true">
+  <header class="intro"><p class="eyebrow">80 NUMBERS. FIVE SHIPS. ONE OCEAN.</p><h1>KENO <span>BATTLESHIP</span></h1><p>Lose two ships and you’re out. Last player standing wins.</p></header>
+  <p class="connection" id="connection" role="status">Connecting to the fleet…</p>
+  <nav class="match-bar" aria-label="Battleship matches"><a href="battleship.html">Back to Battleship</a><button id="active-view" hidden>Active match</button><button id="lobby-view" hidden>Upcoming lobby</button><a href="battleship-results.html">Game results</a></nav>
+  <section id="result-banner" class="result-banner" hidden></section>
+  <div class="layout">
+    <section class="ocean-panel" aria-label="Your ocean board">
+      <div id="setup-controls" class="controls setup-controls"><button id="place" class="primary" disabled>Place my Fleet</button><button id="rotate" hidden>Rotate</button><button id="launch" class="primary" hidden>Launch fleet</button></div>
+      <label id="name-wrap" class="entry-name" hidden>Your name<input id="player-name" maxlength="30" autocomplete="nickname" placeholder="Your name"></label>
+      <p class="entry-status" id="entry-status"></p>
+      <div class="board-heading"><div><p class="eyebrow">YOUR WATERS</p><h2 id="phase">Ready to deploy</h2></div><span class="round" id="round">SETUP</span></div>
+      <div class="keno-board-wrap"><div class="keno-section" id="section-low"></div><div class="equator"><span>FRONTSIDE NAVAL SECTOR</span></div><div class="keno-section" id="section-high"></div></div>
+    </section>
+    <aside class="command-area"><div class="command-columns">
+      <section class="fleet-panel"><p class="eyebrow">FLEET COMMAND</p><div class="fleet-heading"><h2 id="fleet-owner">Your fleet</h2><span id="afloat"></span></div><div id="fleet"></div></section>
+      <section class="score-panel"><p class="eyebrow">PLAYERS</p><h2>Score</h2><div class="score-labels"><span>Name</span><span>Ships left</span></div><div id="scores"></div><p class="score-hint">Tap a player to inspect their ships. Fleets are revealed when the match starts.</p></section>
+    </div><p id="message" role="status" aria-live="polite"></p></aside>
+  </div>
+  <section class="draw-panel"><div class="draw-title"><h2>Draw history</h2><span id="draw-summary"></span></div><div id="balls"></div><div id="history"></div></section>
+  <section id="recent-results"></section>
+  <dialog id="result-popup" aria-labelledby="result-title" aria-describedby="result-detail"><p class="eyebrow">BATTLE UPDATE</p><h2 id="result-title"></h2><p id="result-detail"></p><form method="dialog"><button autofocus id="result-dismiss">Continue</button></form></dialog>
+</main>
+  <footer>
+    <p>DISCLAIMER:</p> 
+	<p>This is a Frontside parody website, and in no way affiliated with any establishments named Frontside.</p> 
+	<p>Past performance is not indicative of future results.</p>
+	<p>Gambling should be avoided by everyone at all costs.</p>
+	<p>If you have a problem with gambling, contact Nebraska Problem Gamblers Assistance Program at <a href="tel:+18332386837">1-833-238-6837</a> </p>
+  </footer>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d6990f441d364d14a474070de0eb6398"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
