@@ -41,7 +41,7 @@ async function refresh(){
   if(polling||busy||document.hidden)return;polling=true;
   try{
     const data=await api('status');uid=data.uid;snapshot=data.state;
-    $('connection').textContent=data.warning||(!data.caughtUp?'Catching up missed Keno draws…':snapshot.last?`Latest received: Game #${snapshot.last.racenumber} · ${time(snapshot.last.timestamp)} MT`:'Waiting for Keno results.');
+    $('connection').textContent=data.warning||(!data.caughtUp?'Catching up missed Keno draws…':snapshot.last?`Latest: Game #${snapshot.last.racenumber} · ${time(snapshot.last.timestamp)}`:'Waiting for Keno results.');
     $('place').disabled=!data.caughtUp||!!data.warning;
     $('active-view').hidden=true;$('lobby-view').hidden=true;
     if(resultsPage){await loadResults();initial=false;return;}
