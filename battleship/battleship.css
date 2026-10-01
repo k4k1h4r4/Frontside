@@ -205,4 +205,4 @@
 .battle-page .result-banner { padding:20px; background:#17394c; border:1px solid #edbd77; border-radius:8px; margin:18px 0; }
 .battle-page .result-banner a { color:#ffcf86; }
 .battle-page .entry-status { padding:0 14px; color:#b9d9eb; font-size:13px; }
-@media(max-width:500px){.battle-page{padding:16px 8px;margin:10px auto}.battle-page .intro h1{font-size:38px}.battle-page .draw-history-row{grid-template-columns:auto 1fr;gap:4px 8px}.battle-page .draw-history-row small{grid-column:2;text-align:left}.battle-page .rotate-ship{min-height:40px;padding:8px 10px}}
+@media(max-width:500px){.battle-page{padding:16px 8px;margin:10px auto}.battle-page .intro h1{font-size:38px;margin-bottom:4px}.battle-page .draw-history-row{grid-template-columns:auto 1fr;gap:4px 8px}.battle-page .draw-history-row small{grid-column:2;text-align:left}.battle-page .rotate-ship{min-height:40px;padding:8px 10px}}
