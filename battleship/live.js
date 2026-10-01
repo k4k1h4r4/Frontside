@@ -15,6 +15,12 @@ function hits(p){return new Set(p?.hits||[]);}
 function sunk(s,p){return s.cells.length>0&&s.cells.every(n=>hits(p).has(n));}
 function remaining(p){return (p?.fleet||[]).filter(s=>!sunk(s,p)).length;}
 function allLocked(){return draft.every(s=>s.locked&&s.cells.length===s.length);}
+function lobbyMessage(lobby){
+  const count=lobby?.players?.length||0;
+  if(count<2)return '1 more Captain is required before the battle can commence.';
+  if(lobby.expectedGame)return `${count} Captains are locked. Battle will begin with Game #${lobby.expectedGame}.`;
+  return `${count} Captains are locked. Battle will begin with the first game after the active battle.`;
+}
 async function api(action,extra={}){
   const {data:{session}}=await client.auth.getSession();
   if(!session)throw Error('Session unavailable. Reload to reconnect.');
@@ -37,8 +43,7 @@ async function refresh(){
     const data=await api('status');uid=data.uid;snapshot=data.state;
     $('connection').textContent=data.warning||(!data.caughtUp?'Catching up missed Keno draws…':snapshot.last?`Latest received: Game #${snapshot.last.racenumber} · ${time(snapshot.last.timestamp)} MT`:'Waiting for Keno results.');
     $('place').disabled=!data.caughtUp||!!data.warning;
-    const canSwitch=!!snapshot.active&&!!snapshot.lobby;
-    $('active-view').hidden=!canSwitch;$('lobby-view').hidden=!canSwitch;
+    $('active-view').hidden=true;$('lobby-view').hidden=true;
     if(resultsPage){await loadResults();initial=false;return;}
     const previous=storage.get('match');
     if(initial&&previous&&!storage.get(`seen:${previous}`)&&!owned(snapshot.active)&&!owned(snapshot.lobby)){
@@ -124,16 +129,24 @@ function render(){
   const inActive=owned(snapshot?.active)&&!owned(snapshot.active).eliminated,inLobby=!!owned(snapshot?.lobby);
   $('active-view').setAttribute('aria-pressed',String(shown?.id===snapshot?.active?.id));
   $('lobby-view').setAttribute('aria-pressed',String(shown?.id===snapshot?.lobby?.id));
+  $('active-view').hidden=true;
+  $('lobby-view').hidden=resultsPage||!snapshot?.active||!snapshot?.lobby||shown?.id!==snapshot.active.id;
   $('setup-controls').hidden=resultsPage||(placing?!allLocked():(inActive||inLobby));
   $('place').hidden=placing;$('rotate').hidden=!placing;$('rotate').disabled=busy||!!draft[selected]?.locked;$('rotate').textContent='Rotate Ship';
+  const waiting=shown?.status==='lobby'&&!placing&&!resultsPage,hasOtherBattle=!!snapshot?.active||!!snapshot?.recent?.length;
+  $('battle-view').hidden=!waiting||!hasOtherBattle;$('battle-view').textContent=snapshot?.active?'Active Battle':'Last Battle';
   $('launch').hidden=!placing||!allLocked();$('launch').disabled=busy;$('launch').textContent=busy?'Launching…':'Launch Fleet';$('name-wrap').hidden=!placing;
   $('entry-row').classList.toggle('is-placing',placing);
   $('phase').textContent=placing?'Deploy your fleet':shown?.status==='active'?(me?.eliminated?'Eliminated · Spectating':'Battle in progress'):shown?.status==='finished'?'Match finished':shown?.status==='lobby'?'Waiting for start':'Ready to deploy';
   $('round').hidden=placing||!shown?.history?.length;$('round').textContent=shown?.history?.length?`GAME #${shown.history.at(-1).racenumber}`:'';
   const lobby=snapshot?.lobby;
-  $('entry-status').textContent=shown?.status==='active'?'':lobby?lobby.startRaceId?`Lobby starts with the next result after Game #${snapshot.last.racenumber}. ${lobby.players.length} player(s) locked. At least two required.`:`Upcoming lobby: ${lobby.players.length} player(s). Starts after the active match.`:'Launch your fleet to join the next lobby.';
+  $('entry-status').textContent=shown?.status==='active'?'':lobby?lobbyMessage(lobby):'Launch your fleet to join the next lobby.';
   $('result-banner').hidden=shown?.status!=='finished';
-  if(shown?.status==='finished'){const names=shown.players.filter(p=>shown.winners.includes(p.id)).map(p=>p.name).join(' & ');$('result-banner').replaceChildren(element('h2','',`${names} ${shown.winners.length>1?'share the win':'wins'}!`),element('p','',`Decided in Game #${shown.finish.racenumber}, ball ${shown.finish.ball} (${shown.finish.number}).`));const a=element('a','','Open game results');a.href=`battleship-results.html?match=${encodeURIComponent(shown.id)}`;$('result-banner').append(a);}
+  if(shown?.status==='finished'){
+    const names=shown.players.filter(p=>shown.winners.includes(p.id)).map(p=>p.name).join(' & ');
+    $('result-banner').replaceChildren(element('h2','',`${names} ${shown.winners.length>1?'share the win':'wins'}!`),element('p','',`Decided in Game #${shown.finish.racenumber}, ball ${shown.finish.ball} (${shown.finish.number}).`));
+    if(!resultsPage){const a=element('a','','Open game results');a.href=`battleship-results.html?match=${encodeURIComponent(shown.id)}`;$('result-banner').append(a);}
+  }
   renderHistory(shown);
 }
 function renderShips(fleet,player){
@@ -192,6 +205,7 @@ board.addEventListener('pointerup',e=>{if(!gesture||gesture.id!==e.pointerId)ret
 board.addEventListener('pointercancel',()=>{gesture=null;});
 $('place').onclick=()=>{if(busy||!snapshot)return;stopAnimation();placing=true;viewed=uid;selected=draft.findIndex(s=>!s.locked);if(selected<0)selected=0;stageShip(selected);render();message('Drag the highlighted ship, then tap it to lock. Tap a locked ship to lift it.');};
 $('rotate').onclick=()=>{if(!placing||busy||draft[selected].locked)return;vertical=!vertical;const start=draft[selected].cells[0];if(start&&!moveShip(start)){vertical=!vertical;message('No room to rotate here. Move the ship first.');}render();};
+$('battle-view').onclick=()=>{if(snapshot?.active){mode='active';viewed=uid;stopAnimation();match=snapshot.active;visual=match;render();return;}const last=snapshot?.recent?.[0];if(last)location.href=`battleship-results.html?match=${encodeURIComponent(last.id)}`;};
 $('launch').onclick=async()=>{
   if(busy||!placing||!allLocked())return;
   const name=$('player-name').value.trim();if(name.length<2||name.length>30){message('Enter a name between 2 and 30 characters.');$('player-name').focus();return;}
@@ -199,7 +213,7 @@ $('launch').onclick=async()=>{
   try{
     const data=await api('join',{name,fleet:draft});snapshot=data.state;uid=data.uid;storage.set('name',name);placing=false;mode='auto';match=chooseMatch();visual=match;if(owned(match))storage.set('match',match.id);storage.set('draft','');draft=emptyFleet();message('Fleet saved. You can leave this page and return to the match.');
     const lobby=snapshot.lobby;
-    const detail=lobby?.players.length<2?'Your fleet is locked in. Waiting for a second player.':lobby?.expectedGame?`Your fleet is locked in. Waiting for Draw #${lobby.expectedGame}.`:'Your fleet is locked in. Waiting for the active battle to finish.';
+    const detail=lobbyMessage(lobby);
     showPopup('Fleet launched',detail,{className:'result-launch'});
   }
   catch(e){message(e.message+' Your placement is still saved here.');}
