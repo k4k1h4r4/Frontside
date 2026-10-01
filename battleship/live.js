@@ -110,7 +110,7 @@ function render(){
   $('phase').textContent=placing?'Deploy your fleet':shown?.status==='active'?(me?.eliminated?'Eliminated · Spectating':'Battle in progress'):shown?.status==='finished'?'Match finished':shown?.status==='lobby'?'Waiting for start':'Ready to deploy';
   $('round').textContent=shown?.history?.length?`GAME #${shown.history.at(-1).racenumber}`:'SETUP';
   const lobby=snapshot?.lobby;
-  $('entry-status').textContent=lobby?lobby.startRaceId?`Lobby starts with the next result after Game #${snapshot.last.racenumber}. ${lobby.players.length} player(s) locked. At least two required.`:`Upcoming lobby: ${lobby.players.length} player(s). Starts after the active match.`:'Launch your fleet to join the next lobby. Entries close when its starting draw result arrives.';
+  $('entry-status').textContent=shown?.status==='active'?'':lobby?lobby.startRaceId?`Lobby starts with the next result after Game #${snapshot.last.racenumber}. ${lobby.players.length} player(s) locked. At least two required.`:`Upcoming lobby: ${lobby.players.length} player(s). Starts after the active match.`:'Launch your fleet to join the next lobby. Entries close when its starting draw result arrives.';
   $('result-banner').hidden=shown?.status!=='finished';
   if(shown?.status==='finished'){const names=shown.players.filter(p=>shown.winners.includes(p.id)).map(p=>p.name).join(' & ');$('result-banner').replaceChildren(element('h2','',`${names} ${shown.winners.length>1?'share the win':'wins'}!`),element('p','',`Decided in Game #${shown.finish.racenumber}, ball ${shown.finish.ball} (${shown.finish.number}).`));const a=element('a','','Open game results');a.href=`battleship-results.html?match=${encodeURIComponent(shown.id)}`;$('result-banner').append(a);}
   renderHistory(shown);
