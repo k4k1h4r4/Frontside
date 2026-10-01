@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Start the LCP image and imported font styles before the main CSS is parsed. -->
-  <link rel="preload" as="image" href="images/Frontside.webp" fetchpriority="high">
+  <link rel="preload" as="image" href="images/BattleshipKeno.webp" fetchpriority="high">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Special+Elite&amp;family=Oswald:wght@300;400;600;700&amp;display=swap">
@@ -41,7 +41,7 @@
   <noscript><a href="index.html">Frontside home</a></noscript>
 
 <main class="battle-page" data-results="true">
-  <header class="intro"><p class="eyebrow">80 NUMBERS. 5 SHIPS. 1 OCEAN.</p><h1><span>BATTLESHIP</span> KENO</h1><p>Lose two ships and you’re out. Last player standing wins.</p></header>
+  <header class="intro"><img class="battleship-logo" src="images/BattleshipKeno.webp" width="2048" height="703" alt="Battleship Keno" fetchpriority="high"><p>Lose 2 ships and you’re out. Last player standing wins.</p></header>
   <p class="connection" id="connection" role="status">Connecting to the fleet…</p>
   <nav class="match-bar" aria-label="Battleship matches"><a href="battleship.html">Back to Battleship</a><button id="active-view" hidden>Active match</button><button id="lobby-view" hidden>Upcoming lobby</button></nav>
   <section id="result-banner" class="result-banner" hidden></section>
@@ -53,8 +53,9 @@
       <div class="keno-board-wrap"><div class="keno-section" id="section-low"></div><div class="equator"><span>FRONTSIDE NAVAL SECTOR</span></div><div class="keno-section" id="section-high"></div></div>
     </section>
     <aside class="command-area"><div class="command-columns">
-      <section class="fleet-panel"><p class="eyebrow">FLEET COMMAND</p><div class="fleet-heading"><h2 id="fleet-owner">Your fleet</h2><span id="afloat"></span></div><div id="fleet"></div></section>
-      <section class="score-panel"><p class="eyebrow">PLAYERS</p><h2>Score</h2><div class="score-labels"><span>Name</span><span>Ships left</span></div><div id="scores"></div><p class="score-hint">Tap a player to inspect their ships. Fleets are revealed when the match starts.</p></section>
+      <h2 class="command-title">Fleet Command</h2>
+      <section class="fleet-panel"><div class="fleet-heading"><h2 id="fleet-owner">Your fleet</h2><span id="afloat"></span></div><div id="fleet"></div></section>
+      <section class="score-panel"><h2>Captains</h2><div class="score-labels"><span>Name</span><span>Ships left</span></div><div id="scores"></div><p class="score-hint">Tap a player to inspect their ships. Fleets are revealed when the match starts.</p></section>
     </div><p id="message" role="status" aria-live="polite"></p></aside>
   </div>
   <section class="draw-panel"><div class="draw-title"><h2>Draw history</h2><span id="draw-summary"></span></div><div id="balls"></div><div id="history"></div></section>
