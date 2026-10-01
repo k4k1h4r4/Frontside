@@ -9,7 +9,8 @@
 .battle-page .masthead a span{font-size:11px;color:#839aaa}
 .battle-page .badge{font-size:10px;letter-spacing:2px;border:1px solid #496273;border-radius:4px;padding:7px 10px;color:#b5cedd}
 .battle-page{max-width:1180px;margin:auto;padding:35px 28px}
-.battle-page .intro{margin-bottom:30px}
+.battle-page .intro{text-align:center;margin-bottom:16px}
+.battle-page .battleship-logo{display:block;width:min(720px,100%);height:auto;margin:0 auto 2px}
 .battle-page .eyebrow{font-size:10px;letter-spacing:2.2px;font-weight:700;color:#79afca;margin:0 0 9px}
 .battle-page h1,.battle-page h2,.battle-page p{margin-top:0}
 .battle-page h1{font-family:'Barlow Condensed',Impact,sans-serif;font-size:clamp(40px,6vw,70px);line-height:1;margin-bottom:12px;letter-spacing:1px}
@@ -87,7 +88,7 @@
 .battle-page .legend{gap:13px;padding:14px 12px}
 .battle-page aside{grid-template-columns:1fr}
 .battle-page .rules{padding:0 5px}
-.battle-page .intro{margin-bottom:22px}
+.battle-page .intro{margin-bottom:12px}
 .battle-page .draw-title{align-items:center;gap:8px}
 .battle-page .keno-cell.hit::after{font-size:12px;top:-5px}
 }
@@ -143,6 +144,7 @@
 .battle-page .layout{ grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }
 .battle-page .command-area{ display: block; min-width: 0; }
 .battle-page .command-columns{ display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px; }
+.battle-page .command-title{ grid-column:1 / -1; margin:0; padding:8px 12px; border:1px solid #304653; border-radius:7px; background:#102a3b; color:#d8e8ef; text-align:center; font-size:22px; letter-spacing:1.4px; }
 .battle-page .command-columns .fleet-panel,.battle-page .score-panel{ min-width: 0; padding: 13px 10px; border: 1px solid #304653; border-radius: 10px; background: #122633; }
 .battle-page .command-columns .eyebrow{ font-size: 9px; letter-spacing: 1.2px; }
 .battle-page .command-columns h2{ font-size: 22px; overflow-wrap: anywhere; }
@@ -205,4 +207,4 @@
 .battle-page .result-banner { padding:20px; background:#17394c; border:1px solid #edbd77; border-radius:8px; margin:18px 0; }
 .battle-page .result-banner a { color:#ffcf86; }
 .battle-page .entry-status { padding:0 14px; color:#b9d9eb; font-size:13px; }
-@media(max-width:500px){.battle-page{padding:16px 8px;margin:10px auto}.battle-page .intro h1{font-size:38px;margin-bottom:4px}.battle-page .entry-row.is-placing{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch;gap:10px;padding:0 12px 12px}.battle-page .entry-row.is-placing .entry-name,.battle-page .entry-row.is-placing .entry-status{padding:0;margin:0}.battle-page .entry-row.is-placing .entry-status{display:grid;place-items:center;text-align:center;font-size:12px;line-height:1.4}.battle-page .entry-row.is-placing input{width:100%}.battle-page .draw-history-row{grid-template-columns:auto 1fr;gap:4px 8px}.battle-page .draw-history-row small{grid-column:2;text-align:left}.battle-page .rotate-ship{min-height:40px;padding:8px 10px}}
+@media(max-width:500px){.battle-page{padding:4px 8px 16px;margin:0 auto 10px}.battle-page .battleship-logo{width:75%;margin-bottom:0}.battle-page .intro>p:last-child{font-size:14px;line-height:1.25}.battle-page .entry-row.is-placing{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch;gap:10px;padding:0 12px 12px}.battle-page .entry-row.is-placing .entry-name,.battle-page .entry-row.is-placing .entry-status{padding:0;margin:0}.battle-page .entry-row.is-placing .entry-status{display:grid;place-items:center;text-align:center;font-size:12px;line-height:1.4}.battle-page .entry-row.is-placing input{width:100%}.battle-page .draw-history-row{grid-template-columns:auto 1fr;gap:4px 8px}.battle-page .draw-history-row small{grid-column:2;text-align:left}.battle-page .rotate-ship{min-height:40px;padding:8px 10px}}
