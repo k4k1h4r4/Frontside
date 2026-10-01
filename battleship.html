@@ -33,7 +33,8 @@
   <script defer src="site-update.js?v=2026-09-15-02"></script>
   <link rel="stylesheet" href="battleship/battleship.css?v=2026-09-30-01">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script type="module" src="battleship/live.js?v=2026-09-30-01"></script>
+  <script defer src="battleship/ships.js?v=2026-10-01-01"></script>
+  <script defer src="battleship/live.js?v=2026-10-01-01"></script>
 </head>
 <body>
   <nav class="site-nav" data-site-nav aria-label="Main navigation"></nav>
@@ -47,8 +48,7 @@
   <div class="layout">
     <section class="ocean-panel" aria-label="Your ocean board">
       <div id="setup-controls" class="controls setup-controls"><button id="place" class="primary" disabled>Place my Fleet</button><button id="launch" class="primary" hidden>Launch fleet</button></div>
-      <label id="name-wrap" class="entry-name" hidden>Your name<input id="player-name" maxlength="30" autocomplete="nickname" placeholder="Your name"></label>
-      <p class="entry-status" id="entry-status"></p>
+      <div class="entry-row" id="entry-row"><label id="name-wrap" class="entry-name" hidden>Your name<input id="player-name" maxlength="30" autocomplete="nickname" placeholder="Your name"></label><p class="entry-status" id="entry-status"></p></div>
       <div class="board-heading"><div><p class="eyebrow" id="water-owner">YOUR WATERS</p><h2 id="phase">Ready to deploy</h2></div><div class="board-actions"><button id="rotate" class="rotate-ship" hidden>Rotate Ship</button><span class="round" id="round" hidden></span></div></div>
       <div class="keno-board-wrap"><div class="keno-section" id="section-low"></div><div class="equator"><span>FRONTSIDE NAVAL SECTOR</span></div><div class="keno-section" id="section-high"></div></div>
     </section>
