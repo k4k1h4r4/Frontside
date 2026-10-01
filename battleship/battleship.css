@@ -1,0 +1,198 @@
+.battle-page{color-scheme:dark;font-family:Barlow,Arial,sans-serif;color:#e7f1f6;background:#08141e}
+.battle-page *{box-sizing:border-box}
+.battle-page{margin:0;background:radial-gradient(ellipse at 35% 35%,#11314866,transparent 60%)}
+.battle-page button,.battle-page a{-webkit-tap-highlight-color:transparent}
+.battle-page button{font:inherit;cursor:pointer}
+.battle-page button:focus-visible,.battle-page a:focus-visible{outline:3px solid #ffcd74;outline-offset:3px}
+.battle-page .masthead{max-width:1180px;margin:auto;padding:25px 28px;border-bottom:1px solid #28404f;display:flex;justify-content:space-between;align-items:center;gap:15px}
+.battle-page .masthead a{text-decoration:none;color:#eceddd;font-weight:800;letter-spacing:2px}
+.battle-page .masthead a span{font-size:11px;color:#839aaa}
+.battle-page .badge{font-size:10px;letter-spacing:2px;border:1px solid #496273;border-radius:4px;padding:7px 10px;color:#b5cedd}
+.battle-page{max-width:1180px;margin:auto;padding:35px 28px}
+.battle-page .intro{margin-bottom:30px}
+.battle-page .eyebrow{font-size:10px;letter-spacing:2.2px;font-weight:700;color:#79afca;margin:0 0 9px}
+.battle-page h1,.battle-page h2,.battle-page p{margin-top:0}
+.battle-page h1{font-family:'Barlow Condensed',Impact,sans-serif;font-size:clamp(40px,6vw,70px);line-height:1;margin-bottom:12px;letter-spacing:1px}
+.battle-page h1 span{color:#ebbb71}
+.battle-page .intro>p:last-child{color:#9bb1bf;font-size:16px;margin:0}
+.battle-page .layout{display:grid;grid-template-columns:minmax(0,1fr) 295px;gap:24px}
+.battle-page .ocean-panel{border:1px solid #31566d;background:#0b2232;border-radius:10px;overflow:hidden;box-shadow:0 15px 45px #0003}
+.battle-page .board-heading{padding:19px 22px;display:flex;align-items:center;justify-content:space-between;background:#102a3b}
+.battle-page h2{font-family:'Barlow Condensed',Arial,sans-serif;font-size:25px;letter-spacing:.4px;margin-bottom:0}
+.battle-page .round{font-size:11px;letter-spacing:1.5px;background:#1d4055;border:1px solid #3b6279;padding:9px;border-radius:4px;white-space:nowrap}
+.battle-page .keno-board-wrap{padding:20px;background:repeating-radial-gradient(ellipse at 20% 100%,transparent 0 24px,#73c9ff09 25px 26px,transparent 27px 48px),linear-gradient(135deg,#156390,#103b63 60%,#0d4c75)}
+.battle-page .keno-section{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px}
+.battle-page .keno-cell{position:relative;min-width:0;aspect-ratio:1;border-radius:50%;border:1px solid #75c3e843;background:#082e504a;color:#c4e5f5;font-family:'Barlow Condensed',Arial,sans-serif;font-size:clamp(15px,2vw,23px);font-weight:600;padding:0;display:flex;align-items:center;justify-content:center}
+.battle-page .keno-cell:disabled{cursor:default;opacity:1}
+.battle-page .keno-cell.ship{border-radius:5px;border:2px solid #a9c4cf;background:linear-gradient(135deg,#718d9b,#374e5b);color:#fff;box-shadow:inset 0 0 0 3px #243f4d80,0 3px 5px #001d32aa}
+.battle-page .keno-cell.hit{background:linear-gradient(135deg,#a44d2e,#6e2d21);border-color:#ffac6b;color:#fff0da}
+.battle-page .keno-cell.hit::after{content:'×';position:absolute;right:1px;top:-6px;font:700 16px Arial;color:#ffd69a}
+.battle-page .keno-cell.miss{color:#8fbdd4;background:#06283e99;border-style:dashed}
+.battle-page .keno-cell.miss::after{content:'•';position:absolute;bottom:-3px;font-size:14px;color:#97d4eb}
+.battle-page .keno-cell.sunk{background:#372e35;border-color:#a78387;color:#c5b4b7}
+.battle-page .keno-cell.preview{outline:2px solid #a3ffe0;background:#418b89}
+.battle-page .equator{display:flex;align-items:center;gap:15px;margin:13px 0;color:#80bed7;font-size:8px;letter-spacing:2px;text-align:center}
+.battle-page .equator::before,.battle-page .equator::after{content:'';height:1px;background:#74bad340;flex:1}
+.battle-page .legend{display:flex;gap:20px;flex-wrap:wrap;padding:15px 20px;color:#a9becb;font-size:11px}
+.battle-page .legend span{display:flex;align-items:center;gap:6px}
+.battle-page .legend i{width:10px;height:10px;display:inline-block;border-radius:2px}
+.battle-page .ship-key{background:#718d9b}
+.battle-page .hit-key{background:#d67845}
+.battle-page .miss-key{border:1px dashed #80b8d6;border-radius:50%!important}
+.battle-page .sunk-key{background:#69545e}
+.battle-page .fleet-panel{padding:22px;background:#122633;border:1px solid #304653;border-radius:10px}
+.battle-page .fleet-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.battle-page .fleet-heading>span{font-size:11px;color:#9bcec4}
+.battle-page .fleet-item{width:100%;text-align:left;color:inherit;background:none;border:0;border-bottom:1px solid #2a414e;padding:13px 0}
+.battle-page .fleet-item.selected{color:#ffcd74}
+.battle-page .fleet-item:disabled{cursor:default}
+.battle-page .fleet-line{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
+.battle-page .fleet-line small{color:#a4b9c6;font-size:10px}
+.battle-page .segments{display:flex;gap:4px;margin-top:9px}
+.battle-page .segments i{width:27px;height:10px;background:#718d9b;border:1px solid #9eb8c5;border-radius:2px}
+.battle-page .segments i.damaged{background:#a65031;border-color:#f5a363}
+.battle-page .segments i.lost{background:#55424b;border-color:#927783}
+.battle-page #message{font-size:13px;line-height:1.5;color:#c4d5df;min-height:40px;margin:17px 0}
+.battle-page .controls{display:grid;gap:9px}
+.battle-page .controls button{border:1px solid #4a6678;background:transparent;color:#d6e5ed;padding:12px;border-radius:5px;font-weight:600;font-size:13px}
+.battle-page .controls button.primary{background:#eabc76;color:#152331;border-color:#eabc76}
+.battle-page .controls button:disabled{opacity:.45;cursor:default}
+.battle-page .controls button.text-button{border:0;color:#8bafc4;padding-bottom:0;font-size:11px}
+.battle-page [hidden]{display:none!important}
+.battle-page .rules{padding:22px 5px 0;color:#8faab9;font-size:13px;line-height:1.7}
+.battle-page .rules p:last-child{margin:0}
+.battle-page .draw-panel{margin-top:24px;border-top:1px solid #304653;padding-top:20px}
+.battle-page .draw-title{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:15px}
+.battle-page .draw-title span{color:#a6bcc9;font-size:12px}
+.battle-page #balls{display:flex;gap:8px;flex-wrap:wrap}
+.battle-page .draw-ball{width:33px;height:33px;display:grid;place-items:center;border-radius:50%;border:1px solid #456279;background:#173247;color:#bcd7e6;font-size:12px;font-weight:700}
+.battle-page .draw-ball.strike{background:#aa5632;color:#fff1dd;border-color:#efaa71}
+.battle-page footer{margin-top:35px;color:#7891a1;font-size:10px;letter-spacing:1.4px}
+@media(max-width:850px){.battle-page .layout{grid-template-columns:1fr}
+.battle-page aside{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.battle-page .keno-cell{font-size:22px}
+.battle-page .rules{padding-top:10px}
+}
+@media(max-width:500px){.battle-page{padding:25px 12px}
+.battle-page .masthead{padding:18px 12px}
+.battle-page .masthead a span{display:none}
+.battle-page .badge{font-size:8px;letter-spacing:1px}
+.battle-page .keno-board-wrap{padding:12px 8px}
+.battle-page .keno-section{gap:4px}
+.battle-page .keno-cell{font-size:16px}
+.battle-page .board-heading{padding:15px 12px}
+.battle-page .legend{gap:13px;padding:14px 12px}
+.battle-page aside{grid-template-columns:1fr}
+.battle-page .rules{padding:0 5px}
+.battle-page .intro{margin-bottom:22px}
+.battle-page .draw-title{align-items:flex-start;flex-direction:column;gap:6px}
+.battle-page .keno-cell.hit::after{font-size:12px;top:-5px}
+}
+.battle-page .keno-board-wrap{ position: relative; isolation: isolate; }
+.battle-page .ship-silhouette{ position: absolute; z-index: 1; pointer-events: none; filter: drop-shadow(0 3px 3px #001622aa); }
+.battle-page .ship-silhouette svg{ display: block; width: 100%; height: 100%; }
+.battle-page .ship-silhouette.wreck{ --hull: #61505b; filter: grayscale(.65) drop-shadow(0 3px 3px #001622aa); }
+.battle-page .keno-cell{ z-index: 2; }
+.battle-page .keno-cell.ship,.battle-page .keno-cell.ship.hit,.battle-page .keno-cell.ship.sunk{ background: transparent; border-color: transparent; box-shadow: none; border-radius: 50%; }
+.battle-page .cell-number{ position: relative; z-index: 2; }
+.battle-page .ship .cell-number{ background: #102735e6; color: #fff; border: 1px solid #c0d5df88; border-radius: 50%; min-width: 1.25em; padding: 0 .12em; line-height: 1.25; text-shadow: 0 1px 2px #000; }
+.battle-page .keno-cell.hit::after{ content: '🔥'; z-index: 3; font-family: 'Segoe UI Emoji', sans-serif; font-size: clamp(17px,2.5vw,29px); top: -12%; right: -8%; line-height: 1; filter: drop-shadow(0 0 4px #ff7b22aa); }
+.battle-page .keno-cell.ship.preview{ background: #418b8966; }
+@media(max-width:500px){.battle-page .keno-cell.hit::after{ font-size: 18px; top: -18%; right: -12%; }
+}
+.battle-page .keno-cell.hit .cell-number{ visibility: hidden; }
+.battle-page .keno-cell.hit::after{
+  content: '';
+  inset: 0;
+  background: url('keno-battleship-fire.svg') center / contain no-repeat;
+  filter: drop-shadow(0 0 5px #ff5a1599);
+  pointer-events: none;
+}
+.battle-page .keno-cell.miss{
+  background: #d8f4ff;
+  color: #07334d;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 2px #58c7ef, inset 0 0 0 3px #a6def1;
+  font-weight: 800;
+}
+.battle-page .keno-cell.miss::after{
+  content: '';
+  inset: 3px;
+  border: 1px solid #368bac;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.battle-page .miss-key{ background: #d8f4ff; border: 2px solid #fff; box-shadow: 0 0 0 1px #58c7ef; }
+.battle-page .fleet-ship{ display: block; position: relative; width: calc(var(--spaces) * 20%); height: 42px; margin-top: 10px; }
+.battle-page .fleet-ship > svg{ display: block; width: 100%; height: 100%; filter: drop-shadow(0 3px 2px #00162299); }
+.battle-page .fleet-ship.wreck{ --hull: #61505b; }
+.battle-page .fleet-ship.wreck > svg{ filter: grayscale(.65); }
+.battle-page .fleet-ship-spaces{ position: absolute; inset: 0; display: grid; grid-template-columns: repeat(var(--spaces), 1fr); }
+.battle-page .fleet-fire{ background: url('keno-battleship-fire.svg') center / contain no-repeat; filter: drop-shadow(0 0 3px #ff5a1599); }
+.battle-page .draw-ball:last-child{ outline: 2px solid #edbd77; outline-offset: 2px; }
+.battle-page .keno-cell.ball-impact{ animation: ball-impact 420ms ease-out; }
+@keyframes ball-impact{
+  0%, 25% { outline: 3px solid #fff3ae; outline-offset: 2px; filter: brightness(1.8); }
+  100% { outline: 3px solid transparent; outline-offset: 5px; filter: brightness(1); }
+}
+@media (prefers-reduced-motion: reduce){.battle-page .keno-cell.ball-impact{ animation: none; outline: 3px solid #fff3ae; outline-offset: 2px; }
+}
+.battle-page .layout{ grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }
+.battle-page .command-area{ display: block; min-width: 0; }
+.battle-page .command-columns{ display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px; }
+.battle-page .command-columns .fleet-panel,.battle-page .score-panel{ min-width: 0; padding: 13px 10px; border: 1px solid #304653; border-radius: 10px; background: #122633; }
+.battle-page .command-columns .eyebrow{ font-size: 9px; letter-spacing: 1.2px; }
+.battle-page .command-columns h2{ font-size: 22px; overflow-wrap: anywhere; }
+.battle-page .command-columns .fleet-heading{ display: block; margin-bottom: 5px; }
+.battle-page .command-columns .fleet-heading > span{ display: block; margin-top: 6px; }
+.battle-page .command-columns .fleet-line{ display: block; font-size: 12px; }
+.battle-page .command-columns .fleet-line small{ display: block; margin-top: 4px; }
+.battle-page .command-columns .fleet-ship{ height: 33px; }
+.battle-page .score-labels{ display: flex; justify-content: space-between; gap: 5px; font-size: 10px; color: #a4b9c6; margin: 15px 0 8px; }
+.battle-page .score-player{ display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; min-height: 48px; padding: 10px 8px; margin: 5px 0; border: 1px solid #345365; border-radius: 6px; background: #0e202c; color: #d6e5ed; font-size: 13px; text-align: left; }
+.battle-page .score-player span{ overflow-wrap: anywhere; min-width: 0; }
+.battle-page .score-player strong{ font-size: 20px; color: #edbd77; }
+.battle-page .score-player[aria-pressed="true"]{ border-color: #edbd77; background: #324039; }
+.battle-page .score-player:disabled{ opacity: .5; cursor: default; }
+.battle-page .score-hint{ font-size: 11px; line-height: 1.5; color: #9ab6c6; margin: 15px 0 0; }
+.battle-page .match-controls{ padding: 0 4px; }
+@media(max-width:1000px){.battle-page .layout{ grid-template-columns: minmax(0,1fr); gap: 14px; }
+.battle-page .command-area{ display: block; }
+.battle-page .command-columns{ grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+.battle-page .controls{ grid-template-columns: 1fr 1fr; }
+.battle-page .command-columns .fleet-ship{ max-width: calc(var(--spaces) * 48px); }
+}
+@media(max-width:380px){.battle-page .command-columns{ gap: 8px; }
+.battle-page .command-columns .fleet-panel,.battle-page .score-panel{ padding: 12px 8px; }
+.battle-page .command-columns h2{ font-size: 20px; }
+.battle-page .controls{ grid-template-columns: minmax(0,1fr); }
+}
+.battle-page #result-popup{ width: min(420px, calc(100% - 32px)); margin: auto; padding: 28px; border: 1px solid #bb735b; border-radius: 14px; background: #122633; color: #edf4f7; box-shadow: 0 24px 90px #0009; }
+.battle-page #result-popup::backdrop{ background: #03111cbb; backdrop-filter: blur(3px); }
+.battle-page #result-popup.result-win{ border-color: #edbd77; }
+.battle-page #result-popup h2{ font-size: 34px; line-height: 1.15; }
+.battle-page #result-popup.result-win h2{ color: #ffcf86; }
+.battle-page #result-detail{ color: #bfd2df; font-size: 14px; line-height: 1.6; margin: 18px 0 24px; }
+.battle-page #result-dismiss{ width: 100%; min-height: 48px; border: 0; border-radius: 6px; padding: 12px; background: #edbd77; color: #122633; font-weight: 700; }
+.battle-page .player-out{ display: block; margin-top: 4px; font-size: 9px; color: #ffb7a3; }
+.battle-page .setup-controls{ display: flex; flex-wrap: wrap; gap: 10px; padding: 14px; background: #102a3b; border-bottom: 1px solid #31566d; }
+.battle-page .setup-controls button{ min-height: 48px; flex: 1; }
+.battle-page .keno-board-wrap.is-placing{ touch-action: none; user-select: none; }
+.battle-page .keno-cell.ship-lifted{ outline: 2px dashed #ffcf86; outline-offset: 1px; }
+.battle-page .keno-board-wrap.is-placing .keno-cell{ cursor: grab; }
+.battle-page .keno-board-wrap.is-placing .keno-cell:active{ cursor: grabbing; }
+
+.battle-page { font-family: 'Oswald', Arial, sans-serif; color:#e7f1f6; background:#081e2e; max-width:1180px; margin:20px auto; padding:24px 16px; border-radius:10px; }
+.battle-page h1,.battle-page h2 { font-family:'Bebas Neue',Arial,sans-serif; }
+.battle-page .match-bar { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+.battle-page .match-bar button,.battle-page .match-bar a { border:1px solid #51778c; background:#12364c; padding:10px 14px; border-radius:6px; color:#e7f1f6; text-decoration:none; }
+.battle-page .connection { color:#d4e8f4; line-height:1.6; margin:10px 0; }
+.battle-page .entry-name { display:grid; gap:6px; font-size:13px; padding:0 14px 12px; }
+.battle-page input { max-width:100%; min-height:44px; padding:9px; background:#0c2436; color:white; border:1px solid #8baabc; border-radius:4px; font:inherit; }
+.battle-page details { margin-top:12px; padding:10px; border:1px solid #31566d; border-radius:6px; }
+.battle-page summary { cursor:pointer; min-height:35px; }
+.battle-page .history-balls { line-height:1.8; font-size:13px; color:#b8d9e9; }
+.battle-page .result-banner { padding:20px; background:#17394c; border:1px solid #edbd77; border-radius:8px; margin:18px 0; }
+.battle-page .result-banner a { color:#ffcf86; }
+.battle-page .entry-status { padding:0 14px; color:#b9d9eb; font-size:13px; }
+@media(max-width:500px){.battle-page{padding:16px 8px;margin:10px auto}.battle-page .intro h1{font-size:38px}}
