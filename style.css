@@ -2020,7 +2020,10 @@ footer a:hover { color: var(--accent); }
    stays capped at that width on tablet/desktop. */
 .keno-check-row {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 0.65rem;
   margin: 0.25rem 0 2.5rem;
 }
 
