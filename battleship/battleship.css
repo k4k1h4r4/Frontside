@@ -182,7 +182,7 @@
 .battle-page #result-dismiss{ width: 100%; min-height: 48px; border: 0; border-radius: 6px; padding: 12px; background: #edbd77; color: #122633; font-weight: 700; }
 .battle-page .player-out{ display: block; margin-top: 4px; font-size: 9px; color: #ffb7a3; }
 .battle-page .setup-controls{ display: flex; flex-wrap: wrap; gap: 10px; padding: 14px; background: #102a3b; border-bottom: 1px solid #31566d; }
-.battle-page .setup-controls button{ min-height: 48px; flex: 1; }
+.battle-page .setup-controls button{ min-height: 48px; flex: 1; font-size: 16px; }
 .battle-page .keno-board-wrap.is-placing{ touch-action: none; user-select: none; }
 .battle-page .keno-cell.ship-lifted{ outline: 2px dashed #ffcf86; outline-offset: 1px; }
 .battle-page .keno-board-wrap.is-placing .keno-cell{ cursor: grab; }
