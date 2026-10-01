@@ -186,6 +186,7 @@
 .battle-page h1,.battle-page h2 { font-family:'Bebas Neue',Arial,sans-serif; }
 .battle-page .match-bar { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
 .battle-page .match-bar button,.battle-page .match-bar a { border:1px solid #51778c; background:#12364c; padding:10px 14px; border-radius:6px; color:#e7f1f6; text-decoration:none; }
+.battle-page .match-bar button[aria-pressed="true"] { border-color:#edbd77; background:#285a72; color:#fff4d6; }
 .battle-page .connection { color:#d4e8f4; line-height:1.6; margin:10px 0; }
 .battle-page .entry-name { display:grid; gap:6px; font-size:13px; padding:0 14px 12px; }
 .battle-page input { max-width:100%; min-height:44px; padding:9px; background:#0c2436; color:white; border:1px solid #8baabc; border-radius:4px; font:inherit; }

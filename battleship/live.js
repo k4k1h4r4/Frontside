@@ -25,8 +25,8 @@ async function api(action,extra={}){
 }
 function owned(m){return m?.players.find(p=>p.id===uid);}
 function chooseMatch(){
-  if(mode==='active')return snapshot.active;
-  if(mode==='lobby')return snapshot.lobby;
+  if(mode==='active'&&snapshot.active)return snapshot.active;
+  if(mode==='lobby'&&snapshot.lobby)return snapshot.lobby;
   if(owned(snapshot.lobby))return snapshot.lobby;
   if(owned(snapshot.active))return snapshot.active;
   return snapshot.active||snapshot.lobby;
@@ -37,7 +37,8 @@ async function refresh(){
     const data=await api('status');uid=data.uid;snapshot=data.state;
     $('connection').textContent=data.warning||(!data.caughtUp?'Catching up missed Keno draws…':snapshot.last?`Latest received: Game #${snapshot.last.racenumber} · ${time(snapshot.last.timestamp)} MT`:'Waiting for Keno results.');
     $('place').disabled=!data.caughtUp||!!data.warning;
-    $('active-view').hidden=!snapshot.active;$('lobby-view').hidden=!snapshot.lobby;
+    const canSwitch=!!snapshot.active&&!!snapshot.lobby;
+    $('active-view').hidden=!canSwitch;$('lobby-view').hidden=!canSwitch;
     if(resultsPage){await loadResults();initial=false;return;}
     const previous=storage.get('match');
     if(initial&&previous&&!storage.get(`seen:${previous}`)&&!owned(snapshot.active)&&!owned(snapshot.lobby)){
@@ -104,6 +105,8 @@ function render(){
   $('scores').replaceChildren(...(shown?.players||[]).map(p=>{const b=element('button','score-player');b.id='player-'+p.id;b.setAttribute('aria-pressed',String(inspection?.id===p.id));const name=element('span','',p.id===uid?`${p.name} (you)`:p.name);if(p.eliminated)name.append(element('small','player-out','OUT · 2 ships sunk'));b.append(name,element('strong','',shown.status==='lobby'?'—':remaining(p)));b.onclick=()=>{viewed=p.id;render();};return b;}));
   if(focused?.startsWith('player-'))document.getElementById(focused)?.focus({preventScroll:true});
   const inActive=owned(snapshot?.active)&&!owned(snapshot.active).eliminated,inLobby=!!owned(snapshot?.lobby);
+  $('active-view').setAttribute('aria-pressed',String(shown?.id===snapshot?.active?.id));
+  $('lobby-view').setAttribute('aria-pressed',String(shown?.id===snapshot?.lobby?.id));
   $('setup-controls').hidden=resultsPage||(!placing&&(inActive||inLobby));
   $('place').hidden=placing;$('rotate').hidden=!placing;$('rotate').disabled=busy||!!draft[selected]?.locked;$('rotate').textContent=vertical?'Rotate · Vertical ↕':'Rotate · Horizontal ↔';
   $('launch').hidden=!placing||!allLocked();$('launch').disabled=busy;$('launch').textContent=busy?'Launching…':'Launch fleet';$('name-wrap').hidden=!placing;
