@@ -38,7 +38,9 @@ jobs:
           node --check site-update.js
           node --check keno-feed.js
           node --check live-feed-posts.js
-          node --test tests/site-update.test.cjs tests/keno-feed.test.cjs tests/live-feed-posts.test.cjs
+          node --check battleship/live.js
+          node --check battleship/ships.js
+          node --test tests/site-update.test.cjs tests/keno-feed.test.cjs tests/live-feed-posts.test.cjs tests/battleship-engine.test.mjs
 
       - name: Stamp a unique release
         env:
@@ -50,6 +52,8 @@ jobs:
           mkdir _site
           cp *.html *.css nav.js bingo.js site-update.js keno-feed.js live-feed-posts.js version.json manifest.webmanifest favicon.ico CNAME _site/
           cp -R Arcade images _site/
+          mkdir -p _site/battleship
+          cp battleship/battleship.css battleship/live.js battleship/ships.js battleship/keno-battleship-fire.svg _site/battleship/
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
