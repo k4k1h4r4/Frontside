@@ -1,4 +1,3 @@
-import { shipArt } from './ships.js';
 const SUPABASE_URL='https://znqnnaslskjewfxcswxw.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_0pVZp5JcAc9lSIClZD5eqQ_9Q33F7Uf';
 const MOUNTAIN_TIME_ZONE='America/Denver';
@@ -128,6 +127,7 @@ function render(){
   $('setup-controls').hidden=resultsPage||(placing?!allLocked():(inActive||inLobby));
   $('place').hidden=placing;$('rotate').hidden=!placing;$('rotate').disabled=busy||!!draft[selected]?.locked;$('rotate').textContent='Rotate Ship';
   $('launch').hidden=!placing||!allLocked();$('launch').disabled=busy;$('launch').textContent=busy?'Launching…':'Launch fleet';$('name-wrap').hidden=!placing;
+  $('entry-row').classList.toggle('is-placing',placing);
   $('phase').textContent=placing?'Deploy your fleet':shown?.status==='active'?(me?.eliminated?'Eliminated · Spectating':'Battle in progress'):shown?.status==='finished'?'Match finished':shown?.status==='lobby'?'Waiting for start':'Ready to deploy';
   $('round').hidden=placing||!shown?.history?.length;$('round').textContent=shown?.history?.length?`GAME #${shown.history.at(-1).racenumber}`:'';
   const lobby=snapshot?.lobby;
