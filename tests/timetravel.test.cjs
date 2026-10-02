@@ -242,6 +242,28 @@ test('media errors leave a clear message and the popup can be dismissed',()=>{
   element('skip-travel').listeners.click();
   assert.equal(element('travel-popup').open,false);
 });
+test('Message blinks until opened, remembers reading, and alerts again for the next clue or restart',()=>{
+  const game=dashboard();
+  const unread=app=>app.element('open-message').classList.contains('unread');
+  assert.equal(unread(game),true);
+  game.element('open-message').listeners.click();
+  assert.equal(unread(game),false);
+  game.element('close-message').listeners.click();
+  const resumed=dashboard('',{storage:game.storage});
+  assert.equal(unread(resumed),false);
+  resumed.api.travel('10212015');
+  assert.equal(unread(resumed),true);
+  const next=dashboard('',{storage:resumed.storage});
+  assert.equal(unread(next),true);
+  next.element('open-message').listeners.click();
+  assert.equal(unread(next),false);
+  next.hunt.reset();
+  assert.equal(unread(next),true);
+  next.hunt.setStep(3);
+  next.api.travel('10022026');
+  assert.equal(unread(next),false);
+});
+
 test('Message shows the current clue and the hunt starts at step one',()=>{
   const {hunt,element}=dashboard();
   assert.equal(hunt.getState().step,1);
