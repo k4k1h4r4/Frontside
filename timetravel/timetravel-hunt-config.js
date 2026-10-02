@@ -8,12 +8,12 @@ window.TIME_HUNT_CONFIG = {
   steps: [
     {
       step: 1,
-      message: 'Find the date Marty arrives in the future in Back to the Future Part II. Enter that date to begin your journey.',
+      message: 'First message, but we'll start on Part Two— Travel back to the past where future Marty flew.',
       destinationkey: '10212015'
     },
     {
       step: 2,
-      message: 'Your next destination is the day Doc Brown invented the flux capacitor. Find that date and enter it to continue.',
+      message: 'Doc Brown invents the flux capacitor.',
       destinationkey: '11051955'
     }
   ]
