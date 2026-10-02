@@ -8,12 +8,12 @@ window.TIME_HUNT_CONFIG = {
   steps: [
     {
       step: 1,
-      message: 'First message, but we'll start on Part Two— Travel back to the past where future Marty flew.',
+      message: "First message, but we'll start on Part Two— Travel back to the past where future Marty flew.",
       destinationkey: '10212015'
     },
     {
       step: 2,
-      message: 'Doc Brown invents the flux capacitor.',
+      message: "Doc Brown invents the flux capacitor.",
       destinationkey: '11051955'
     }
   ]
