@@ -27,7 +27,7 @@ h2 { width: max-content; max-width: 100%; margin: 12px auto 0; background: #080a
 .under-panel { display: flex; justify-content: space-between; margin: 15px 5px 28px; color: #7a8073; font-size: 8px; letter-spacing: 1px; }.under-panel b { font-weight: 400; color: #b4bd9d; margin-left: 6px; }
 .keypad-panel { width: min(100%, 410px); margin: 0 auto; padding: 23px 20px 20px; display: grid; grid-template-columns: 39px minmax(0,1fr); gap: 20px; border: 3px solid #656347; border-radius: 13px; background: radial-gradient(ellipse at 3% 7%, #d4c59438, transparent 14%), radial-gradient(ellipse at 96% 93%, #22261755, transparent 22%), linear-gradient(168deg, transparent 0 48%, #e1d7ab30 49% 51%, transparent 52%) 12px 9px / 31px 3px no-repeat, linear-gradient(12deg, transparent 0 45%, #272b1955 46% 54%, transparent 55%) right 14px bottom 12px / 47px 4px no-repeat, repeating-linear-gradient(3deg, transparent 0 3px, #ffffff04 3px 4px), linear-gradient(120deg, #73704a, #4a4d32 35%, #58593b 80%, #7c7750); box-shadow: inset 2px 2px 3px #c0b58066, inset -3px -4px 5px #242918, 0 15px 30px #0006; }
 .indicator-bank { display: flex; flex-direction: column; gap: 22px; padding-top: 16px; }
-.lamp { --lamp: #52462b; display: block; width: 37px; height: 39px; border: 3px ridge #938163; background: #282b1c; box-shadow: 1px 2px 3px #0009; position: relative; }
+.lamp { --lamp: #52462b; display: block; flex: none; width: 37px; height: 37px; border: 3px ridge #938163; background: #282b1c; box-shadow: 1px 2px 3px #0009; position: relative; }
 .lamp::after { content: ''; position: absolute; inset: 5px; border-radius: 50%; background: repeating-radial-gradient(circle, #ffffff30 0 1px, transparent 2px 4px), var(--lamp); box-shadow: inset 0 0 6px #000a; }
 .lamp.red { --lamp: #b81914; }.lamp.amber { --lamp: #b07a11; }.lamp.green { --lamp: #304515; }.lamp.lit::after { box-shadow: 0 0 13px var(--lamp), inset 0 0 8px #fff9; }.lamp.red.lit { --lamp: #ff3027; }.lamp.amber.lit { --lamp: #ffb722; }.lamp.green.lit { --lamp: #85ed32; }
 .keypad-body { padding: 16px 15px 12px; border: 4px ridge #9d9270; background: radial-gradient(ellipse at 12% 38%, #65513024, transparent 28%), radial-gradient(ellipse at 84% 77%, #6957322b, transparent 25%), radial-gradient(circle, #5c4a3026 0 .6px, transparent .9px) 0 0 / 19px 23px, linear-gradient(174deg, transparent 46%, #f0dfb53b 48% 51%, transparent 54%) right 7px top 38% / 23px 3px no-repeat, repeating-linear-gradient(5deg, #ffffff04 0 2px, transparent 2px 5px), linear-gradient(115deg, #a69a75, #c1b28b 60%, #a1936c); box-shadow: inset 0 0 15px #4a3b2466, inset 0 2px 3px #51442d55, 0 2px 5px #0007; }
@@ -40,6 +40,7 @@ h2 { width: max-content; max-width: 100%; margin: 12px auto 0; background: #080a
 .keypad { display: grid; grid-template-columns: repeat(3,48.4px); gap: 15.6px 19.2px; align-items: start; justify-content: center; }
 .keypad button, .destination-submit { position: relative; width: 100%; aspect-ratio: 1 / 1; min-width: 0; min-height: 0; padding: 0; display: grid; place-items: center; cursor: pointer; touch-action: manipulation; border: 3px solid; border-color: #dfd6bf #a99e83 #93896f #cec3a8; border-radius: 2px; background: radial-gradient(ellipse at 50% 45%, #f5efe052, transparent 62%), radial-gradient(ellipse at 93% 95%, #796b4533, transparent 44%), linear-gradient(130deg,#e5dfce,#c6bda7); color: #424136; font: 500 24px 'Barlow Condensed', sans-serif; text-shadow: 0 1px #fff8; box-shadow: inset 0 0 3px #f7efd48c, 0 3px 0 #665f47, 0 4px 5px #413c3077; }
 .keypad button::after, .destination-submit::after { content: ''; position: absolute; inset: 2px; pointer-events: none; background: linear-gradient(166deg, transparent 40%, #766b4933 43% 49%, transparent 52%) 12% 9% / 13px 2px no-repeat, linear-gradient(8deg, transparent 40%, #fff7df77 43% 50%, transparent 55%) 85% 94% / 10px 2px no-repeat; opacity: .7; }
+.keypad button { appearance: none; width: 48.4px; height: 48.4px; line-height: 1; }
 .keypad button:nth-child(3n+2)::after { transform: rotate(90deg); opacity: .45; }
 .keypad button:nth-child(4n) { background: radial-gradient(ellipse at 32% 30%, #f4edda60, transparent 57%), radial-gradient(ellipse at 8% 94%, #78684238, transparent 38%), linear-gradient(140deg,#ddd6c3,#c1b8a2); }
 .keypad button:active, .destination-submit:not(:disabled):active { transform: translateY(2px); box-shadow: inset 0 1px 4px #786b4555, 0 1px 0 #665f47; }
@@ -69,13 +70,20 @@ button:focus-visible { outline: 2px solid #eff3cf; outline-offset: 4px; }
 .input-popup { width: min(410px,calc(100% - 24px)); max-height: calc(100svh - 24px); padding: 0; border: 0; border-radius: 13px; background: transparent; color: inherit; }
 .input-popup::backdrop { background: #030806d9; }
 .keypad-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
-.keypad-header h3 { margin: 0; text-align: left; }
+.keypad-body .keypad-header h3 { margin: 0; text-align: left; }
 .keypad-header button { flex: 0 0 32px; height: 32px; border: 1px solid #80775c; border-radius: 2px; background: #c6bda7; color: #393b26; font-size: 23px; cursor: pointer; }
 .destination-submit { aspect-ratio: auto; min-height: 48px; padding: 10px 6px; font-size: 15px; font-weight: 700; letter-spacing: 1px; }
 .destination-submit:disabled { opacity: .5; cursor: default; }
 .input-error { color: #5a120d; font-size: 10px; line-height: 1.5; margin: 10px 0 0; min-height: 15px; }
 @media (max-width: 540px) { .console { width: calc(100% - 24px); padding-top: 6px; }.housing { padding: 6px; }.circuit { padding: 20px 9px 12px; }.readout { gap: 6px; }.field-label { padding: 2px 4px; letter-spacing: 1px; margin-bottom: 6px; }.screen { padding: 4px 2px; border-width: 1px; }.hour-display { gap: 3px; }h2 { letter-spacing: 1.6px; }.under-panel { font-size: 7px; letter-spacing: .6px; }.keypad-panel { padding: 18px 12px 15px; gap: 12px; grid-template-columns: 33px minmax(0,1fr); }.lamp { width: 32px; height: 35px; }.keypad-body { padding: 14px 10px 10px; }.keypad { gap: 14px 10px; } }
-@media (max-width: 540px) { .keypad { gap: 16.8px 12px; } }
+@media (max-width: 540px) {
+  .lamp { width: 32px; height: 32px; }
+  .indicator-bank { gap: 18px; padding-top: 10px; }
+  .keypad { gap: 12px; }
+  .keypad-header { margin-bottom: 10px; }
+  .date-entry { margin-bottom: 12px; }
+  .keypad-hint { margin-top: 12px; }
+}
 @media (prefers-reduced-motion: no-preference) { .segment { transition: fill .15s; } }
 
 .travel-popup { width: min(440px, calc(100% - 28px)); padding: 18px; border: 2px solid #697169; border-radius: 8px; color: #e2e5d8; background: linear-gradient(140deg,#252b27,#101512); box-shadow: 0 20px 80px #000b, inset 0 1px #bac2aa44; }
