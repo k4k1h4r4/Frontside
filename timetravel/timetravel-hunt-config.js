@@ -10,17 +10,18 @@ window.TIME_HUNT_CONFIG = {
   steps: [
     {
       step: 1,
-      message: "First message, but we'll start on Part Two— \n\nTravel back to the past where future Marty flew.",
+      message: "IF YOU ARE READING THIS, THEN THE MACHINE WORKED! \n\nFirst message, but we'll start on Part Two— \nTravel back to the past where future Marty flew. \n\nI will tell you more later, but you need to go now!!",
       destinationkey: '10212015'
     },
     {
       step: 2,
-      message: "Doc Brown invents the flux capacitor.",
-      destinationkey: '11051955'
+      message: "Frontside 2015 looks awfully familiar, doesn't it?  \n\nNow that you're away from the immediate threat, I can tell you a little more...  
+        \nI come from a time where the Frontside Bar is nothing but a pile of dirt and ash.  I trust that you're the one that can save it!  \n\nYou're going to get awfully hungry on this mission, so I would order a Pulled Pork Sandwich.",
+      destinationkey: '01061995'
     },
     {
       step: 3,
-      message: "Mission accomplished? Almost. Set your destination to today's date and make it Back to the Frontside.",
+      message: "Mission accomplished? Almost. You gotta get back to your own place in time to make it Back to the Frontside.",
       destinationkey: 'currentdate'
     }
   ]
