@@ -8,7 +8,7 @@ window.TIME_HUNT_CONFIG = {
   steps: [
     {
       step: 1,
-      message: "First message, but we'll start on Part Two— Travel back to the past where future Marty flew.",
+      message: "First message, but we'll start on Part Two— \n\nTravel back to the past where future Marty flew.",
       destinationkey: '10212015'
     },
     {
