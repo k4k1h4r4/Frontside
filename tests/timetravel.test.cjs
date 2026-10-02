@@ -8,7 +8,8 @@ const fixtureHunt = {
   completionMessage: 'You have completed the scavenger hunt.',
   steps: [
     {step:1,message:'First test clue',destinationkey:'10212015'},
-    {step:2,message:'Second test clue',destinationkey:'11051955'}
+    {step:2,message:'Second test clue',destinationkey:'11051955'},
+    {step:3,message:'Return to today',destinationkey:'currentdate'}
   ]
 };
 function dashboard(search = '', options = {}) {
@@ -189,7 +190,7 @@ test('travel opens the MP4 with sound and returns to circuits when the clip ends
   assert.equal(video.playCalls,1);
   assert.equal(video.paused,false);
   video.listeners.playing();
-  assert.equal(element('travel-caption').textContent,'TIME TRAVEL IN PROGRESS');
+  assert.equal(element('travel-caption').textContent,'');
   video.listeners.waiting();
   assert.match(element('travel-caption').textContent,/BUFFERING/);
   video.listeners.ended();
@@ -293,13 +294,21 @@ test('last step completes the hunt, stays completed after reload, and supports r
   const first=dashboard();
   first.api.travel('10212015');
   first.api.travel('11051955');
+  assert.equal(first.hunt.getState().destinationkey,'10022026');
+  assert.equal(first.api.travel('11051955').success,false);
+  first.element('close-failure').listeners.click();
+  first.api.travel('10022026');
+  assert.equal(first.api.get('present'),'2026-10-02T13:45');
+  assert.equal(first.element('completion-popup').open,false);
+  first.element('travel-video').listeners.ended();
+  assert.equal(first.element('completion-popup').open,true);
   assert.equal(first.hunt.getState().completed,true);
   assert.equal(first.element('hunt-progress').textContent,'HUNT COMPLETE');
   const resumed=dashboard('',{storage:first.storage});
   assert.equal(resumed.hunt.getState().completed,true);
   assert.equal(resumed.element('travel-button').disabled,true);
   assert.equal(resumed.api.travel('11051955').success,false);
-  assert.equal(resumed.element('message-popup').open,true);
+  assert.equal(resumed.element('completion-popup').open,true);
   assert.match(resumed.element('hunt-message').textContent,/completed the scavenger hunt/);
   resumed.hunt.reset();
   assert.equal(resumed.hunt.getState().step,1);
@@ -307,6 +316,46 @@ test('last step completes the hunt, stays completed after reload, and supports r
   assert.equal(resumed.api.get('present'),'2026-10-02T13:45');
   assert.equal(resumed.api.get('departed'),'1985-10-26T01:20');
 });
+test('final destination follows the local date across midnight and completion appears when skipped',()=>{
+  const game=dashboard();
+  game.hunt.setStep(3);
+  game.api.set('destination','10022026');
+  game.clock(2026,10,3,0,1);
+  assert.equal(game.hunt.getState().destinationkey,'10032026');
+  assert.equal(game.api.travel().success,false);
+  game.element('close-failure').listeners.click();
+  assert.equal(game.api.travel('10032026').success,true);
+  game.element('skip-travel').listeners.click();
+  assert.equal(game.element('completion-popup').open,true);
+  assert.equal(game.element('travel-video').paused,true);
+  game.element('close-completion').listeners.click();
+  game.clock(2026,10,4,0,2);
+  assert.equal(game.api.get('present'),'2026-10-04T00:02');
+  game.element('open-message').listeners.click();
+  assert.equal(game.element('completion-popup').open,true);
+});
+
+test('completion restart button restores step one and default circuits, including after reload',()=>{
+  const game=dashboard();
+  game.api.travel('10212015');
+  game.api.travel('11051955');
+  game.api.travel('10022026');
+  game.element('travel-video').listeners.ended();
+  game.element('restart-mission').listeners.click();
+  assert.equal(game.element('completion-popup').open,false);
+  assert.equal(game.hunt.getState().step,1);
+  assert.equal(game.hunt.getState().completed,false);
+  assert.equal(game.api.get('destination'),null);
+  assert.equal(game.api.get('present'),'2026-10-02T13:45');
+  assert.equal(game.api.get('departed'),'1985-10-26T01:20');
+  assert.equal(game.element('travel-button').disabled,true);
+  const resumed=dashboard('',{storage:game.storage});
+  assert.equal(resumed.hunt.getState().step,1);
+  assert.equal(resumed.hunt.getState().completed,false);
+  resumed.element('open-message').listeners.click();
+  assert.equal(resumed.element('message-title').textContent,'MESSAGE 1');
+});
+
 test('configured steps can be selected, and malformed or disabled storage does not break play',()=>{
   const custom={id:'test',initialStep:1,steps:[
     {step:1,message:'First custom clue',destinationkey:'01012000'},
