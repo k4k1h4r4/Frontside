@@ -74,16 +74,25 @@
   </dialog>
   <dialog class="hunt-popup failure-popup" id="failure-popup" aria-labelledby="failure-title" aria-describedby="failure-message">
     <div class="travel-popup-header"><h2 id="failure-title">TIME TRAVEL UNSUCCESSFUL</h2><button type="button" id="close-failure" aria-label="Close unsuccessful travel message">×</button></div>
-    <p class="hunt-message" id="failure-message">That destination does not match your clue. Read the message and try another date.</p>
+    <p class="hunt-message" id="failure-message">Temporal displacement failed. Destination coordinates unreachable. Input new date to bridge time.</p>
     <button type="button" class="play-travel-video" id="retry-input">TRY ANOTHER DESTINATION</button>
   </dialog>
+  <dialog class="completion-popup" id="completion-popup" aria-labelledby="completion-title" aria-describedby="completion-message">
+    <div class="mission-emblem" aria-hidden="true">⚡</div>
+    <p class="mission-status">TEMPORAL COORDINATES RESTORED</p>
+    <h2 id="completion-title">MISSION COMPLETE</h2>
+    <div class="mission-rule" aria-hidden="true"></div>
+    <p id="completion-message"></p>
+    <button type="button" id="close-completion">BACK TO THE FRONTSIDE</button>
+    <button type="button" id="restart-mission">RESTART THE MISSION</button>
+  </dialog>
   <dialog class="travel-popup" id="travel-popup" aria-labelledby="travel-title" aria-describedby="travel-caption">
-    <div class="travel-popup-header"><h2 id="travel-title">TEMPORAL DISPLACEMENT</h2><button type="button" id="skip-travel" aria-label="Skip animation">×</button></div>
+    <div class="travel-popup-header"><h2 id="travel-title">TIME TRAVEL IN PROGRESS</h2><button type="button" id="skip-travel" aria-label="Skip animation">×</button></div>
     <video id="travel-video" class="travel-video" src="images/bttfTimeTravel.mp4" preload="metadata" playsinline controls aria-label="DeLorean time travel clip">
       Your browser does not support this video.
     </video>
     <button type="button" id="play-travel-video" class="play-travel-video" hidden>PLAY CLIP WITH SOUND</button>
-    <p id="travel-caption" class="travel-caption" role="status">TIME TRAVEL IN PROGRESS</p>
+    <p id="travel-caption" class="travel-caption" role="status"></p>
   </dialog>
 </body>
 </html>
