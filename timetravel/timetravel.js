@@ -46,6 +46,7 @@
   const legacyStorageKey = `time-circuits:hunt:${huntConfig.id || 'default'}`;
   let huntIndex = initialIndex;
   let huntCompleted = false;
+  let messageRead = false;
   let restoring = true;
   const messagePopup = document.getElementById('message-popup');
   const failurePopup = document.getElementById('failure-popup');
@@ -71,12 +72,13 @@
     document.getElementById('hunt-progress').textContent = state.completed ? 'HUNT COMPLETE' : `STEP ${state.step}`;
     document.getElementById('message-title').textContent = state.completed ? 'HUNT COMPLETE' : `MESSAGE ${state.step}`;
     document.getElementById('hunt-message').textContent = state.completed ? (huntConfig.completionMessage || 'You have completed the scavenger hunt!') : state.message;
+    document.getElementById('open-message').classList.toggle('unread', !messageRead && !huntCompleted);
     syncEntry();
   }
   function saveHunt() {
     if (restoring) return;
     try {
-      window.localStorage.setItem(storageKey, JSON.stringify({ schema: 2, ...huntState(), presentDate, destination: values.destination, departed: values.departed }));
+      window.localStorage.setItem(storageKey, JSON.stringify({ schema: 2, ...huntState(), messageRead, presentDate, destination: values.destination, departed: values.departed }));
     } catch { /* The hunt remains playable when browser storage is unavailable. */ }
   }
   function changeStep(step) {
@@ -84,6 +86,7 @@
     if (index < 0) throw new RangeError(`Unknown hunt step: ${step}`);
     huntIndex = index;
     huntCompleted = false;
+    messageRead = false;
     set('destination', null);
     refreshHunt();
     saveHunt();
@@ -160,7 +163,10 @@
     set('departed', departure);
     set('present', arrival);
     set('destination', null);
-    if (huntIndex + 1 < huntSteps.length) huntIndex++;
+    if (huntIndex + 1 < huntSteps.length) {
+      huntIndex++;
+      messageRead = false;
+    }
     else {
       huntCompleted = true;
       presentDate = null;
@@ -235,6 +241,7 @@
     reset: () => {
       huntIndex = initialIndex;
       huntCompleted = false;
+      messageRead = false;
       presentDate = null;
       set('departed', '1985-10-26T01:20');
       set('destination', null);
@@ -304,7 +311,9 @@
   }
   document.getElementById('open-input').addEventListener('click', openInput);
   document.getElementById('open-message').addEventListener('click', () => {
+    messageRead = true;
     refreshHunt();
+    saveHunt();
     if (huntCompleted) showCompletion();
     else if (!messagePopup.open) messagePopup.showModal();
   });
@@ -354,6 +363,7 @@
       if (saved.destination !== null) parse(saved.destination);
       huntIndex = index;
       huntCompleted = saved.completed === true && index === huntSteps.length - 1;
+      messageRead = saved.messageRead === true;
       presentDate = huntCompleted ? null : saved.presentDate;
       set('departed', saved.departed);
       set('destination', saved.destination);
