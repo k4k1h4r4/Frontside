@@ -40,7 +40,9 @@ jobs:
           node --check live-feed-posts.js
           node --check battleship/live.js
           node --check battleship/ships.js
-          node --test tests/site-update.test.cjs tests/keno-feed.test.cjs tests/live-feed-posts.test.cjs tests/battleship-engine.test.mjs
+          node --check timetravel/timetravel.js
+          node --check timetravel/timetravel-hunt-config.js
+          node --test tests/site-update.test.cjs tests/keno-feed.test.cjs tests/live-feed-posts.test.cjs tests/battleship-engine.test.mjs tests/timetravel.test.cjs
 
       - name: Stamp a unique release
         env:
@@ -51,7 +53,7 @@ jobs:
         run: |
           mkdir _site
           cp *.html *.css nav.js bingo.js site-update.js keno-feed.js live-feed-posts.js version.json manifest.webmanifest favicon.ico CNAME _site/
-          cp -R Arcade images _site/
+          cp -R Arcade images timetravel _site/
           mkdir -p _site/battleship
           cp battleship/battleship.css battleship/live.js battleship/ships.js battleship/keno-battleship-fire.svg _site/battleship/
 
