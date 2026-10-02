@@ -34,8 +34,8 @@
   if (!huntConfig || !Array.isArray(huntConfig.steps) || !huntConfig.steps.length) throw new Error('Define at least one step in timetravel-hunt-config.js.');
   const stepNumbers = new Set();
   const huntSteps = huntConfig.steps.map(item => {
-    if (!Number.isInteger(item.step) || item.step < 1 || stepNumbers.has(item.step) || typeof item.message !== 'string' || !/^\d{8}$/.test(item.destinationkey)) throw new Error('Each hunt step needs a unique step number starting at 1, message, and MMDDYYYY destinationkey.');
-    parse(item.destinationkey);
+    if (!Number.isInteger(item.step) || item.step < 1 || stepNumbers.has(item.step) || typeof item.message !== 'string' || !(item.destinationkey === 'currentdate' || /^\d{8}$/.test(item.destinationkey))) throw new Error('Each hunt step needs a unique step number starting at 1, message, and MMDDYYYY destinationkey (or currentdate).');
+    if (item.destinationkey !== 'currentdate') parse(item.destinationkey);
     stepNumbers.add(item.step);
     return Object.freeze({ step: item.step, message: item.message, destinationkey: item.destinationkey });
   }).sort((a,b) => a.step - b.step);
@@ -49,8 +49,22 @@
   let restoring = true;
   const messagePopup = document.getElementById('message-popup');
   const failurePopup = document.getElementById('failure-popup');
+  const completionPopup = document.getElementById('completion-popup');
+  const completionMessage = huntConfig.completionMessage || 'Congratulations on completing your mission and making it Back to the Frontside. You deserve a beer.';
+  document.getElementById('completion-message').textContent = completionMessage;
+  function currentDateKey() {
+    const today = new Date();
+    return `${pad(today.getMonth()+1)}${pad(today.getDate())}${String(today.getFullYear()).padStart(4,'0')}`;
+  }
+  function expectedDestination() {
+    const step = huntSteps[huntIndex];
+    return huntIndex === huntSteps.length - 1 || step.destinationkey === 'currentdate' ? currentDateKey() : step.destinationkey;
+  }
+  function showCompletion() {
+    if (!completionPopup.open) completionPopup.showModal();
+  }
   function huntState() {
-    return { ...huntSteps[huntIndex], completed: huntCompleted };
+    return { ...huntSteps[huntIndex], destinationkey: expectedDestination(), completed: huntCompleted };
   }
   function refreshHunt() {
     const state = huntState();
@@ -130,11 +144,11 @@
     if (!destination) throw new RangeError('Enter a complete destination date first.');
     const date = parse(destination);
     if (huntCompleted) {
-      if (!messagePopup.open) messagePopup.showModal();
+      showCompletion();
       return { success: false, completed: true };
     }
     const destinationkey = `${pad(date.month)}${pad(date.day)}${String(date.year).padStart(4,'0')}`;
-    if (destinationkey !== huntSteps[huntIndex].destinationkey) {
+    if (destinationkey !== expectedDestination()) {
       if (inputPopup.open) inputPopup.close();
       if (!failurePopup.open) failurePopup.showModal();
       return { success: false, step: huntSteps[huntIndex].step };
@@ -147,7 +161,11 @@
     set('present', arrival);
     set('destination', null);
     if (huntIndex + 1 < huntSteps.length) huntIndex++;
-    else huntCompleted = true;
+    else {
+      huntCompleted = true;
+      presentDate = null;
+      tick();
+    }
     refreshHunt();
     saveHunt();
     if (inputPopup.open) inputPopup.close();
@@ -185,7 +203,7 @@
   travelVideo.addEventListener('playing', () => {
     if (!travelPopup.open) return;
     playVideoButton.hidden = true;
-    travelCaption.textContent = 'TIME TRAVEL IN PROGRESS';
+    travelCaption.textContent = '';
   });
   travelVideo.addEventListener('waiting', () => {
     if (travelPopup.open) travelCaption.textContent = 'BUFFERING TIME TRAVEL CLIP…';
@@ -196,7 +214,10 @@
   travelVideo.addEventListener('ended', () => {
     if (travelPopup.open) travelPopup.close();
   });
-  travelPopup.addEventListener('close', stopTravelAnimation);
+  travelPopup.addEventListener('close', () => {
+    stopTravelAnimation();
+    if (huntCompleted) showCompletion();
+  });
   travelPopup.addEventListener('cancel', stopTravelAnimation);
   document.getElementById('skip-travel').addEventListener('click', () => {
     stopTravelAnimation();
@@ -284,7 +305,14 @@
   document.getElementById('open-input').addEventListener('click', openInput);
   document.getElementById('open-message').addEventListener('click', () => {
     refreshHunt();
-    if (!messagePopup.open) messagePopup.showModal();
+    if (huntCompleted) showCompletion();
+    else if (!messagePopup.open) messagePopup.showModal();
+  });
+  document.getElementById('close-completion').addEventListener('click', () => completionPopup.close());
+  document.getElementById('restart-mission').addEventListener('click', () => {
+    window.timeHunt.reset();
+    window.timeHunt.setStep(1);
+    completionPopup.close();
   });
   document.getElementById('close-message').addEventListener('click', () => messagePopup.close());
   document.getElementById('close-failure').addEventListener('click', () => failurePopup.close());
@@ -326,7 +354,7 @@
       if (saved.destination !== null) parse(saved.destination);
       huntIndex = index;
       huntCompleted = saved.completed === true && index === huntSteps.length - 1;
-      presentDate = saved.presentDate;
+      presentDate = huntCompleted ? null : saved.presentDate;
       set('departed', saved.departed);
       set('destination', saved.destination);
       tick();

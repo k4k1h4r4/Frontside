@@ -16,6 +16,8 @@ Open `timetravel.html`. No build step is required. Tap Input beside Destination 
 
 Edit `timetravel-hunt-config.js`. Each step has a numeric `step`, a clue in `message`, and an eight-digit **string** `destinationkey` in MMDDYYYY format. The included movie clues are starter examples to replace with your hunt's clues.
 
+Use double quotes around clue text so apostrophes are safe: `message: "We'll travel back in time."`. Escape double quotes inside a clue as `\"`. Check your edits before publishing with `node --check timetravel/timetravel-hunt-config.js`.
+
 ```js
 window.TIME_HUNT_CONFIG = {
   id: 'my-hunt-v1',
@@ -23,14 +25,16 @@ window.TIME_HUNT_CONFIG = {
   completionMessage: 'You found the final destination!',
   steps: [
     { step: 1, message: 'Your first clue goes here.', destinationkey: '10261985' },
-    { step: 2, message: 'Your second clue goes here.', destinationkey: '11051955' }
+    { step: 2, message: 'Return to today to make it Back to the Frontside.', destinationkey: 'currentdate' }
   ]
 };
 ```
 
 Add as many steps as needed, numbering them from 1. Steps run in numerical order, beginning at `initialStep` for new players. Clue headings read Message 1, Message 2, and so on. Changing `initialStep` does not override a returning player's saved step. Existing progress from the original zero-based version migrates to the same clue with the new numbering. Change `id` to create a new hunt with independent browser progress.
 
-MESSAGE opens the current clue popup. An incorrect destination opens the unsuccessful-travel popup without changing the step or circuit values or playing the video. A correct destination records the previous Present Time, advances to the next configured step, saves progress, and plays the video. Finishing the last step marks the hunt complete; MESSAGE then shows `completionMessage`. Skipping the video does not undo success.
+The last step always requires the player's current local date, regardless of a fixed key in the configuration. Set its `destinationkey` to `'currentdate'` to make this clear. The answer follows the device calendar, including after midnight or returning on another day. Add new clues before this final return-home step.
+
+MESSAGE opens the current clue popup. An incorrect destination opens the unsuccessful-travel popup without changing the step or circuit values or playing the video. A correct destination records the previous Present Time, advances to the next configured step, saves progress, and plays the video. Finishing the last step restores the live current date and time and marks the hunt complete. A glowing mission-complete popup shows `completionMessage` when the video ends or is skipped. MESSAGE reopens that screen for completed players. Skipping the video does not undo success.
 
 The current step, message, destinationkey, completion flag, selected Present date, static Departed time, and confirmed Destination are saved in `localStorage`. Reloading or navigating away and returning resumes the same hunt in that browser on the same site. Clues and keys are refreshed from the configuration when loading, so correcting a clue file also updates returning players. If browser storage is disabled, the hunt works for the current page visit.
 

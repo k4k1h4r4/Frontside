@@ -95,8 +95,19 @@ button:focus-visible { outline: 2px solid #eff3cf; outline-offset: 4px; }
 .play-travel-video { display: block; width: 100%; min-height: 44px; margin-top: 14px; padding: 10px; border: 1px solid #839076; border-radius: 3px; background: #263022; color: #e2e5d8; font: 600 14px 'Barlow Condensed', sans-serif; letter-spacing: 1px; cursor: pointer; }
 .play-travel-video[hidden] { display: none; }
 .travel-caption { margin: 16px 0 0; text-align: center; min-height: 18px; color: #a9b59c; font-size: 9px; line-height: 1.7; letter-spacing: 1.6px; }
+.travel-caption:empty { display: none; }
 .hunt-popup { width: min(440px,calc(100% - 28px)); max-height: calc(100svh - 28px); padding: 20px; border: 2px solid #697169; border-radius: 8px; color: #e2e5d8; background: linear-gradient(140deg,#252b27,#101512); box-shadow: 0 20px 80px #000b, inset 0 1px #bac2aa44; }
 .hunt-popup::backdrop { background: #030806d9; }
 .hunt-message { margin: 0; font-size: 14px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
 .failure-popup { border-color: #a46249; }.failure-popup h2 { color: #ffc7a8; font-size: 15px; }
+.completion-popup { width: min(440px,calc(100% - 28px)); max-height: calc(100svh - 28px); padding: 32px 24px; border: 2px solid #69dce6; border-radius: 12px; text-align: center; color: #f7eed2; background: radial-gradient(ellipse at 50% 0%,#17576388,transparent 65%), repeating-linear-gradient(0deg,#ffffff03 0 1px,transparent 1px 4px), #10191d; box-shadow: 0 0 24px #21d5ed44, inset 0 0 30px #21d5ed15, 0 20px 80px #000b; }
+.completion-popup::backdrop { background: #030806e8; }
+.mission-emblem { width: 72px; height: 72px; display: grid; place-items: center; margin: 0 auto 20px; border: 1px solid #ffe391; border-radius: 50%; font-size: 42px; background: #e9aa1815; box-shadow: 0 0 22px #ffc33933, inset 0 0 15px #ffc33922; }
+.mission-status { font-size: 9px; letter-spacing: 1.7px; line-height: 1.6; color: #88e5ec; }
+.completion-popup h2 { margin: 12px auto; padding: 0; background: none; box-shadow: none; font-size: clamp(27px,7vw,36px); letter-spacing: 2px; color: #ffe28b; text-shadow: 0 0 14px #ffaf3555; }
+.mission-rule { height: 2px; margin: 20px auto; background: linear-gradient(90deg,transparent,#6ee1e9,transparent); }
+#completion-message { font-size: 16px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+#close-completion, #restart-mission { width: 100%; min-height: 48px; margin-top: 16px; padding: 12px; border: 1px solid #ffdd83; border-radius: 4px; background: linear-gradient(#ffe8a4,#e5b44c); color: #34290e; font: 700 16px 'Barlow Condensed',sans-serif; letter-spacing: 1px; box-shadow: 0 0 12px #ffc33933; cursor: pointer; }
+#restart-mission { margin-top: 12px; border-color: #69dce6; background: linear-gradient(#213e46,#14282e); color: #a2eef3; box-shadow: 0 0 12px #21d5ed22; }
+@media (prefers-reduced-motion: no-preference) { .completion-popup[open] { animation: mission-arrival .45s ease-out; } @keyframes mission-arrival { from { opacity: 0; transform: translateY(12px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } } }
 @media (max-width: 540px) { .destination-actions h2 { padding-left: 5px; padding-right: 5px; letter-spacing: .8px; }.message-button { padding-left: 5px; padding-right: 5px; font-size: 10px; } }
