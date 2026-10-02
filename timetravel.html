@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101311">
+  <title>Back to the Frontside</title>
+  <link rel="icon" href="favicon.ico" sizes="32x32">
+  <link rel="stylesheet" href="timetravel/timetravel.css">
+  <link rel="stylesheet" href="nav.css">
+  <script defer src="nav.js"></script>
+  <script defer src="timetravel/timetravel-hunt-config.js"></script>
+  <script defer src="timetravel/timetravel.js"></script>
+</head>
+<body>
+  <nav class="site-nav" data-site-nav aria-label="Main navigation"></nav>
+  <noscript><a href="index.html">Frontside home</a></noscript>
+  <main class="console">
+    <header class="masthead">
+      <h1><img class="hunt-logo" src="images/backtothefrontside.webp" alt="Back to the Frontside" width="1774" height="887" fetchpriority="high"></h1>
+    </header>
+
+    <div class="housing" aria-label="Time circuit dashboard">
+      <div class="console-controls">
+        <span class="console-control-label">TIME CIRCUITS<br><small>DRIVE CONTROL</small></span>
+        <div class="engage-control" id="engage-control">
+          <span class="engage-status" id="engage-status" role="status"><i aria-hidden="true"></i><span id="engage-status-text">AWAITING DESTINATION</span></span>
+          <button type="button" class="engage-switch" id="travel-button" aria-label="Engage time travel" aria-describedby="engage-status" disabled>ENGAGE</button>
+        </div>
+      </div>
+      <section class="circuit destination" data-circuit="destination" aria-label="Destination time">
+        <div class="readout"></div>
+        <div class="destination-actions"><button type="button" class="input-button message-button" id="open-message" aria-haspopup="dialog" aria-controls="message-popup">MESSAGE</button><h2>DESTINATION TIME</h2><button type="button" class="input-button" id="open-input" aria-haspopup="dialog" aria-controls="input-popup">INPUT</button></div>
+      </section>
+      <section class="circuit present" data-circuit="present" aria-label="Present time">
+        <div class="readout"></div>
+        <h2>PRESENT TIME</h2>
+      </section>
+      <section class="circuit departed" data-circuit="departed" aria-label="Last time departed">
+        <div class="readout"></div>
+        <h2>LAST TIME DEPARTED</h2>
+      </section>
+    </div>
+
+    <div class="under-panel"><span id="hunt-progress" role="status">STEP 1</span><span>1.21 <b>GW</b></span></div>
+  </main>
+  <dialog class="input-popup" id="input-popup" aria-labelledby="input-title">
+    <section class="keypad-panel" aria-label="Destination date keypad">
+      <div class="indicator-bank" aria-hidden="true">
+        <i class="lamp red lit"></i><i class="lamp amber lit"></i><i class="lamp green" id="ready-lamp"></i><i class="lamp"></i><i class="lamp"></i>
+      </div>
+      <div class="keypad-body">
+        <div class="keypad-header"><h3 id="input-title">DESTINATION COORDINATES</h3><button type="button" id="close-input" aria-label="Close destination keypad">×</button></div>
+        <div class="date-entry" role="group" aria-label="Destination date">
+          <button type="button" class="date-slot" id="month-slot" data-start="0" aria-label="Edit month"><span>MM</span><output id="month-entry">__</output></button>
+          <button type="button" class="date-slot" id="day-slot" data-start="2" aria-label="Edit day"><span>DD</span><output id="day-entry">__</output></button>
+          <button type="button" class="date-slot" id="year-slot" data-start="4" aria-label="Edit year"><span>YYYY</span><output id="year-entry">____</output></button>
+        </div>
+        <div class="keypad" aria-label="Numeric keypad">
+          <button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button>
+          <button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button>
+          <button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button>
+          <button type="button" class="utility-key" data-key="clear">CLEAR</button><button type="button" data-key="0">0</button><button type="button" class="utility-key" data-key="backspace" aria-label="Delete previous digit">⌫</button>
+        </div>
+        <p class="keypad-hint">ENTER MMDDYYYY · TIME SYNCS AUTOMATICALLY</p>
+        <button type="button" class="destination-submit" id="submit-destination" disabled>INPUT DESTINATION</button>
+        <p class="input-error" id="input-error" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+  </dialog>
+  <dialog class="hunt-popup" id="message-popup" aria-labelledby="message-title">
+    <div class="travel-popup-header"><h2 id="message-title">MESSAGE 1</h2><button type="button" id="close-message" aria-label="Close message">×</button></div>
+    <p class="hunt-message" id="hunt-message"></p>
+  </dialog>
+  <dialog class="hunt-popup failure-popup" id="failure-popup" aria-labelledby="failure-title" aria-describedby="failure-message">
+    <div class="travel-popup-header"><h2 id="failure-title">TIME TRAVEL UNSUCCESSFUL</h2><button type="button" id="close-failure" aria-label="Close unsuccessful travel message">×</button></div>
+    <p class="hunt-message" id="failure-message">That destination does not match your clue. Read the message and try another date.</p>
+    <button type="button" class="play-travel-video" id="retry-input">TRY ANOTHER DESTINATION</button>
+  </dialog>
+  <dialog class="travel-popup" id="travel-popup" aria-labelledby="travel-title" aria-describedby="travel-caption">
+    <div class="travel-popup-header"><h2 id="travel-title">TEMPORAL DISPLACEMENT</h2><button type="button" id="skip-travel" aria-label="Skip animation">×</button></div>
+    <video id="travel-video" class="travel-video" src="images/bttfTimeTravel.mp4" preload="metadata" playsinline controls aria-label="DeLorean time travel clip">
+      Your browser does not support this video.
+    </video>
+    <button type="button" id="play-travel-video" class="play-travel-video" hidden>PLAY CLIP WITH SOUND</button>
+    <p id="travel-caption" class="travel-caption" role="status">TIME TRAVEL IN PROGRESS</p>
+  </dialog>
+</body>
+</html>
+
