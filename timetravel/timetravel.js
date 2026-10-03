@@ -116,7 +116,7 @@
     const target = document.querySelector(`[data-circuit="${name}"] .readout`);
     target.setAttribute('role','img');
     target.setAttribute('aria-label', date ? `${parts[0]} ${date.day}, ${date.year}, ${parts[3]}:${parts[4]} ${date.hour < 12 ? 'AM' : 'PM'}` : 'No destination set');
-    target.innerHTML = parts.map((part,index) => `<div class="field"><span class="field-label" aria-hidden="true">${labels[index]}</span>${index === 3 ? `<div class="hour-display"><div class="meridiem" aria-hidden="true"><span class="${date && date.hour<12?'active':''}">AM<i></i></span><span class="${date && date.hour>=12?'active':''}">PM<i></i></span></div>` : ''}<div class="screen">${digits(part)}</div>${index === 3 ? '</div>' : ''}</div>`).join('');
+    target.innerHTML = parts.map((part,index) => `<div class="field${index === 3 ? ' hour-field' : ''}"><span class="field-label" aria-hidden="true">${labels[index]}</span>${index === 3 ? `<div class="hour-display"><div class="meridiem" aria-hidden="true"><span class="${date && date.hour<12?'active':''}">AM<i></i></span><span class="${date && date.hour>=12?'active':''}">PM<i></i></span></div>` : ''}<div class="screen">${digits(part)}</div>${index === 3 ? '</div>' : ''}</div>`).join('');
   }
   function set(name, value) {
     if (!names.includes(name)) throw new RangeError(`Unknown circuit: ${name}`);
