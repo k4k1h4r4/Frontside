@@ -22,7 +22,8 @@ body { margin: 0; min-height: 100svh; background: radial-gradient(ellipse at 50%
 .segment { fill: var(--dim); }.segment.on { fill: var(--led); filter: drop-shadow(0 0 1.7px var(--led)); }
 .hour-field { --meridiem-width: clamp(12px,2.1vw,23px); --hour-gap: 5px; display: grid; grid-template-columns: var(--meridiem-width) minmax(0,1fr); column-gap: var(--hour-gap); }
 .hour-field .field-label { grid-column: 2; width: 100%; min-width: 0; padding-left: 0; padding-right: 0; }
-.hour-display { grid-column: 1 / -1; display: grid; grid-template-columns: var(--meridiem-width) minmax(0,1fr); align-items: center; gap: var(--hour-gap); height: clamp(41px,9vw,88px); }.hour-display .screen { min-width: 0; }
+/* Keep the AM/PM stack from enlarging the grid row on narrow screens. */
+.hour-display { grid-column: 1 / -1; display: grid; grid-template-columns: var(--meridiem-width) minmax(0,1fr); grid-template-rows: minmax(0,1fr); align-items: center; gap: var(--hour-gap); height: clamp(41px,9vw,88px); }.hour-display .screen { min-width: 0; height: 100%; align-self: stretch; }
 @media (max-width: 540px) { .hour-field { --hour-gap: 3px; } }
 .meridiem { font: 700 clamp(6px, 1.15vw, 12px) 'Barlow Condensed', sans-serif; display: grid; gap: 3px; text-align: center; }
 .meridiem span { padding: 1px 2px; background: #641c17; }.meridiem i { display: block; margin: 3px auto; width: 6px; height: 6px; border-radius: 50%; background: #15190e; box-shadow: inset 0 1px 2px #000; }.meridiem .active i { background: var(--led); box-shadow: 0 0 5px var(--led); }
