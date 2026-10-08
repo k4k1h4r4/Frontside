@@ -15,7 +15,7 @@ window.TIME_HUNT_CONFIG = {
   steps: [
     {
       step: 1,
-      message: "IF YOU ARE READING THIS, THEN THE MACHINE WORKED!\n\nFirst message, but we'll start on Part Two—\nTravel back to the past where future Marty flew.\n\nI will tell you more later, but you need to go now!!",
+      message: "IT WORKED!  WE DID IT!\nNOW FOLLOW MY INSTRUCTIONS EXACTLY!\n\nI sent you this time travel device from the future, so you can prevent a catastrophe.\nThis device is programmed with everything you will need.\n\nThere are several messages stored inside.\nEach message is triggered at a specific point in time.\nThe device will only allow you to travel to those predetermined points.\n\nI have intentionally hidden the dates from you.  Temporal safeguards prevent me from giving you the dates directly. You must discover them.\nOnce you enter the correct date, the device will take you there and the corresponding message will appear.",
       destinationkey: '10212015',
       clip: 'images/bttfTimeTravel.mp4'
     },
