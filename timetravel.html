@@ -13,9 +13,15 @@
   <script defer src="timetravel/timetravel.js"></script>
 </head>
 <body>
-  <nav class="site-nav" data-site-nav aria-label="Main navigation"></nav>
+  <nav class="site-nav" id="game-nav" data-site-nav aria-label="Main navigation" hidden></nav>
   <noscript><a href="index.html">Frontside home</a></noscript>
-  <main class="console">
+  <section class="start-screen" id="start-screen" aria-label="Start Back to the Frontside">
+    <div class="start-content">
+      <h1><img src="images/backtothefrontside.webp" alt="Back to the Frontside" width="1774" height="887" fetchpriority="high"></h1>
+      <button type="button" class="input-button" id="start-game">Start</button>
+    </div>
+  </section>
+  <main class="console" id="game-console" hidden>
     <header class="masthead">
       <h1><img class="hunt-logo" src="images/backtothefrontside.webp" alt="Back to the Frontside" width="1774" height="887" fetchpriority="high"></h1>
     </header>
@@ -88,7 +94,7 @@
   </dialog>
   <dialog class="travel-popup" id="travel-popup" aria-labelledby="travel-title" aria-describedby="travel-caption">
     <div class="travel-popup-header"><h2 id="travel-title">TIME TRAVEL IN PROGRESS</h2></div>
-    <video id="travel-video" class="travel-video" src="images/bttfTimeTravel.mp4" preload="metadata" playsinline controls aria-label="DeLorean time travel clip">
+    <video id="travel-video" class="travel-video" src="images/bttf.webm" preload="metadata" playsinline aria-label="Opening film">
       Your browser does not support this video.
     </video>
     <button type="button" id="play-travel-video" class="play-travel-video" hidden>PLAY CLIP WITH SOUND</button>
