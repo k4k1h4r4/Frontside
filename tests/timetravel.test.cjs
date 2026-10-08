@@ -561,6 +561,7 @@ test('Start plays the fixed opening film before revealing the game without advan
   const video=game.element('travel-video');
   assert.equal(video.getAttribute('src'),'images/bttf.webm');
   assert.equal(video.playCalls,1);
+  assert.equal(game.element('travel-header').hidden,true);
   assert.equal(video.muted,false);
   assert.equal(game.element('travel-popup').open,true);
   assert.equal(game.element('game-console').hidden,true);
@@ -576,6 +577,7 @@ test('Start plays the fixed opening film before revealing the game without advan
   game.api.travel('10212015');
   assert.equal(video.getAttribute('src'),'images/bttfTimeTravel.mp4');
   assert.equal(game.element('travel-title').textContent,'TIME TRAVEL IN PROGRESS');
+  assert.equal(game.element('travel-header').hidden,false);
 });
 
 test('saved games resume directly, while unfinished starts and restarted missions show Start',()=>{
