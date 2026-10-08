@@ -37,7 +37,9 @@
     if (!Number.isInteger(item.step) || item.step < 1 || stepNumbers.has(item.step) || typeof item.message !== 'string' || !(item.destinationkey === 'currentdate' || /^\d{8}$/.test(item.destinationkey))) throw new Error('Each hunt step needs a unique step number starting at 1, message, and MMDDYYYY destinationkey (or currentdate).');
     if (item.destinationkey !== 'currentdate') parse(item.destinationkey);
     stepNumbers.add(item.step);
-    return Object.freeze({ step: item.step, message: item.message, destinationkey: item.destinationkey });
+    if (item.clip !== undefined && (typeof item.clip !== 'string' || !item.clip.trim())) throw new Error('Each hunt clip must be a non-empty file path.');
+    const clip = (item.clip ?? 'images/bttfTimeTravel.mp4').trim().replaceAll('\\', '/');
+    return Object.freeze({ step: item.step, message: item.message, destinationkey: item.destinationkey, clip });
   }).sort((a,b) => a.step - b.step);
   const initialIndex = huntSteps.findIndex(item => item.step === (huntConfig.initialStep ?? 1));
   if (initialIndex < 0) throw new Error('initialStep must match a configured hunt step.');
@@ -181,6 +183,7 @@
       return { success: false, step: huntSteps[huntIndex].step };
     }
     const selected = date.value.slice(0,10);
+    const clip = huntSteps[huntIndex].clip;
     stopMessageSpeech();
     const arrival = `${selected}T${localValue(new Date()).slice(11)}`;
     tick();
@@ -200,11 +203,16 @@
     refreshHunt();
     saveHunt();
     if (inputPopup.open) inputPopup.close();
-    animateTravel();
+    animateTravel(clip);
     return { success: true, destination: null, present: arrival, departed: departure, ...huntState() };
   }
-  function animateTravel() {
+  function animateTravel(clip) {
     stopTravelAnimation();
+    // Select the departing step's clip before advancing to the next clue.
+    if (travelVideo.getAttribute('src') !== clip) {
+      travelVideo.setAttribute('src', clip);
+      travelVideo.load();
+    }
     travelVideo.currentTime = 0;
     travelVideo.muted = false;
     travelCaption.textContent = 'LOADING TIME TRAVEL CLIP…';
@@ -221,7 +229,7 @@
         playVideoButton.hidden = false;
         travelCaption.textContent = 'TAP PLAY TO START THE CLIP WITH SOUND';
       } else if (cause.name !== 'AbortError') {
-        travelCaption.textContent = 'CLIP UNAVAILABLE. CLOSE TO RETURN TO TIME CIRCUITS.';
+        travelPopup.close();
       }
     });
   }
@@ -240,7 +248,8 @@
     if (travelPopup.open) travelCaption.textContent = 'BUFFERING TIME TRAVEL CLIP…';
   });
   travelVideo.addEventListener('error', () => {
-    if (travelPopup.open) travelCaption.textContent = 'CLIP UNAVAILABLE. CLOSE TO RETURN TO TIME CIRCUITS.';
+    // With no close button, a broken clip must also return players to the hunt.
+    if (travelPopup.open) travelPopup.close();
   });
   travelVideo.addEventListener('ended', () => {
     if (travelPopup.open) travelPopup.close();
@@ -250,10 +259,6 @@
     if (huntCompleted) showCompletion();
   });
   travelPopup.addEventListener('cancel', stopTravelAnimation);
-  document.getElementById('skip-travel').addEventListener('click', () => {
-    stopTravelAnimation();
-    travelPopup.close();
-  });
   window.timeCircuits = Object.freeze({
     set,
     travel,

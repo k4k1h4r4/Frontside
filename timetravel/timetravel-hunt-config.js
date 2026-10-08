@@ -5,6 +5,9 @@
 // If your clue contains a double quote, escape it as \".
 // Keep each quoted message on one physical line. Use \n for a line break
 // and \n\n for a blank line between paragraphs.
+// Upload clips to images/ and set each step's clip to its path from timetravel.html.
+// Use forward slashes (e.g. 'images/bttfTimeTravel.mp4'). Steps can share a clip.
+// The clip plays when leaving that step after entering its correct destination.
 window.TIME_HUNT_CONFIG = {
   id: 'frontside-time-hunt-v1', // Change the id to start a separate saved hunt.
   initialStep: 1,
@@ -13,17 +16,20 @@ window.TIME_HUNT_CONFIG = {
     {
       step: 1,
       message: "IF YOU ARE READING THIS, THEN THE MACHINE WORKED!\n\nFirst message, but we'll start on Part Two—\nTravel back to the past where future Marty flew.\n\nI will tell you more later, but you need to go now!!",
-      destinationkey: '10212015'
+      destinationkey: '10212015',
+      clip: 'images/bttfTimeTravel.mp4'
     },
     {
       step: 2,
       message: "Frontside 2015 looks awfully familiar, doesn't it?\n\nNow that you're away from the immediate threat, I can tell you a little more...\nI come from a time where the Frontside Bar is nothing but a pile of dirt and ash.  I trust that you're the one that can save it!\n\nYou're going to get awfully hungry on this mission, so I would order a Pulled Pork Sandwich.",
-      destinationkey: '01061995'
+      destinationkey: '01061995',
+      clip: 'images/bttfTimeTravel.mp4'
     },
     {
       step: 3,
       message: "Mission accomplished? Almost. You gotta get back to your own place in time to make it Back to the Frontside.",
-      destinationkey: 'currentdate'
+      destinationkey: 'currentdate',
+      clip: 'images/bttfTimeTravel.mp4'
     }
   ]
 };
