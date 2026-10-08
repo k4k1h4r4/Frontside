@@ -25,6 +25,7 @@ function dashboard(search = '', options = {}) {
         load() { this.loadCalls++; },
         play() { this.playCalls++; if(playFailure) return Promise.reject(playFailure); this.paused=false; return Promise.resolve(); },
         pause() { this.paused=true; },
+        focus() { this.focused=true; },
         showModal() { this.open=true; }, close() { this.open=false; if(this.listeners.close) this.listeners.close(); },
         classList:{ toggle(k,on) { if(on) classes.add(k); else classes.delete(k); }, contains:k=>classes.has(k) },
         setAttribute(k,v) { this.attributes[k]=v; }, getAttribute(k) { return this.attributes[k] ?? null; }, addEventListener(k,v) { this.listeners[k]=v; } });
@@ -203,8 +204,9 @@ test('travel opens the MP4 with sound and returns to circuits when the clip ends
   assert.equal(video.paused,true);
   assert.equal(api.get('present'),'2015-10-21T13:45');
   const html=fs.readFileSync(require.resolve('../timetravel.html'),'utf8');
-  assert.match(html,/src="images\/bttfTimeTravel.mp4"/);
-  assert.match(html,/preload="metadata" playsinline controls/);
+  assert.match(html,/src="images\/bttf.webm"/);
+  assert.match(html,/preload="metadata" playsinline/);
+  assert.doesNotMatch(html.match(/<video\b[^>]*>/)[0],/\scontrols(?:\s|=|>)/);
   assert.ok(fs.statSync(require.resolve('../images/bttfTimeTravel.mp4')).size>0);
 });
 test('completion stops audio without undoing travel; later trips replay from the beginning',()=>{
@@ -545,6 +547,65 @@ test('published hunt configuration has valid steps, dates, and an existing initi
   assert.equal(typeof state.message,'string');
   assert.match(state.destinationkey,/^\d{8}$/);
   assert.equal(state.completed,false);
+});
+
+test('Start plays the fixed opening film before revealing the game without advancing the clue',()=>{
+  const game=dashboard();
+  assert.equal(game.element('start-screen').hidden,false);
+  assert.equal(game.element('game-console').hidden,true);
+  assert.equal(game.element('game-nav').hidden,true);
+  assert.equal(game.element('travel-video').playCalls,0);
+  game.element('start-game').listeners.click();
+  game.element('start-game').listeners.click();
+  const video=game.element('travel-video');
+  assert.equal(video.getAttribute('src'),'images/bttf.webm');
+  assert.equal(video.playCalls,1);
+  assert.equal(video.muted,false);
+  assert.equal(game.element('travel-popup').open,true);
+  assert.equal(game.element('game-console').hidden,true);
+  assert.equal(game.hunt.getState().step,1);
+  video.listeners.ended();
+  assert.equal(game.element('travel-popup').open,false);
+  assert.equal(game.element('start-screen').hidden,true);
+  assert.equal(game.element('game-console').hidden,false);
+  assert.equal(game.element('game-nav').hidden,false);
+  assert.equal(game.element('open-message').focused,true);
+  assert.equal(game.element('open-message').classList.contains('unread'),true);
+  assert.equal(game.hunt.getState().step,1);
+  game.api.travel('10212015');
+  assert.equal(video.getAttribute('src'),'images/bttfTimeTravel.mp4');
+  assert.equal(game.element('travel-title').textContent,'TIME TRAVEL IN PROGRESS');
+});
+
+test('saved games resume directly, while unfinished starts and restarted missions show Start',()=>{
+  const game=dashboard();
+  assert.equal(dashboard('',{storage:game.storage}).element('start-screen').hidden,false);
+  game.element('start-game').listeners.click();
+  game.element('travel-video').listeners.ended();
+  const resumed=dashboard('',{storage:game.storage});
+  assert.equal(resumed.element('start-screen').hidden,true);
+  assert.equal(resumed.element('game-console').hidden,false);
+  assert.equal(resumed.element('travel-video').playCalls,0);
+  resumed.hunt.reset();
+  assert.equal(resumed.element('start-screen').hidden,false);
+  assert.equal(resumed.element('game-console').hidden,true);
+  assert.equal(dashboard('',{storage:resumed.storage}).element('start-screen').hidden,false);
+  resumed.element('start-game').listeners.click();
+  assert.equal(resumed.element('travel-video').getAttribute('src'),'images/bttf.webm');
+});
+
+test('opening film handles blocked playback and unavailable media without trapping players',async()=>{
+  const game=dashboard('',{blockStorage:true});
+  game.failPlayback({name:'NotAllowedError'});
+  game.element('start-game').listeners.click();
+  await Promise.resolve();
+  assert.equal(game.element('play-travel-video').hidden,false);
+  assert.equal(game.element('game-console').hidden,true);
+  game.failPlayback(null);
+  game.element('play-travel-video').listeners.click();
+  game.element('travel-video').listeners.error();
+  assert.equal(game.element('travel-popup').open,false);
+  assert.equal(game.element('game-console').hidden,false);
 });
 
 
