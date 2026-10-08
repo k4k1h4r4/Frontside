@@ -23,13 +23,13 @@ window.TIME_HUNT_CONFIG = {
       step: 2,
       message: "Frontside 2015 looks awfully familiar, doesn't it?\n\nNow that you're away from the immediate threat, I can tell you a little more...\nI come from a time where the Frontside Bar is nothing but a pile of dirt and ash.  I trust that you're the one that can save it!\n\nYou're going to get awfully hungry on this mission, so I would order a Pulled Pork Sandwich.",
       destinationkey: '01061995',
-      clip: 'images/bttfTimeTravel.mp4'
+      clip: 'images/t2.webm'
     },
     {
       step: 3,
       message: "Mission accomplished? Almost. You gotta get back to your own place in time to make it Back to the Frontside.",
       destinationkey: 'currentdate',
-      clip: 'images/bttfTimeTravel.mp4'
+      clip: 'images/groundhog.webm'
     }
   ]
 };
