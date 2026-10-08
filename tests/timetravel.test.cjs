@@ -39,6 +39,10 @@ function dashboard(search = '', options = {}) {
     setItem:(key,value)=>{ if(options.blockStorage) throw new Error('Storage disabled'); storage.set(key,value); }
   };
   const window = { localStorage, addEventListener:(name,fn)=>{ listeners[name]=fn; } };
+  if (options.speech) {
+    window.speechSynthesis = options.speech;
+    window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
+  }
   const context = vm.createContext({
     window, Date:ClockDate, document:{ getElementById:element, querySelector:element, querySelectorAll:s=>s==='[data-key]'?buttons:slots },
     location:{ search }, URLSearchParams, setInterval:fn=>{ window.tick=fn; }
@@ -274,6 +278,68 @@ test('Message shows the current clue and the hunt starts at step one',()=>{
   assert.equal(element('message-title').textContent,'MESSAGE 1');
   element('close-message').listeners.click();
   assert.equal(element('message-popup').open,false);
+});
+
+test('speech follows unread clues, persists across reload, and resets with the hunt',()=>{
+  const spoken=[];
+  const speech={speak:utterance=>spoken.push(utterance),cancel() {}};
+  const game=dashboard('',{speech});
+  assert.equal(spoken.length,0);
+  game.element('open-message').listeners.click();
+  assert.equal(spoken.length,1);
+  assert.equal(spoken[0].text,game.hunt.getState().message);
+  assert.equal(spoken[0].lang,'en-US');
+  game.element('close-message').listeners.click();
+  game.element('open-message').listeners.click();
+  assert.equal(spoken.length,1);
+  const resumed=dashboard('',{speech,storage:game.storage});
+  resumed.element('open-message').listeners.click();
+  assert.equal(spoken.length,1);
+  resumed.api.travel('10212015');
+  assert.equal(spoken.length,1);
+  resumed.element('open-message').listeners.click();
+  assert.equal(spoken.length,2);
+  assert.equal(spoken[1].text,'Second test clue');
+  resumed.hunt.reset();
+  resumed.element('open-message').listeners.click();
+  assert.equal(spoken.length,3);
+  resumed.hunt.setStep(3);
+  resumed.api.travel('10022026');
+  resumed.element('open-message').listeners.click();
+  assert.equal(spoken.length,3);
+});
+
+test('closing, dismissing, advancing, resetting, and leaving stop message speech',()=>{
+  let cancelled=0;
+  const speech={speak() {},cancel() { cancelled++; }};
+  const game=dashboard('',{speech});
+  const open=()=>game.element('open-message').listeners.click();
+  open();
+  game.element('close-message').listeners.click();
+  assert.equal(cancelled,1);
+  game.hunt.reset(); open();
+  game.element('message-popup').listeners.cancel();
+  game.element('message-popup').close();
+  assert.equal(cancelled,2);
+  game.hunt.reset(); open();
+  game.api.travel('10212015');
+  assert.equal(cancelled,3);
+  open(); game.hunt.setStep(3);
+  assert.equal(cancelled,4);
+  open(); game.hunt.reset();
+  assert.equal(cancelled,5);
+  open(); game.listeners.pagehide();
+  assert.equal(cancelled,6);
+});
+
+test('unavailable or failed speech leaves the message readable and stops blinking',()=>{
+  for (const speech of [undefined,{speak() { throw new Error('Speech unavailable'); },cancel() {}}]) {
+    const game=dashboard('',{speech});
+    assert.doesNotThrow(()=>game.element('open-message').listeners.click());
+    assert.equal(game.element('message-popup').open,true);
+    assert.equal(game.element('hunt-message').textContent,'First test clue');
+    assert.equal(game.element('open-message').classList.contains('unread'),false);
+  }
 });
 test('wrong destinations show failure, preserve the step and circuits, and can be corrected',()=>{
   const {api,hunt,element}=dashboard();
