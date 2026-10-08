@@ -185,7 +185,7 @@ test('all circuits accept variables and event updates validate before changing s
   api.resetPresent();
   assert.equal(api.get('present'),'2026-10-02T14:00');
 });
-test('travel opens the MP4 with sound and returns to circuits when the clip ends',()=>{
+test('travel opens the configured clip with sound and returns to circuits when the clip ends',()=>{
   const {api,element}=dashboard();
   api.travel('10212015');
   const popup=element('travel-popup');
@@ -207,7 +207,8 @@ test('travel opens the MP4 with sound and returns to circuits when the clip ends
   assert.match(html,/src="images\/bttf.webm"/);
   assert.match(html,/preload="metadata" playsinline/);
   assert.doesNotMatch(html.match(/<video\b[^>]*>/)[0],/\scontrols(?:\s|=|>)/);
-  assert.ok(fs.statSync(require.resolve('../images/bttfTimeTravel.mp4')).size>0);
+  const openingClip=html.match(/<video\b[^>]*\bsrc="([^"]+)"/)[1];
+  assert.ok(fs.statSync(require('node:path').resolve(__dirname,'..',openingClip)).size>0);
 });
 test('completion stops audio without undoing travel; later trips replay from the beginning',()=>{
   const {api,element}=dashboard();
