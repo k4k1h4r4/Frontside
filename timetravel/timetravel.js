@@ -49,7 +49,21 @@
   let huntIndex = initialIndex;
   let huntCompleted = false;
   let messageRead = false;
+  let gameStarted = false;
+  let introPlaying = false;
   let restoring = true;
+  function refreshStartScreen() {
+    document.getElementById('start-screen').hidden = gameStarted;
+    document.getElementById('game-console').hidden = !gameStarted;
+    document.getElementById('game-nav').hidden = !gameStarted;
+  }
+  document.getElementById('start-game').addEventListener('click', () => {
+    if (introPlaying || gameStarted) return;
+    introPlaying = true;
+    document.getElementById('travel-title').textContent = 'BACK TO THE FRONTSIDE';
+    travelVideo.setAttribute('aria-label', 'Opening film');
+    animateTravel('images/bttf.webm');
+  });
   const messagePopup = document.getElementById('message-popup');
   let messageSpeech = null;
   function stopMessageSpeech() {
@@ -103,7 +117,7 @@
   function saveHunt() {
     if (restoring) return;
     try {
-      window.localStorage.setItem(storageKey, JSON.stringify({ schema: 2, ...huntState(), messageRead, presentDate, destination: values.destination, departed: values.departed }));
+      window.localStorage.setItem(storageKey, JSON.stringify({ schema: 2, ...huntState(), messageRead, gameStarted, presentDate, destination: values.destination, departed: values.departed }));
     } catch { /* The hunt remains playable when browser storage is unavailable. */ }
   }
   function changeStep(step) {
@@ -203,6 +217,8 @@
     refreshHunt();
     saveHunt();
     if (inputPopup.open) inputPopup.close();
+    document.getElementById('travel-title').textContent = 'TIME TRAVEL IN PROGRESS';
+    travelVideo.setAttribute('aria-label', 'Time travel clip');
     animateTravel(clip);
     return { success: true, destination: null, present: arrival, departed: departure, ...huntState() };
   }
@@ -256,6 +272,13 @@
   });
   travelPopup.addEventListener('close', () => {
     stopTravelAnimation();
+    if (introPlaying) {
+      introPlaying = false;
+      gameStarted = true;
+      refreshStartScreen();
+      saveHunt();
+      document.getElementById('open-message').focus();
+    }
     if (huntCompleted) showCompletion();
   });
   travelPopup.addEventListener('cancel', stopTravelAnimation);
@@ -273,6 +296,8 @@
       huntIndex = initialIndex;
       huntCompleted = false;
       messageRead = false;
+      gameStarted = false;
+      refreshStartScreen();
       presentDate = null;
       set('departed', '1985-10-26T01:20');
       set('destination', null);
@@ -355,6 +380,7 @@
     window.timeHunt.reset();
     window.timeHunt.setStep(1);
     completionPopup.close();
+    document.getElementById('start-game').focus();
   });
   document.getElementById('close-message').addEventListener('click', () => messagePopup.close());
   document.getElementById('close-failure').addEventListener('click', () => failurePopup.close());
@@ -401,10 +427,13 @@
       set('departed', saved.departed);
       set('destination', saved.destination);
       tick();
+      // Existing saved hunts predate the opening film and should still resume.
+      gameStarted = saved.gameStarted !== false;
     }
   } catch { /* Invalid or unavailable storage starts a fresh hunt. */ }
   refreshHunt();
   restoring = false;
+  refreshStartScreen();
   const query = new URLSearchParams(location.search);
   names.forEach(name => {
     if (query.has(name)) {
