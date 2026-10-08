@@ -49,6 +49,29 @@
   let messageRead = false;
   let restoring = true;
   const messagePopup = document.getElementById('message-popup');
+  let messageSpeech = null;
+  function stopMessageSpeech() {
+    if (!messageSpeech) return;
+    messageSpeech = null;
+    try { window.speechSynthesis.cancel(); } catch { /* Reading the clue remains available. */ }
+  }
+  function speakMessage() {
+    if (!window.speechSynthesis || typeof window.SpeechSynthesisUtterance !== 'function') return;
+    try {
+      stopMessageSpeech();
+      const utterance = new window.SpeechSynthesisUtterance(document.getElementById('hunt-message').textContent);
+      utterance.lang = document.documentElement?.lang || 'en-US';
+      utterance.onend = utterance.onerror = () => {
+        if (messageSpeech === utterance) messageSpeech = null;
+      };
+      // Keep the utterance alive and start synchronously within the mobile user's tap.
+      messageSpeech = utterance;
+      window.speechSynthesis.speak(utterance);
+    } catch { messageSpeech = null; /* Unsupported or blocked speech must not prevent viewing. */ }
+  }
+  messagePopup.addEventListener('close', stopMessageSpeech);
+  messagePopup.addEventListener('cancel', stopMessageSpeech);
+  window.addEventListener('pagehide', stopMessageSpeech);
   const failurePopup = document.getElementById('failure-popup');
   const completionPopup = document.getElementById('completion-popup');
   const completionMessage = huntConfig.completionMessage || 'Congratulations on completing your mission and making it Back to the Frontside. You deserve a beer.';
@@ -84,6 +107,7 @@
   function changeStep(step) {
     const index = huntSteps.findIndex(item => item.step === step);
     if (index < 0) throw new RangeError(`Unknown hunt step: ${step}`);
+    stopMessageSpeech();
     huntIndex = index;
     huntCompleted = false;
     messageRead = false;
@@ -157,6 +181,7 @@
       return { success: false, step: huntSteps[huntIndex].step };
     }
     const selected = date.value.slice(0,10);
+    stopMessageSpeech();
     const arrival = `${selected}T${localValue(new Date()).slice(11)}`;
     tick();
     const departure = values.present;
@@ -239,6 +264,7 @@
     getState: huntState,
     setStep: changeStep,
     reset: () => {
+      stopMessageSpeech();
       huntIndex = initialIndex;
       huntCompleted = false;
       messageRead = false;
@@ -311,11 +337,13 @@
   }
   document.getElementById('open-input').addEventListener('click', openInput);
   document.getElementById('open-message').addEventListener('click', () => {
+    const firstViewing = !messageRead && !huntCompleted;
     messageRead = true;
     refreshHunt();
     saveHunt();
     if (huntCompleted) showCompletion();
     else if (!messagePopup.open) messagePopup.showModal();
+    if (firstViewing) speakMessage();
   });
   document.getElementById('close-completion').addEventListener('click', () => completionPopup.close());
   document.getElementById('restart-mission').addEventListener('click', () => {
