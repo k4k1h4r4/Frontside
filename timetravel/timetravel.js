@@ -60,6 +60,7 @@
   document.getElementById('start-game').addEventListener('click', () => {
     if (introPlaying || gameStarted) return;
     introPlaying = true;
+    document.getElementById('travel-header').hidden = true;
     document.getElementById('travel-title').textContent = 'BACK TO THE FRONTSIDE';
     travelVideo.setAttribute('aria-label', 'Opening film');
     animateTravel('images/bttf.webm');
@@ -217,6 +218,7 @@
     refreshHunt();
     saveHunt();
     if (inputPopup.open) inputPopup.close();
+    document.getElementById('travel-header').hidden = false;
     document.getElementById('travel-title').textContent = 'TIME TRAVEL IN PROGRESS';
     travelVideo.setAttribute('aria-label', 'Time travel clip');
     animateTravel(clip);
