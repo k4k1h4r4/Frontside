@@ -21,12 +21,13 @@ function dashboard(search = '', options = {}) {
     if (!elements.has(key)) {
       const classes = new Set();
       elements.set(key, { textContent:'', innerHTML:'', attributes:{}, listeners:{}, dataset:{}, disabled:false, open:false,
-        currentTime:0, muted:true, paused:true, playCalls:0,
+        currentTime:0, muted:true, paused:true, playCalls:0, loadCalls:0,
+        load() { this.loadCalls++; },
         play() { this.playCalls++; if(playFailure) return Promise.reject(playFailure); this.paused=false; return Promise.resolve(); },
         pause() { this.paused=true; },
         showModal() { this.open=true; }, close() { this.open=false; if(this.listeners.close) this.listeners.close(); },
         classList:{ toggle(k,on) { if(on) classes.add(k); else classes.delete(k); }, contains:k=>classes.has(k) },
-        setAttribute(k,v) { this.attributes[k]=v; }, addEventListener(k,v) { this.listeners[k]=v; } });
+        setAttribute(k,v) { this.attributes[k]=v; }, getAttribute(k) { return this.attributes[k] ?? null; }, addEventListener(k,v) { this.listeners[k]=v; } });
     }
     return elements.get(key);
   }
@@ -206,7 +207,7 @@ test('travel opens the MP4 with sound and returns to circuits when the clip ends
   assert.match(html,/preload="metadata" playsinline controls/);
   assert.ok(fs.statSync(require.resolve('../images/bttfTimeTravel.mp4')).size>0);
 });
-test('skip stops audio without undoing travel; later trips replay from the beginning',()=>{
+test('completion stops audio without undoing travel; later trips replay from the beginning',()=>{
   const {api,element}=dashboard();
   assert.throws(()=>api.travel('invalid'));
   assert.equal(element('travel-popup').open,false);
@@ -215,10 +216,44 @@ test('skip stops audio without undoing travel; later trips replay from the begin
   api.travel('11051955');
   assert.equal(element('travel-video').currentTime,0);
   assert.equal(element('travel-video').playCalls,2);
-  element('skip-travel').listeners.click();
+  element('travel-video').listeners.ended();
   assert.equal(element('travel-popup').open,false);
   assert.equal(element('travel-video').paused,true);
   assert.equal(api.get('present'),'1955-11-05T13:45');
+});
+
+test('each successful transition uses the departing step clip, including shared and final clips',()=>{
+  const config={...fixtureHunt,steps:fixtureHunt.steps.map((step,index)=>({...step,clip:index<2?'images/shared.mp4':'images\\final.mp4'}))};
+  const game=dashboard('',{config});
+  const video=game.element('travel-video');
+  assert.equal(game.api.travel('01012000').success,false);
+  assert.equal(video.loadCalls,0);
+  game.api.travel('10212015');
+  assert.equal(video.getAttribute('src'),'images/shared.mp4');
+  assert.equal(game.hunt.getState().step,2);
+  assert.equal(video.loadCalls,1);
+  game.element('travel-video').listeners.ended();
+  video.currentTime=10;
+  game.api.travel('11051955');
+  assert.equal(video.getAttribute('src'),'images/shared.mp4');
+  assert.equal(video.currentTime,0);
+  assert.equal(video.loadCalls,1);
+  game.element('travel-video').listeners.ended();
+  game.api.travel('10022026');
+  assert.equal(video.getAttribute('src'),'images/final.mp4');
+  assert.equal(video.loadCalls,2);
+  assert.equal(video.playCalls,3);
+  assert.equal(game.hunt.getState().completed,true);
+});
+
+test('missing clip settings use the existing video and invalid settings are rejected',()=>{
+  const game=dashboard();
+  game.api.travel('10212015');
+  assert.equal(game.element('travel-video').getAttribute('src'),'images/bttfTimeTravel.mp4');
+  for (const clip of ['', '  ', null, 123]) {
+    const config={...fixtureHunt,steps:[{...fixtureHunt.steps[0],clip}]};
+    assert.throws(()=>dashboard('',{config}),/non-empty file path/);
+  }
 });
 test('blocked playback offers a fresh play tap, and stale rejections cannot reopen it',async()=>{
   const {api,element,failPlayback}=dashboard();
@@ -233,18 +268,18 @@ test('blocked playback offers a fresh play tap, and stale rejections cannot reop
   assert.equal(element('travel-video').paused,false);
   failPlayback({name:'NotAllowedError'});
   api.travel('11051955');
-  element('skip-travel').listeners.click();
+  element('travel-video').listeners.ended();
   await Promise.resolve();
   assert.equal(element('play-travel-video').hidden,true);
   assert.equal(element('travel-popup').open,false);
 });
-test('media errors leave a clear message and the popup can be dismissed',()=>{
+test('media errors automatically close the transition without trapping players',()=>{
   const {api,element}=dashboard();
   api.travel('10212015');
   element('travel-video').listeners.error();
-  assert.match(element('travel-caption').textContent,/CLIP UNAVAILABLE/);
-  element('skip-travel').listeners.click();
   assert.equal(element('travel-popup').open,false);
+  assert.equal(element('travel-video').paused,true);
+  assert.equal(api.get('present'),'2015-10-21T13:45');
 });
 test('Message blinks until opened, remembers reading, and alerts again for the next clue or restart',()=>{
   const game=dashboard();
@@ -404,7 +439,7 @@ test('last step completes the hunt, stays completed after reload, and supports r
   assert.equal(resumed.api.get('present'),'2026-10-02T13:45');
   assert.equal(resumed.api.get('departed'),'1985-10-26T01:20');
 });
-test('final destination follows the local date across midnight and completion appears when skipped',()=>{
+test('final destination follows the local date across midnight and completion appears when the clip ends',()=>{
   const game=dashboard();
   game.hunt.setStep(3);
   game.api.set('destination','10022026');
@@ -413,7 +448,7 @@ test('final destination follows the local date across midnight and completion ap
   assert.equal(game.api.travel().success,false);
   game.element('close-failure').listeners.click();
   assert.equal(game.api.travel('10032026').success,true);
-  game.element('skip-travel').listeners.click();
+  game.element('travel-video').listeners.ended();
   assert.equal(game.element('completion-popup').open,true);
   assert.equal(game.element('travel-video').paused,true);
   game.element('close-completion').listeners.click();
