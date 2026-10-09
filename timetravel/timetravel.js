@@ -34,8 +34,8 @@
   if (!huntConfig || !Array.isArray(huntConfig.steps) || !huntConfig.steps.length) throw new Error('Define at least one step in timetravel-hunt-config.js.');
   const stepNumbers = new Set();
   const huntSteps = huntConfig.steps.map(item => {
-    if (!Number.isInteger(item.step) || item.step < 1 || stepNumbers.has(item.step) || typeof item.message !== 'string' || !(item.destinationkey === 'currentdate' || /^\d{8}$/.test(item.destinationkey))) throw new Error('Each hunt step needs a unique step number starting at 1, message, and MMDDYYYY destinationkey (or currentdate).');
-    if (item.destinationkey !== 'currentdate') parse(item.destinationkey);
+    if (!Number.isInteger(item.step) || item.step < 1 || stepNumbers.has(item.step) || typeof item.message !== 'string') throw new Error('Each hunt step needs a unique step number starting at 1 and a message.');
+    resolveDestinationKey(item.destinationkey);
     stepNumbers.add(item.step);
     if (item.clip !== undefined && (typeof item.clip !== 'string' || !item.clip.trim())) throw new Error('Each hunt clip must be a non-empty file path.');
     const clip = (item.clip ?? 'images/bttfTimeTravel.mp4').trim().replaceAll('\\', '/');
@@ -93,13 +93,23 @@
   const completionPopup = document.getElementById('completion-popup');
   const completionMessage = huntConfig.completionMessage || 'Congratulations on completing your mission and making it Back to the Frontside. You deserve a beer.';
   document.getElementById('completion-message').textContent = completionMessage;
-  function currentDateKey() {
+  function resolveDestinationKey(key) {
+    if (typeof key !== 'string') throw new TypeError('destinationkey must be MMDDYYYY, currentdate, or currentdate +/- Nyears.');
+    if (/^\d{8}$/.test(key)) { parse(key); return key; }
+    const relative = key.match(/^\s*currentdate(?:\s*([+-])\s*(\d+)\s*years?)?\s*$/i);
+    if (!relative) throw new TypeError('destinationkey must be MMDDYYYY, currentdate, or currentdate +/- Nyears.');
     const today = new Date();
-    return `${pad(today.getMonth()+1)}${pad(today.getDate())}${String(today.getFullYear()).padStart(4,'0')}`;
+    const offset = relative[2] ? Number(relative[2]) * (relative[1] === '-' ? -1 : 1) : 0;
+    const year = today.getFullYear() + offset;
+    if (!Number.isSafeInteger(year) || year < 1 || year > 9999) throw new RangeError('Relative destination year must be between 0001 and 9999.');
+    // Clamp February 29 to February 28 when the destination year is not a leap year.
+    const monthEnd = new Date(0);
+    monthEnd.setUTCFullYear(year, today.getMonth() + 1, 0);
+    const day = Math.min(today.getDate(), monthEnd.getUTCDate());
+    return `${pad(today.getMonth()+1)}${pad(day)}${String(year).padStart(4,'0')}`;
   }
   function expectedDestination() {
-    const step = huntSteps[huntIndex];
-    return huntIndex === huntSteps.length - 1 || step.destinationkey === 'currentdate' ? currentDateKey() : step.destinationkey;
+    return resolveDestinationKey(huntSteps[huntIndex].destinationkey);
   }
   function showCompletion() {
     if (!completionPopup.open) completionPopup.showModal();
