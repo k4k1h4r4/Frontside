@@ -611,4 +611,58 @@ test('opening film handles blocked playback and unavailable media without trappi
   assert.equal(game.element('game-console').hidden,false);
 });
 
+test('relative destinations subtract calendar years and validate travel using today locally',()=>{
+  const config={...fixtureHunt,steps:[
+    {...fixtureHunt.steps[0],destinationkey:'currentdate - 21years'},
+    fixtureHunt.steps[2]
+  ]};
+  const game=dashboard('',{config});
+  game.clock(2026,10,8,13,45);
+  assert.equal(game.hunt.getState().destinationkey,'10082005');
+  assert.equal(game.api.travel('10082026').success,false);
+  assert.equal(game.hunt.getState().step,1);
+  assert.equal(game.api.travel('10082005').success,true);
+  assert.equal(game.api.get('present'),'2005-10-08T13:45');
+  assert.equal(game.hunt.getState().destinationkey,'10082026');
+});
+
+test('relative destinations recompute across midnight and reload and support a final step',()=>{
+  const config={...fixtureHunt,steps:[{...fixtureHunt.steps[0],destinationkey:'currentdate-21years'}]};
+  const game=dashboard('',{config});
+  assert.equal(game.hunt.getState().destinationkey,'10022005');
+  game.api.set('destination','10022005');
+  game.clock(2026,10,3,0,1);
+  assert.equal(game.hunt.getState().destinationkey,'10032005');
+  assert.equal(game.api.travel().success,false);
+  const resumed=dashboard('',{config,storage:game.storage});
+  resumed.clock(2026,10,4,13,45);
+  assert.equal(resumed.hunt.getState().destinationkey,'10042005');
+  assert.equal(resumed.api.travel('10042005').success,true);
+  assert.equal(resumed.hunt.getState().completed,true);
+});
+
+test('relative year syntax supports addition and handles leap days and early years',()=>{
+  for (const [key,today,expected] of [
+    ['currentdate + 1year',[2024,2,29],'02282025'],
+    [' currentdate - 4 years ',[2024,2,29],'02292020'],
+    ['CURRENTDATE - 21YEARS',[2024,2,29],'02282003'],
+    ['currentdate - 1927years',[2026,10,8],'10080099'],
+    ['currentdate',[2024,2,29],'02292024']
+  ]) {
+    const config={...fixtureHunt,steps:[{...fixtureHunt.steps[0],destinationkey:key}]};
+    const game=dashboard('',{config});
+    game.clock(...today,13,45);
+    assert.equal(game.hunt.getState().destinationkey,expected);
+  }
+  const config={...fixtureHunt,steps:[{...fixtureHunt.steps[0],destinationkey:'01012000'}]};
+  assert.equal(dashboard('',{config}).hunt.getState().destinationkey,'01012000');
+});
+
+test('malformed or out-of-range relative destinations are rejected',()=>{
+  for (const key of ['currentdate - 21months','currentdate - 1.5years','currentdate - -21years','currentdate + 8000years','currentdate - 2026years','currentdate + 999999999999999999years',null]) {
+    const config={...fixtureHunt,steps:[{...fixtureHunt.steps[0],destinationkey:key}]};
+    assert.throws(()=>dashboard('',{config}),/destinationkey|Relative destination year/);
+  }
+});
+
 
