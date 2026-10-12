@@ -2,7 +2,11 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const snapshot = require('../keno-snapshot.js');
+const html = fs.readFileSync(require.resolve('../keno.html'), 'utf8');
+const apiScript = html.match(/<script id="keno-snapshot-api">([\s\S]*?)<\/script>/)[1];
+const apiModule = { exports: {} };
+new Function('module', apiScript)(apiModule);
+const snapshot = apiModule.exports;
 
 const game = {
   raceid: 12345, racenumber: 806, timestamp: '2026-10-12T17:54:00Z',
@@ -63,13 +67,13 @@ function pageContext(query) {
   };
   const context = vm.createContext({
     document, window: { location: { search: query, origin: 'https://frontsidebar.com' } },
-    URLSearchParams, KenoSnapshot: snapshot,
+    URL, URLSearchParams,
     fetch() { throw new Error('Snapshot must not fetch game data'); },
     setTimeout() { throw new Error('Snapshot must not animate'); },
     setInterval() { throw new Error('Snapshot must not poll'); }
   });
-  const html = fs.readFileSync(require.resolve('../keno.html'), 'utf8');
   const script = html.match(/<script>\s*([\s\S]*?)<\/script>/)[1];
+  vm.runInContext(apiScript, context);
   vm.runInContext(script, context);
   return { document, context };
 }
