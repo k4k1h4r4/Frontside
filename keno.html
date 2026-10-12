@@ -14,6 +14,13 @@
   <link rel="stylesheet" href="nav.css?v=2026-09-15-02">
   <script defer src="nav.js?v=2026-09-15-02"></script>
   <script defer src="site-update.js?v=2026-09-15-02"></script>
+  <style>
+    #destroy-board-link[hidden] { display: none; }
+    .keno-snapshot .keno-cell.drawn { animation: none; transition: none; }
+    .keno-snapshot .keno-action-stack,
+    .keno-snapshot .recent-toggle-row,
+    .keno-snapshot .recent-panel { display: none !important; }
+  </style>
 </head>
 <body>
 
@@ -76,6 +83,7 @@
     <div class="keno-check-row">
       <a href="ticket.html" class="btn btn-secondary btn-check-tickets">Check Tickets</a>
       <a href="battleship.html" class="btn btn-check-tickets btn-play-battleship">Play Battleship Keno</a>
+      <a id="destroy-board-link" class="btn btn-secondary btn-check-tickets" target="_blank" rel="noopener" hidden>Destroy this Keno Board</a>
     </div>
 
     <div class="recent-toggle-row">
@@ -100,6 +108,7 @@
 	<br>Keno results via <a href="https://kenocloud.com" target="_blank">KenoCloud</a></p>
   </footer>
 
+  <script src="keno-snapshot.js"></script>
   <script>
     const BASE = 'https://kenocloud.com/kenocloud/casino/41/game/1/balldraw';
     const DEFAULT_HEAT_MAP_GAMES = 20;
@@ -346,8 +355,10 @@
 
       if (!currentGameData) return;
 
-      gameNumber.textContent = `Game #${currentGameData.racenumber}`;
-      gameTimestamp.textContent = formatTimestamp(currentGameData.timestamp);
+      gameNumber.textContent = currentGameData.racenumber != null
+        ? `Game #${currentGameData.racenumber}` : `Race #${currentGameData.raceid}`;
+      gameTimestamp.textContent = currentGameData.timestamp
+        ? formatTimestamp(currentGameData.timestamp) : 'Board snapshot';
     }
 
     function applyHeatMap() {
@@ -461,6 +472,7 @@
     function displayGame(data) {
       currentGameData = data;
       currentRaceId = data.raceid;
+      updateDestroyLink();
       updateHeaderDisplay();
       updateCellDisplay();
       renderDrawOrder(data.balls);
@@ -471,6 +483,32 @@
       document.querySelectorAll('.recent-item').forEach(el => {
         el.classList.toggle('selected', el.dataset.raceid == data.raceid);
       });
+    }
+
+    function updateDestroyLink() {
+      const link = document.getElementById('destroy-board-link');
+      link.hidden = true;
+      link.removeAttribute('href');
+      try {
+        link.href = KenoSnapshot.buildLink(currentGameData, window.location.origin);
+        link.hidden = false;
+      } catch (_) {
+        // Only offer destruction for a complete, valid 20-ball board.
+      }
+    }
+
+    function displaySnapshot(data) {
+      document.body.classList.add('keno-snapshot');
+      currentGameData = data;
+      currentRaceId = data.raceid;
+      updateHeaderDisplay();
+      renderDrawOrder(data.balls);
+      data.balls.forEach(num => {
+        document.querySelector(`.keno-cell[data-num="${num}"]`).classList.add('drawn');
+        document.querySelector(`.draw-ball[data-num="${num}"]`).classList.add('active');
+      });
+      setStatus('', 'Snapshot');
+      updateDestroyLink();
     }
 
     function setStatus(state, label) {
@@ -611,6 +649,20 @@
     }
 
     (async function init() {
+      let snapshot;
+      try {
+        snapshot = KenoSnapshot.read(window.location.search);
+      } catch (err) {
+        document.body.classList.add('keno-snapshot');
+        renderBoard();
+        showError(err.message);
+        return;
+      }
+      if (snapshot) {
+        renderBoard();
+        displaySnapshot(snapshot);
+        return;
+      }
       readHeatMapLinkState();
 	  renderBoard();
       updateHeatMapButton();
