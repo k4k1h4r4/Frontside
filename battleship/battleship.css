@@ -244,3 +244,9 @@
 .battle-page .mode-choices button:disabled,.battle-page #change-mode:disabled{opacity:.5;cursor:default}
 
 .battle-page #current-mode{font-size:1.5em}
+
+@media(max-width:500px){
+  .battle-page .rng-lobby{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;padding:14px;text-align:center;scroll-margin-top:16px}
+  .battle-page .rng-lobby p{font-size:20px;line-height:1.35}
+  .battle-page #extend-countdown{width:100%;min-height:48px;font-size:18px}
+}

@@ -3,8 +3,8 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 
-async function page(search='',{legacy=false,beforeResponse=null}={}){
-  const nodes=new Map(),requests=[],saved=new Map(),lanes=new Map();
+async function page(search='',{legacy=false,beforeResponse=null,uid='me',sharedLanes=null,archivedMatches=new Map()}={}){
+  const nodes=new Map(),requests=[],saved=new Map(),lanes=sharedLanes||new Map(),timers=new Map();let nextTimer=1;
   class Element{
     constructor(id=''){
       this.id=id;this.className='';this.dataset={};this.children=[];this.value='';this.hidden=false;
@@ -17,30 +17,33 @@ async function page(search='',{legacy=false,beforeResponse=null}={}){
     }
     append(...items){this.children.push(...items);for(const n of items)if(n.id)nodes.set(n.id,n);}
     replaceChildren(...items){this.children=[];this.append(...items);}
-    setAttribute(){} addEventListener(){} querySelectorAll(){return [];} focus(){}
+    setAttribute(){} addEventListener(){} querySelectorAll(){return [];} focus(){} scrollIntoView(){}
     showModal(){this.open=true;} close(){this.open=false;}
   }
   const html=fs.readFileSync('battleship.html','utf8');
   for(const [,id]of html.matchAll(/id="([^"]+)"/g))nodes.set(id,new Element(id));
   const board=new Element();
   const document={hidden:false,activeElement:null,getElementById:id=>nodes.get(id)||null,querySelector:s=>s==='.keno-board-wrap'?board:null,createElement:()=>new Element(),addEventListener(){}};
-  const session={access_token:'test',user:{id:'me'}};
+  const session={access_token:'test',user:{id:uid}};
   const client={auth:{getSession:async()=>({data:{session}})}};
-  const context=vm.createContext({document,location:{search},localStorage:{getItem:k=>saved.get(k)||null,setItem:(k,v)=>saved.set(k,v)},window:{supabase:{createClient:()=>client},addEventListener(){}},ResizeObserver:class{observe(){}},URLSearchParams,AbortController,AbortSignal,structuredClone,Date,crypto:require('node:crypto').webcrypto,console,setTimeout:()=>1,clearTimeout(){},setInterval(){},fetch:async(url,options)=>{
+  const context=vm.createContext({document,location:{search},localStorage:{getItem:k=>saved.get(k)||null,setItem:(k,v)=>saved.set(k,v)},window:{supabase:{createClient:()=>client},addEventListener(){}},ResizeObserver:class{observe(){}},URLSearchParams,AbortController,AbortSignal,structuredClone,Date,crypto:require('node:crypto').webcrypto,console,setTimeout:fn=>{const id=nextTimer++;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),setInterval(){},fetch:async(url,options)=>{
     const body=JSON.parse(options.body);requests.push(body);
-    if(beforeResponse)await beforeResponse(body);
     let state=lanes.get(body.gameMode)||{active:null,lobby:null,recent:[],last:null};
     if(body.action==='join'){
-      state={...state,lobby:{id:'match-'+body.gameMode,gameMode:body.gameMode,status:'lobby',players:[{id:'me',name:body.name,fleet:body.fleet,hits:[],eliminated:null}]}};
+      const player={id:uid,name:body.name,fleet:body.fleet,hits:[],eliminated:null};
+      state={...state,lobby:state.lobby?{...state.lobby,players:[...state.lobby.players,player]}:{id:'match-'+body.gameMode,gameMode:body.gameMode,status:'lobby',players:[player]}};
+      if(body.gameMode==='rng'&&state.lobby.players.length>=2)state.lobby.countdownEndsAt??=new Date(Date.now()+60000).toISOString();
       lanes.set(body.gameMode,state);
     }
     if(body.action==='extend')state.lobby.countdownEndsAt=new Date(Date.parse(state.lobby.countdownEndsAt)+60000).toISOString();
-    return {ok:true,json:async()=>({...(!legacy?{gameMode:body.gameMode,rulesVersion:2}:{}),uid:'me',state:structuredClone(state),caughtUp:true,warning:'',serverTime:new Date().toISOString()})};
+    const replyState=structuredClone(state);
+    if(beforeResponse)await beforeResponse(body);
+    return {ok:true,json:async()=>({...(!legacy?{gameMode:body.gameMode,rulesVersion:2}:{}),uid,state:replyState,match:archivedMatches.get(body.matchId),caughtUp:true,warning:'',serverTime:new Date().toISOString()})};
   }});
   vm.runInContext(fs.readFileSync('battleship/ships.js','utf8'),context);
   vm.runInContext(fs.readFileSync('battleship/live.js','utf8'),context);
   await new Promise(setImmediate);
-  return {nodes,requests,lanes,context,refresh:()=>vm.runInContext('refresh()',context)};
+  return {nodes,requests,lanes,context,refresh:()=>vm.runInContext('refresh()',context),runTimers:()=>{let count=0;while(timers.size){assert.ok(count++<100,'Unexpected timer loop');const [id,fn]=timers.entries().next().value;timers.delete(id);fn();}}};
 }
 
 for(const mode of ['live-1','live-2','rng']){
@@ -184,3 +187,71 @@ for(const gameMode of ['live-1','live-2']){
     assert.match(nodes.get('entry-status').textContent,/Battle will begin with Game #123/);
   });
 }
+
+async function launchFleet(view,name){
+  await view.nodes.get('mode-rng').onclick();view.nodes.get('place').onclick();
+  for(let i=0;i<5;i++){
+    const ship=[...view.nodes.values()].find(e=>e.id.startsWith('cell-')&&e.className.split(' ').includes('ship-lifted'));
+    ship.onclick({detail:0});
+  }
+  view.nodes.get('player-name').value=name;await view.nodes.get('launch').onclick();
+}
+
+test('both independently signed-in captains can extend the shared countdown immediately after launching',async()=>{
+  const lanes=new Map();
+  const first=await page('?gameMode=rng',{uid:'captain-a',sharedLanes:lanes});
+  const second=await page('?gameMode=rng',{uid:'captain-b',sharedLanes:lanes});
+  await launchFleet(first,'First');await launchFleet(second,'Second');await first.refresh();
+  for(const view of [first,second]){
+    assert.equal(view.nodes.get('result-popup').open===true,false,'Launch overlay must not cover the countdown');
+    assert.equal(view.nodes.get('rng-lobby').hidden,false);
+    assert.equal(view.nodes.get('extend-countdown').hidden,false);
+    assert.equal(view.nodes.get('extend-countdown').disabled,false);
+  }
+  const deadline=Date.parse(lanes.get('rng').lobby.countdownEndsAt);
+  await first.nodes.get('extend-countdown').onclick();await second.refresh();
+  await second.nodes.get('extend-countdown').onclick();await first.refresh();
+  assert.equal(Date.parse(lanes.get('rng').lobby.countdownEndsAt),deadline+120000);
+  assert.equal(first.nodes.get('lobby-countdown').textContent,second.nodes.get('lobby-countdown').textContent);
+});
+
+test('countdown extension stays clickable during polling and a delayed response cannot undo it',async()=>{
+  let hold=false,release;
+  const delayed=new Promise(resolve=>{release=resolve;});
+  const view=await page('?gameMode=rng',{beforeResponse:async body=>{
+    if(hold&&body.action==='status'){hold=false;await delayed;}
+  }});
+  const {nodes,lanes,refresh}=view;
+  const deadline=Date.now()+60000;
+  lanes.set('rng',{active:null,recent:[],last:null,lobby:{id:'rng-lobby',status:'lobby',gameMode:'rng',countdownEndsAt:new Date(deadline).toISOString(),players:[{id:'me',name:'Me',fleet:[],hits:[]},{id:'other',name:'Other',fleet:[],hits:[]}]}});
+  await refresh();hold=true;const oldRefresh=refresh();await new Promise(setImmediate);
+  assert.equal(nodes.get('extend-countdown').disabled,false);
+  await nodes.get('extend-countdown').onclick();
+  release();await oldRefresh;
+  assert.equal(Date.parse(lanes.get('rng').lobby.countdownEndsAt),deadline+60000);
+  assert.match(nodes.get('lobby-countdown').textContent,/Battle begins in [12]:/);
+  assert.equal(nodes.get('extend-countdown').disabled,false);
+});
+
+test('final RNG animation survives background polling and shows the winner before the next lobby',async()=>{
+  const archivedMatches=new Map(),view=await page('?gameMode=rng',{archivedMatches});
+  const {nodes,lanes,refresh}=view;
+  await nodes.get('mode-rng').onclick();
+  const players=[{id:'me',name:'Me',fleet:[],hits:[],eliminated:null},{id:'other',name:'Other',fleet:[],hits:[],eliminated:null}];
+  const first={raceid:1,racenumber:1,timestamp:new Date().toISOString(),balls:[60]};
+  const active={id:'final-match',gameMode:'rng',status:'active',startGame:1,history:[first],players,winners:[]};
+  lanes.set('rng',{active,lobby:null,recent:[],last:null});await refresh();
+  const finish={raceid:2,racenumber:2,timestamp:new Date().toISOString(),ball:1,number:80};
+  const completed={...active,status:'finished',history:[first,{...finish,balls:[80]}],winners:['other'],finish};
+  archivedMatches.set(active.id,completed);
+  lanes.set('rng',{active:null,lobby:null,recent:[completed],last:null});await refresh();
+  // The next poll arrives while the last ball animation is still queued.
+  lanes.get('rng').lobby={id:'next-lobby',gameMode:'rng',status:'lobby',players:[]};
+  await refresh();view.runTimers();
+  assert.equal(nodes.get('result-popup').open,true);
+  assert.equal(nodes.get('result-title').textContent,'Other wins!');
+  assert.equal(nodes.get('result-banner').hidden,false);
+  nodes.get('result-popup').close();await refresh();
+  assert.equal(nodes.get('phase').textContent,'Match finished');
+  assert.equal(nodes.get('result-popup').open,false,'Outcome should appear once');
+});

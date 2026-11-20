@@ -7,12 +7,13 @@ Deno.test('Battleship API modes, persistence, cleanup, feed failure and commit r
   const previous=Object.fromEntries(['SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','BATTLESHIP_CRON_SECRET'].map(k=>[k,Deno.env.get(k)]));
   let handler:(r:Request)=>Promise<Response>=()=>{throw Error('Missing handler');};
   let state:any=emptyState(),version=0,feedDown=false,conflict=false,commits=0,feedRequests=0;
+  let authUid='captain';
   const archived=new Map<string,unknown>();
   Deno.env.set('SUPABASE_URL','https://database.test');Deno.env.set('SUPABASE_SERVICE_ROLE_KEY','test-service');Deno.env.set('BATTLESHIP_CRON_SECRET','test-cron');
   (Deno as any).serve=(fn:typeof handler)=>{handler=fn;return {};};
   globalThis.fetch=async(input:any,init?:RequestInit)=>{
     const url=String(input);
-    if(url.endsWith('/auth/v1/user'))return Response.json({id:'captain'});
+    if(url.endsWith('/auth/v1/user'))return Response.json({id:authUid});
     if(url.includes('kenocloud.com')){
       feedRequests++;if(feedDown)throw Error('Feed offline');
       const id=url.endsWith('/latest')?100:Number(url.split('/').at(-1));
@@ -90,6 +91,10 @@ Deno.test('Battleship API modes, persistence, cleanup, feed failure and commit r
       check(Date.parse(state.games.rng.lobby.countdownEndsAt)===deadline+60000);
       check((await request(extension)).status===200);
       check(Date.parse(state.games.rng.lobby.countdownEndsAt)===deadline+60000,'Duplicate extension added time');
+      authUid='second';
+      check((await request({...extension,requestId:'second-captain'})).status===200);
+      check(Date.parse(state.games.rng.lobby.countdownEndsAt)===deadline+120000,'Second captain could not extend');
+      authUid='captain';
       check((await request({...extension,matchId:'wrong'})).status===409);
       state.games.rng.lobby.players=state.games.rng.lobby.players.filter((p:any)=>p.id!=='captain');
       check((await request({...extension,requestId:'spectator'})).status===409);

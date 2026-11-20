@@ -68,6 +68,12 @@ async function refresh(){
     }
     if(version!==modeVersion)return;
     if(pendingImpact){renderRecent();initial=false;return;}
+    // Keep the final draw and outcome until the captain chooses another match.
+    // Polls arriving during its animation must not replace it with the next lobby.
+    if(match?.status==='finished'&&!placing){
+      if(!animation){visual=match;render();notifyOutcome();}
+      renderRecent();initial=false;return;
+    }
     const latest=chooseMatch();
     // A just-finished match can disappear from active state between polls.
     const ended=match?.status==='active'&&snapshot.recent.find(m=>m.id===match.id);
@@ -253,10 +259,10 @@ $('launch').onclick=async()=>{
     const data=await api('join',{name,fleet:draft});snapshot=data.state;uid=data.uid;storage.set('name',name);placing=false;mode='auto';match=chooseMatch();visual=match;if(owned(match))storage.set('match:'+gameMode,match.id);storage.set('draft','');draft=emptyFleet();message('Fleet saved. You can leave this page and return to the match.');
     const lobby=snapshot.lobby;
     const detail=lobbyMessage(lobby);
-    showPopup('Fleet launched',detail,{className:'result-launch'});
+    if(gameMode!=='rng')showPopup('Fleet launched',detail,{className:'result-launch'});
   }
   catch(e){message(e.message+' Your placement is still saved here.');}
-  finally{busy=false;render();}
+  finally{busy=false;render();if(gameMode==='rng'&&!placing&&owned(snapshot?.lobby))$('rng-lobby').scrollIntoView({block:'center'});}
 };
 for(const [id,value]of [['active-view','active'],['lobby-view','lobby']])$(id).onclick=()=>{if(placing){message('Finish launching your fleet before switching matches.');return;}mode=value;viewed=uid;stopAnimation();match=chooseMatch();visual=match;render();};
 $('result-popup').addEventListener('cancel',e=>{if(pendingImpact)e.preventDefault();});
@@ -271,14 +277,15 @@ function updateCountdown(){
     const ends=Date.parse(lobby.countdownEndsAt),seconds=Math.max(0,Math.ceil((ends-now)/1000));
     $('lobby-countdown').textContent=Number.isFinite(ends)?(seconds?`Battle begins in ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`:'Starting battle...'):lobby.players.length<2?'Waiting for a second Captain.':"Countdown starts after the active battle.";
     $('extend-countdown').hidden=gameMode!=='rng'||!owned(lobby)||!Number.isFinite(ends);
-    $('extend-countdown').disabled=busy||polling||!seconds;
+    $('extend-countdown').disabled=busy||!seconds;
   }
   if(gameMode!=='rng'||resultsPage||!snapshot?.active||!snapshot.nextDrawAt){$('next-draw').textContent='';return;}
   const seconds=Math.max(0,Math.ceil((Date.parse(snapshot.nextDrawAt)-now)/1000));
   $('next-draw').textContent=seconds?`Next simulated 20-ball draw in ${seconds}s`:'Waiting for next simulated draw...';
 }
 $('extend-countdown').onclick=async()=>{
-  if(busy||polling||gameMode!=='rng'||!owned(snapshot?.lobby))return;
+  if(busy||gameMode!=='rng'||!owned(snapshot?.lobby))return;
+  modeVersion++;pollController?.abort();pollController=null;polling=false;
   const matchId=snapshot.lobby.id,requestId=crypto.randomUUID();
   busy=true;render();
   try{
