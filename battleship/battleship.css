@@ -209,3 +209,38 @@
 .battle-page .result-banner a { color:#ffcf86; }
 .battle-page .entry-status { padding:0 14px; color:#b9d9eb; font-size:13px; }
 @media(max-width:500px){.battle-page{padding:4px 8px 16px;margin:0 auto 10px}.battle-page .battleship-logo{width:75%;margin-bottom:0}.battle-page .intro>p:last-child{font-size:14px;line-height:1.25}.battle-page .entry-row.is-placing{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch;gap:10px;padding:0 12px 12px}.battle-page .entry-row.is-placing .entry-name,.battle-page .entry-row.is-placing .entry-status{padding:0;margin:0}.battle-page .entry-row.is-placing .entry-status{display:grid;place-items:center;text-align:center;font-size:12px;line-height:1.4}.battle-page .entry-row.is-placing input{width:100%}.battle-page .draw-panel{margin-top:10px;padding-top:10px}.battle-page .draw-history-row{grid-template-columns:auto 1fr;gap:4px 8px}.battle-page .draw-history-row small{grid-column:2;text-align:left}.battle-page .rotate-ship{min-height:40px;padding:8px 10px}}
+
+.battle-page .game-options{max-width:720px;margin:20px auto;text-align:center;padding:16px;border:1px solid #31566d;border-radius:10px;background:#102a3b}
+.battle-page .game-options label{display:block;font-weight:700;margin-bottom:8px}
+.battle-page .game-options select{max-width:100%;padding:12px;font:inherit;color:#e7f1f6;background:#08141e;border:1px solid #79afca;border-radius:5px}
+.battle-page .game-options select:focus-visible{outline:3px solid #ffcd74;outline-offset:3px}
+.battle-page .game-options p{font-size:14px;line-height:1.5;margin:10px 0 0;color:#b5cedd}
+.battle-page #next-draw{color:#ffcd74;font-variant-numeric:tabular-nums}
+.battle-page #next-draw:empty{display:none}
+
+.battle-page .rng-lobby{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:14px;padding:16px;margin:12px 0;background:#17394c;border:1px solid #edbd77;border-radius:8px}
+.battle-page .rng-lobby p{margin:0;color:#ffcf86;font-size:20px;font-variant-numeric:tabular-nums}
+.battle-page .rng-lobby button{min-height:44px;padding:10px 16px;border:1px solid #edbd77;border-radius:5px;background:#edbd77;color:#122633;font:inherit}
+.battle-page .rng-lobby button:disabled{opacity:.5;cursor:default}
+
+.battle-page .recent-results-wrap{overflow-x:auto;margin-top:12px}
+.battle-page .recent-results-table{width:100%;border-collapse:collapse;text-align:left;font-size:14px}
+.battle-page .recent-results-table th,.battle-page .recent-results-table td{padding:12px 10px;border-bottom:1px solid #31566d;vertical-align:top}
+.battle-page .recent-results-table th{color:#b5cedd;font-weight:600}
+.battle-page .recent-results-table td:first-child,.battle-page .recent-results-table td:nth-child(2){white-space:nowrap}
+.battle-page .recent-results-table a{color:#ffcf86}
+.battle-page .recent-results-table td:last-child{overflow-wrap:anywhere}
+
+.battle-page .mode-summary{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px}
+.battle-page #change-mode,.battle-page #mode-close{min-height:44px;border:1px solid #edbd77;border-radius:5px;padding:10px 16px;background:#edbd77;color:#122633;font:inherit}
+.battle-page #mode-popup{width:min(520px,calc(100% - 32px));max-height:calc(100dvh - 32px);overflow-y:auto;margin:auto;padding:24px;border:1px solid #edbd77;border-radius:14px;background:#122633;color:#edf4f7;box-shadow:0 24px 90px #0009}
+.battle-page #mode-popup::backdrop{background:#03111cbb;backdrop-filter:blur(3px)}
+.battle-page #mode-help{margin:12px 0 18px;color:#bfd2df;line-height:1.5}
+.battle-page .mode-choices{display:grid;gap:12px;margin-bottom:16px}
+.battle-page .mode-choices button{display:grid;gap:7px;min-height:80px;width:100%;padding:16px;border:1px solid #51778c;border-radius:8px;background:#0c2436;color:#edf4f7;text-align:left;font:inherit}
+.battle-page .mode-choices button[aria-pressed="true"]{border-color:#edbd77;background:#284039}
+.battle-page .mode-choices strong{font-size:18px;color:#ffcf86}
+.battle-page .mode-choices span{font-size:14px;color:#bfd2df;line-height:1.5}
+.battle-page .mode-choices button:disabled,.battle-page #change-mode:disabled{opacity:.5;cursor:default}
+
+.battle-page #current-mode{font-size:1.5em}

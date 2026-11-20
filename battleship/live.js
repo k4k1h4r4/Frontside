@@ -5,7 +5,15 @@ const SPECS=[['Carrier',5],['Battleship',4],['Destroyer',3],['Submarine',3],['Pa
 const $=id=>document.getElementById(id),board=document.querySelector('.keno-board-wrap');
 const resultsPage=document.querySelector('[data-results]')!==null;
 const storage={get(k){try{return localStorage.getItem('battleship:'+k);}catch{return null;}},set(k,v){try{localStorage.setItem('battleship:'+k,v);}catch{}}};
+const GAME_MODES={"live-1": {"limit": 1, "label": "Live Keno draws - 1 ship sinks, you lose."}, "live-2": {"limit": 2, "label": "Live Keno draws - 2 ships sink, you lose."}, "rng": {"limit": 5, "label": "Simulated draws every 30 seconds - All 5 ships sink, you lose."}};
+const requestedMode=new URLSearchParams(location.search).get('gameMode')||(resultsPage?'live-2':storage.get('gameMode'));
+let gameMode=Object.hasOwn(GAME_MODES,requestedMode)?requestedMode:'live-2',serverOffset=0;
+function matchMode(m){return m?(Object.hasOwn(GAME_MODES,m.gameMode)?m.gameMode:'live-2'):gameMode;}
+function lossLimit(m){return GAME_MODES[matchMode(m)].limit;}
+function drawLabel(m){return matchMode(m)==='rng'?'Simulated draw':'Keno draw';}
+function resultUrl(id,mode=gameMode){return `battleship-results.html?match=${encodeURIComponent(id)}&gameMode=${encodeURIComponent(mode)}`;}
 let client,uid='',snapshot=null,match=null,viewed='',mode='auto',placing=false,busy=false,polling=false;
+let modeVersion=0,pollController=null;
 let selected=0,vertical=false,gesture=null,draft=emptyFleet(),animation=null,pendingImpact=null,visual=null,initial=true;
 function emptyFleet(){return SPECS.map(([name,length])=>({name,length,cells:[],locked:false}));}
 function element(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
@@ -17,16 +25,21 @@ function remaining(p){return (p?.fleet||[]).filter(s=>!sunk(s,p)).length;}
 function allLocked(){return draft.every(s=>s.locked&&s.cells.length===s.length);}
 function lobbyMessage(lobby){
   const count=lobby?.players?.length||0;
-  if(count<2)return '1 more Captain is required before the battle can commence.';
+  if(count<2)return 'Waiting for a second Captain.';
+  if(gameMode==='rng')return lobby.countdownEndsAt?`${count} Captains locked. More can join until the countdown ends.`:`${count} Captains locked. A 60-second countdown begins after the active battle.`;
   if(lobby.expectedGame)return `${count} Captains are locked. Battle will begin with Game #${lobby.expectedGame}.`;
   return `${count} Captains are locked. Battle will begin with the first game after the active battle.`;
 }
-async function api(action,extra={}){
+async function api(action,extra={},requestSignal=null){
+  const requestedGameMode=gameMode;
   const {data:{session}}=await client.auth.getSession();
   if(!session)throw Error('Session unavailable. Reload to reconnect.');
-  const response=await fetch(`${SUPABASE_URL}/functions/v1/battleship`,{method:'POST',headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({action,...extra}),signal:AbortSignal.timeout(60000)});
+  const response=await fetch(`${SUPABASE_URL}/functions/v1/battleship`,{method:'POST',headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${session.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({action,gameMode:requestedGameMode,...extra}),signal:requestSignal?AbortSignal.any([requestSignal,AbortSignal.timeout(60000)]):AbortSignal.timeout(60000)});
   let data;try{data=await response.json();}catch{throw Error('Battleship backend is not available yet. Deploy the server function and SQL first.');}
-  if(!response.ok)throw Error(data.error||'Could not load Battleship.');return data;
+  if(!response.ok)throw Error(data.error||'Could not load Battleship.');
+  if(['status','join','extend'].includes(action)&&(data.gameMode!==requestedGameMode||data.rulesVersion!==2))
+    throw Error('Battleship is awaiting a server update. Please try again later.');
+  return data;
 }
 function owned(m){return m?.players.find(p=>p.id===uid);}
 function inspected(m){return m?.players.find(p=>p.id===viewed)||owned(m)||m?.players[0];}
@@ -39,29 +52,34 @@ function chooseMatch(){
 }
 async function refresh(){
   if(polling||busy||document.hidden)return;polling=true;
+  const version=modeVersion,controller=new AbortController();pollController=controller;
+  updateModeControls();
   try{
-    const data=await api('status');uid=data.uid;snapshot=data.state;
-    $('connection').textContent=data.warning||(!data.caughtUp?'Catching up missed Keno draws…':snapshot.last?`Latest: Game #${snapshot.last.racenumber} · ${time(snapshot.last.timestamp)}`:'Waiting for Keno results.');
+    const data=await api('status',{},controller.signal);
+    if(version!==modeVersion)return;
+    uid=data.uid;snapshot=data.state;serverOffset=Date.parse(data.serverTime)-Date.now();
+    $('connection').textContent=gameMode==='rng'?(!data.caughtUp?'Catching up simulated draws…':'Connected to shared simulated draws · 20 balls every 30 seconds.'):data.warning||(!data.caughtUp?'Catching up missed Keno draws…':snapshot.last?`Latest: Game #${snapshot.last.racenumber} · ${time(snapshot.last.timestamp)}`:'Waiting for Keno results.');
     $('place').disabled=!data.caughtUp||!!data.warning;
     $('active-view').hidden=true;$('lobby-view').hidden=true;
     if(resultsPage){await loadResults();initial=false;return;}
-    const previous=storage.get('match');
+    const previous=(storage.get('match:'+gameMode)||(gameMode==='live-2'?storage.get('match'):null));
     if(initial&&previous&&!storage.get(`seen:${previous}`)&&!owned(snapshot.active)&&!owned(snapshot.lobby)){
-      try{const saved=await api('result',{matchId:previous});if(saved.match){location.replace(`battleship-results.html?match=${encodeURIComponent(previous)}`);return;}}catch{/* A queued entry may not have a result yet. */}
+      try{const saved=await api('result',{matchId:previous},controller.signal);if(version!==modeVersion)return;if(saved.match){location.replace(resultUrl(previous));return;}}catch{/* A queued entry may not have a result yet. */}
     }
+    if(version!==modeVersion)return;
     if(pendingImpact){renderRecent();initial=false;return;}
     const latest=chooseMatch();
     // A just-finished match can disappear from active state between polls.
     const ended=match?.status==='active'&&snapshot.recent.find(m=>m.id===match.id);
-    if(ended&&!placing){const result=await api('result',{matchId:ended.id});updateMatch(result.match);}
+    if(ended&&!placing){const result=await api('result',{matchId:ended.id},controller.signal);if(version!==modeVersion)return;updateMatch(result.match);}
     else if(!placing)updateMatch(latest);
     renderRecent();if(placing)render();initial=false;
-  }catch(e){$('connection').textContent=e.message;$('place').disabled=true;}
-  finally{polling=false;}
+  }catch(e){if(version!==modeVersion)return;$('connection').textContent=e.message;$('place').disabled=true;}
+  finally{if(version===modeVersion){polling=false;pollController=null;updateModeControls();updateCountdown();}}
 }
 function updateMatch(next){
   const old=match;match=next;
-  if(owned(match))storage.set('match',match.id);
+  if(owned(match))storage.set('match:'+gameMode,match.id);
   if(!match||old?.id!==match.id||document.hidden){stopAnimation();visual=match;render();notifyOutcome();return;}
   const oldCount=(old.history||[]).reduce((n,d)=>n+d.balls.length,0),newCount=(next.history||[]).reduce((n,d)=>n+d.balls.length,0);
   if(newCount>oldCount&&newCount-oldCount<=20&&!animation){
@@ -69,7 +87,8 @@ function updateMatch(next){
     if(!old.history){from.status=next.status;from.startGame=next.startGame;from.history=[];from.winners=[];delete from.finish;from.players=structuredClone(next.players).map(p=>({...p,hits:[],eliminated:null}));}
     pendingImpact={from,next};visual=pendingImpact.from;render();
     const incoming=next.history.flatMap(d=>d.balls.map(number=>({number,draw:d}))).slice(oldCount)[0]?.draw;
-    showPopup('Incoming, Incoming!',incoming?`Keno Draw #${incoming.racenumber} is ready.`:'A new Keno draw is ready.',{className:'result-impact',button:'Brace for Impact!',after:playPendingImpact});
+    if(gameMode==='rng')playPendingImpact();
+    else showPopup('Incoming, Incoming!',incoming?`Keno Draw #${incoming.racenumber} is ready.`:'A new Keno draw is ready.',{className:'result-impact',button:'Brace for Impact!',after:playPendingImpact});
   }else if(!animation){visual=match;render();notifyOutcome();}
 }
 function playPendingImpact(){
@@ -81,7 +100,7 @@ function playPendingImpact(){
     const {number,draw,index}=events[position++];
     let record=visual.history.find(d=>d.raceid===draw.raceid);
     if(!record){record={...draw,balls:[]};visual.history.push(record);}record.balls.push(number);
-    for(const p of visual.players){if(p.eliminated)continue;if(p.fleet.some(s=>s.cells.includes(number))&&!p.hits.includes(number))p.hits.push(number);if(5-remaining(p)>=2)p.eliminated={raceid:draw.raceid,ball:index,number};}
+    for(const p of visual.players){if(p.eliminated)continue;if(p.fleet.some(s=>s.cells.includes(number))&&!p.hits.includes(number))p.hits.push(number);if(5-remaining(p)>=lossLimit(visual))p.eliminated={raceid:draw.raceid,ball:index,number};}
     render();const cell=$('cell-'+number);void cell.offsetWidth;cell.classList.add('ball-impact');
     if(position<events.length)animation=setTimeout(step,500);
     else{animation=null;visual=match;render();notifyOutcome();}
@@ -96,16 +115,19 @@ function showPopup(title,detail,{className='',button='Continue',after=null}={}){
   if(dialog.open)dialog.close();dialog.showModal();
 }
 function notifyOutcome(){
-  if(!match)return;const me=owned(match),finished=match.status==='finished';
+  if(!match||$('mode-popup')?.open)return;const me=owned(match),finished=match.status==='finished';
   if(!finished&&!me?.eliminated)return;
   const key=`notice:${match.id}:${finished?'finished':'out'}`;if(storage.get(key))return;storage.set(key,'1');
   const winners=match.players.filter(p=>match.winners?.includes(p.id));const won=winners.some(p=>p.id===uid);
-  const title=finished?(won?(winners.length>1?'You share the win!':'You win!'):`${winners.map(p=>p.name).join(' & ')} wins!`):'Two ships sunk. You lose.';
-  const detail=finished?`Game #${match.finish.racenumber}, ball ${match.finish.ball}: ${match.finish.number}.`:'Your second ship has sunk. You can watch the match or join the upcoming lobby.';
+  const title=finished?(won?(winners.length>1?'You share the win!':'You win!'):`${winners.map(p=>p.name).join(' & ')} wins!`):`${lossLimit(match)} ${lossLimit(match)===1?'ship':'ships'} sunk. You lose.`;
+  const detail=finished?`${drawLabel(match)} #${match.finish.racenumber}, ball ${match.finish.ball}: ${match.finish.number}.`:`You lost ${lossLimit(match)} ${lossLimit(match)===1?'ship':'ships'}. You can watch the match or join the upcoming lobby.`;
   showPopup(title,detail,{className:won?'result-win':'result-loss'});
 }
 function render(){
   const shown=visual||match,me=owned(shown);
+  const rulesMode=matchMode(shown);
+  $('game-rules').textContent=GAME_MODES[rulesMode].label;
+  updateModeControls();
   const inspection=placing?{id:uid,name:'You',fleet:draft,hits:[]}:inspected(shown);
   const boardFleet=placing?draft:inspection?.fleet||[],boardHits=placing?new Set():hits(inspection),allShots=new Set((shown?.history||[]).flatMap(d=>d.balls));
   for(let n=1;n<=80;n++){
@@ -124,7 +146,7 @@ function render(){
     const markers=element('span','fleet-ship-spaces');s.cells.forEach(n=>markers.append(element('span',hits(inspection).has(n)?'fleet-fire':'')));shape.append(markers);button.append(line,shape);button.onclick=()=>selectShip(i);return button;
   }));
   const focused=document.activeElement?.id;
-  $('scores').replaceChildren(...(shown?.players||[]).map(p=>{const b=element('button','score-player');b.id='player-'+p.id;b.setAttribute('aria-pressed',String(inspection?.id===p.id));const name=element('span','',p.id===uid?`${p.name} (you)`:p.name);if(p.eliminated)name.append(element('small','player-out','OUT · 2 ships sunk'));b.append(name,element('strong','',shown.status==='lobby'?'—':remaining(p)));b.onclick=()=>{viewed=p.id;render();};return b;}));
+  $('scores').replaceChildren(...(shown?.players||[]).map(p=>{const b=element('button','score-player');b.id='player-'+p.id;b.setAttribute('aria-pressed',String(inspection?.id===p.id));const name=element('span','',p.id===uid?`${p.name} (you)`:p.name);if(p.eliminated)name.append(element('small','player-out',`OUT - ${lossLimit(shown)} ${lossLimit(shown)===1?'ship':'ships'} sunk`));b.append(name,element('strong','',shown.status==='lobby'?'—':remaining(p)));b.onclick=()=>{viewed=p.id;render();};return b;}));
   if(focused?.startsWith('player-'))document.getElementById(focused)?.focus({preventScroll:true});
   const inActive=owned(snapshot?.active)&&!owned(snapshot.active).eliminated,inLobby=!!owned(snapshot?.lobby);
   $('active-view').setAttribute('aria-pressed',String(shown?.id===snapshot?.active?.id));
@@ -138,16 +160,16 @@ function render(){
   $('launch').hidden=!placing||!allLocked();$('launch').disabled=busy;$('launch').textContent=busy?'Launching…':'Launch Fleet';$('name-wrap').hidden=!placing;
   $('entry-row').classList.toggle('is-placing',placing);
   $('phase').textContent=placing?'Deploy your fleet':shown?.status==='active'?(me?.eliminated?'Eliminated · Spectating':'Battle in progress'):shown?.status==='finished'?'Match finished':shown?.status==='lobby'?'Waiting for start':'Ready to deploy';
-  $('round').hidden=placing||!shown?.history?.length;$('round').textContent=shown?.history?.length?`GAME #${shown.history.at(-1).racenumber}`:'';
+  $('round').hidden=placing||!shown?.history?.length;$('round').textContent=shown?.history?.length?`${matchMode(shown)==='rng'?'SIM':'GAME'} #${shown.history.at(-1).racenumber}`:'';
   const lobby=snapshot?.lobby;
-  $('entry-status').textContent=shown?.status==='active'?'':lobby?lobbyMessage(lobby):'Launch your fleet to join the next lobby.';
+  $('entry-status').textContent=shown?.status==='active'?'':lobby?(lobby.players.length<2?'':lobbyMessage(lobby)):'Launch your fleet to join the next lobby.';
   $('result-banner').hidden=shown?.status!=='finished';
   if(shown?.status==='finished'){
     const names=shown.players.filter(p=>shown.winners.includes(p.id)).map(p=>p.name).join(' & ');
-    $('result-banner').replaceChildren(element('h2','',`${names} ${shown.winners.length>1?'share the win':'wins'}!`),element('p','',`Decided in Game #${shown.finish.racenumber}, ball ${shown.finish.ball} (${shown.finish.number}).`));
-    if(!resultsPage){const a=element('a','','Open game results');a.href=`battleship-results.html?match=${encodeURIComponent(shown.id)}`;$('result-banner').append(a);}
+    $('result-banner').replaceChildren(element('h2','',`${names} ${shown.winners.length>1?'share the win':'wins'}!`),element('p','',`Decided in ${drawLabel(shown)} #${shown.finish.racenumber}, ball ${shown.finish.ball} (${shown.finish.number}).`));
+    if(!resultsPage){const a=element('a','','Open game results');a.href=resultUrl(shown.id,matchMode(shown));$('result-banner').append(a);}
   }
-  renderHistory(shown);
+  renderHistory(shown);updateCountdown();
 }
 function renderShips(fleet,player){
   board.querySelectorAll('.ship-silhouette').forEach(e=>e.remove());
@@ -159,18 +181,35 @@ function renderShips(fleet,player){
   }
 }
 function renderHistory(m){
-  const history=m?.history||[],last=history.at(-1);$('draw-summary').textContent=history.length?`${history.length} draws since Game #${m.startGame}`:'Waiting for the starting draw';
+  const history=m?.history||[],last=history.at(-1);$('draw-summary').textContent=history.length?`${history.length} draws since ${drawLabel(m)} #${m.startGame}`:'Waiting for the starting draw';
   $('balls').replaceChildren(...(last?.balls||[]).map((n,i)=>{const b=element('span','draw-ball',n);b.title=`Ball ${i+1}`;return b;}));
-  $('history').replaceChildren(...[...history].reverse().map(d=>{const row=element('div','draw-history-row');row.append(element('strong','',`Game #${d.racenumber}`),element('span','',`${time(d.timestamp)} MT`),element('small','',`${d.balls.length} balls applied`));return row;}));
+  $('history').replaceChildren(...[...history].reverse().map(d=>{const row=element('div','draw-history-row');row.append(element('strong','',`${drawLabel(m)} #${d.racenumber}`),element('span','',`${time(d.timestamp)} MT`),element('small','',`${d.balls.length} balls applied`));return row;}));
 }
 function renderRecent(){
-  $('recent-results').replaceChildren(element('h2','','Recent results'));
-  for(const m of snapshot.recent){const a=element('a','',`Game #${m.startGame} → #${m.finish.racenumber}: ${m.players.filter(p=>m.winners.includes(p.id)).map(p=>p.name).join(' & ')}`);a.href=`battleship-results.html?match=${encodeURIComponent(m.id)}`;const p=element('p');p.append(a);$('recent-results').append(p);}
+  const section=$('recent-results');section.replaceChildren(element('h2','','Recent results'));
+  const table=element('table','recent-results-table'),head=element('thead'),headers=element('tr');
+  for(const title of ['Game type','Date','Games / Draws','Winner']){
+    const th=element('th','',title);th.scope='col';headers.append(th);
+  }
+  head.append(headers);const body=element('tbody');
+  for(const m of snapshot.recent){
+    const mode=matchMode(m),row=element('tr');
+    const type={'live-1':'Live Keno-1 Ship','live-2':'Live Keno-2 Ship',rng:'Simulated Draw'}[mode];
+    const timestamp=m.finish?.timestamp;
+    const date=timestamp&&Number.isFinite(Date.parse(timestamp))?new Date(timestamp).toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:MOUNTAIN_TIME_ZONE}):'—';
+    const count=m.drawCount??m.history?.length;
+    const games=mode==='rng'?(Number.isInteger(count)?`${count} simulated ${count===1?'draw':'draws'}`:'—'):`#${m.startGame} → #${m.finish.racenumber}`;
+    const winners=m.players.filter(p=>m.winners.includes(p.id)).map(p=>p.name).join(' & ')||'—';
+    const gameCell=element('td'),link=element('a','',games);link.href=resultUrl(m.id,mode);gameCell.append(link);
+    row.append(element('td','',type),element('td','',date),gameCell,element('td','',winners));body.append(row);
+  }
+  table.append(head,body);const wrap=element('div','recent-results-wrap');wrap.append(table);section.append(wrap);
+  if(!snapshot.recent.length)section.append(element('p','','No completed games yet.'));
 }
 async function loadResults(){
   $('active-view').hidden=true;$('lobby-view').hidden=true;
   const id=new URLSearchParams(location.search).get('match');
-  if(id&&match?.id!==id){const data=await api('result',{matchId:id});match=data.match;visual=match;storage.set(`seen:${id}`,'1');}
+  if(id&&match?.id!==id){const data=await api('result',{matchId:id});match=data.match;gameMode=matchMode(match);visual=match;storage.set(`seen:${id}`,'1');}
   render();renderRecent();$('setup-controls').hidden=true;
   if(!id){$('phase').textContent='Choose a completed match';}
 }
@@ -205,13 +244,13 @@ board.addEventListener('pointerup',e=>{if(!gesture||gesture.id!==e.pointerId)ret
 board.addEventListener('pointercancel',()=>{gesture=null;});
 $('place').onclick=()=>{if(busy||!snapshot)return;stopAnimation();placing=true;viewed=uid;selected=draft.findIndex(s=>!s.locked);if(selected<0)selected=0;stageShip(selected);render();message('Drag the highlighted ship, then tap it to lock. Tap a locked ship to lift it.');};
 $('rotate').onclick=()=>{if(!placing||busy||draft[selected].locked)return;vertical=!vertical;const start=draft[selected].cells[0];if(start&&!moveShip(start)){vertical=!vertical;message('No room to rotate here. Move the ship first.');}render();};
-$('battle-view').onclick=()=>{if(snapshot?.active){mode='active';viewed=uid;stopAnimation();match=snapshot.active;visual=match;render();return;}const last=snapshot?.recent?.[0];if(last)location.href=`battleship-results.html?match=${encodeURIComponent(last.id)}`;};
+$('battle-view').onclick=()=>{if(snapshot?.active){mode='active';viewed=uid;stopAnimation();match=snapshot.active;visual=match;render();return;}const last=snapshot?.recent?.[0];if(last)location.href=resultUrl(last.id);};
 $('launch').onclick=async()=>{
   if(busy||!placing||!allLocked())return;
   const name=$('player-name').value.trim();if(name.length<2||name.length>30){message('Enter a name between 2 and 30 characters.');$('player-name').focus();return;}
-  busy=true;render();message('Checking the latest draw and locking your fleet…');
+  busy=true;render();message('Checking the game and locking your fleet…');
   try{
-    const data=await api('join',{name,fleet:draft});snapshot=data.state;uid=data.uid;storage.set('name',name);placing=false;mode='auto';match=chooseMatch();visual=match;if(owned(match))storage.set('match',match.id);storage.set('draft','');draft=emptyFleet();message('Fleet saved. You can leave this page and return to the match.');
+    const data=await api('join',{name,fleet:draft});snapshot=data.state;uid=data.uid;storage.set('name',name);placing=false;mode='auto';match=chooseMatch();visual=match;if(owned(match))storage.set('match:'+gameMode,match.id);storage.set('draft','');draft=emptyFleet();message('Fleet saved. You can leave this page and return to the match.');
     const lobby=snapshot.lobby;
     const detail=lobbyMessage(lobby);
     showPopup('Fleet launched',detail,{className:'result-launch'});
@@ -224,6 +263,63 @@ $('result-popup').addEventListener('cancel',e=>{if(pendingImpact)e.preventDefaul
 new ResizeObserver(()=>{if(snapshot){const shown=visual||match,player=placing?{hits:[]}:inspected(shown);renderShips(placing?draft:player?.fleet||[],player);}}).observe(board);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){stopAnimation();refresh();}});
 window.addEventListener('online',refresh);
+function updateCountdown(){
+  const now=Date.now()+serverOffset,lobby=snapshot?.lobby;
+  const waiting=!resultsPage&&lobby&&!placing&&(gameMode==='rng'||lobby.players.length<2);
+  $('rng-lobby').hidden=!waiting;
+  if(waiting){
+    const ends=Date.parse(lobby.countdownEndsAt),seconds=Math.max(0,Math.ceil((ends-now)/1000));
+    $('lobby-countdown').textContent=Number.isFinite(ends)?(seconds?`Battle begins in ${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`:'Starting battle...'):lobby.players.length<2?'Waiting for a second Captain.':"Countdown starts after the active battle.";
+    $('extend-countdown').hidden=gameMode!=='rng'||!owned(lobby)||!Number.isFinite(ends);
+    $('extend-countdown').disabled=busy||polling||!seconds;
+  }
+  if(gameMode!=='rng'||resultsPage||!snapshot?.active||!snapshot.nextDrawAt){$('next-draw').textContent='';return;}
+  const seconds=Math.max(0,Math.ceil((Date.parse(snapshot.nextDrawAt)-now)/1000));
+  $('next-draw').textContent=seconds?`Next simulated 20-ball draw in ${seconds}s`:'Waiting for next simulated draw...';
+}
+$('extend-countdown').onclick=async()=>{
+  if(busy||polling||gameMode!=='rng'||!owned(snapshot?.lobby))return;
+  const matchId=snapshot.lobby.id,requestId=crypto.randomUUID();
+  busy=true;render();
+  try{
+    const data=await api('extend',{matchId,requestId});
+    snapshot=data.state;serverOffset=Date.parse(data.serverTime)-Date.now();
+    updateMatch(chooseMatch());message('Added 60 seconds for more Captains to join.');
+  }catch(e){message(e.message);}
+  finally{busy=false;render();}
+};
+const MODE_TITLES={'live-1':'Live Keno - 1 Ship','live-2':'Live Keno - 2 Ship',rng:'Simulated Draw'};
+function updateModeControls(){
+  if(!$('mode-popup'))return;
+  $('current-mode').textContent=MODE_TITLES[gameMode];
+  $('change-mode').disabled=busy;
+  for(const value of Object.keys(GAME_MODES)){
+    const button=$('mode-'+value);button.disabled=busy||!uid;
+    button.setAttribute('aria-pressed',String(value===gameMode));
+  }
+}
+function openModePicker(){
+  const dialog=$('mode-popup');if(!dialog||busy)return;
+  updateModeControls();if(!dialog.open)dialog.showModal();
+}
+async function switchGameMode(value){
+  if(busy||!uid||!Object.hasOwn(GAME_MODES,value))return;
+  $('mode-popup').close();
+  if(value===gameMode){if(!snapshot)await refresh();return;}
+  modeVersion++;pollController?.abort();pollController=null;polling=false;
+  const hadDraft=placing;if(hadDraft)saveDraft();placing=false;gesture=null;
+  gameMode=value;storage.set('gameMode',gameMode);
+  stopAnimation();pendingImpact=null;match=null;visual=null;snapshot=null;initial=true;mode='auto';viewed=uid;
+  if($('result-popup').open)$('result-popup').close();
+  $('place').disabled=true;render();updateCountdown();
+  message(hadDraft?'Battle mode changed. Your ship placement is saved; choose Place my Fleet to continue.':'');
+  await refresh();
+}
+if($('mode-popup')){
+  $('change-mode').onclick=openModePicker;
+  $('mode-close').onclick=()=>$('mode-popup').close();
+  for(const value of Object.keys(GAME_MODES))$('mode-'+value).onclick=()=>switchGameMode(value);
+}
 async function init(){
   try{
     if(!window.supabase)throw Error('Could not load the connection library. Reload when online.');
@@ -232,7 +328,9 @@ async function init(){
     if(!session){const signed=await client.auth.signInAnonymously();if(signed.error)throw Error('Player sign-in is not available. Enable Anonymous Sign-Ins in Supabase Auth.');session=signed.data.session;}
     uid=session.user.id;viewed=uid;$('player-name').value=storage.get('name')||'';
     try{const saved=JSON.parse(storage.get('draft'));if(Array.isArray(saved)&&saved.length===5&&saved.every((s,i)=>s.name===SPECS[i][0]&&s.length===SPECS[i][1]&&Array.isArray(s.cells)&&s.cells.every(n=>Number.isInteger(n)&&n>=1&&n<=80)))draft=saved;}catch{}
-    await refresh();setInterval(refresh,15000);
+    await refresh();setInterval(refresh,5000);setInterval(updateCountdown,1000);updateCountdown();
   }catch(e){$('connection').textContent=e.message;}
 }
+render();
+openModePicker();
 init();

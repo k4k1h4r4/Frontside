@@ -31,19 +31,24 @@
   <link rel="stylesheet" href="nav.css?v=2026-09-15-02">
   <script defer src="nav.js?v=2026-09-15-02"></script>
   <script defer src="site-update.js?v=2026-09-15-02"></script>
-  <link rel="stylesheet" href="battleship/battleship.css?v=2026-09-30-01">
+  <link rel="stylesheet" href="battleship/battleship.css?v=2026-11-19-01">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script defer src="battleship/ships.js?v=2026-10-01-01"></script>
-  <script defer src="battleship/live.js?v=2026-10-01-01"></script>
+  <script defer src="battleship/live.js?v=2026-11-19-03"></script>
 </head>
 <body>
   <nav class="site-nav" data-site-nav aria-label="Main navigation"></nav>
   <noscript><a href="index.html">Frontside home</a></noscript>
 
 <main class="battle-page">
-  <header class="intro"><img class="battleship-logo" src="images/BattleshipKeno.webp" width="2048" height="703" alt="Battleship Keno" fetchpriority="high"><p>Lose 2 ships and you’re out. Last Captain standing wins.</p></header>
+  <header class="intro"><img class="battleship-logo" src="images/BattleshipKeno.webp" width="2048" height="703" alt="Battleship Keno" fetchpriority="high"><p>Place all 5 ships. Last Captain standing wins.</p></header>
+  <section class="game-options" aria-label="Game options">
+    <div class="mode-summary"><strong id="current-mode"></strong><button id="change-mode" type="button" aria-haspopup="dialog" aria-controls="mode-popup">Change battle mode</button></div>
+    <p id="game-rules"></p><p id="next-draw" role="timer"></p>
+  </section>
   <p class="connection" id="connection" role="status">Connecting to the fleet…</p>
   <nav class="match-bar" aria-label="Battleship matches"><button id="active-view" hidden>Active match</button><button id="lobby-view" hidden>Upcoming lobby</button></nav>
+  <section id="rng-lobby" class="rng-lobby" hidden aria-label="Battle lobby status"><p id="lobby-countdown" role="timer"></p><button id="extend-countdown" type="button">+60 seconds</button></section>
   <section id="result-banner" class="result-banner" hidden></section>
   <div class="layout">
     <section class="ocean-panel" aria-label="Your ocean board">
@@ -60,11 +65,21 @@
   </div>
   <section class="draw-panel"><div class="draw-title"><h2>Draw history</h2><span id="draw-summary"></span></div><div id="balls"></div><div id="history"></div></section>
   <section id="recent-results"></section>
+  <dialog id="mode-popup" aria-labelledby="mode-title" aria-describedby="mode-help">
+    <h2 id="mode-title">Choose your battle</h2>
+    <p id="mode-help">Pick a mode. You can change it anytime using Change battle mode.</p>
+    <div class="mode-choices">
+      <button id="mode-live-1" type="button"><strong>Live Keno - 1 Ship</strong><span>Live Keno draws - 1 ship sinks, you lose.</span></button>
+      <button id="mode-live-2" type="button"><strong>Live Keno - 2 Ship</strong><span>Live Keno draws - 2 ships sink, you lose.</span></button>
+      <button id="mode-rng" type="button"><strong>Simulated Draw</strong><span>Simulated draws every 30 seconds - All 5 ships sink, you lose.</span></button>
+    </div>
+    <button id="mode-close" type="button">Close</button>
+  </dialog>
   <dialog id="result-popup" aria-labelledby="result-title" aria-describedby="result-detail"><p class="eyebrow">BATTLE UPDATE</p><h2 id="result-title"></h2><p id="result-detail"></p><form method="dialog"><button autofocus id="result-dismiss">Continue</button></form></dialog>
 </main>
   <footer>
-    <p>DISCLAIMER:</p> 
-	<p>This is a Frontside parody website, and in no way affiliated with any establishments named Frontside.</p> 
+    <p>DISCLAIMER:</p>
+	<p>This is a Frontside parody website, and in no way affiliated with any establishments named Frontside.</p>
 	<p>Past performance is not indicative of future results.</p>
 	<p>Gambling should be avoided by everyone at all costs.</p>
 	<p>If you have a problem with gambling, contact Nebraska Problem Gamblers Assistance Program at <a href="tel:+18332386837">1-833-238-6837</a> </p>
