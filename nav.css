@@ -55,7 +55,9 @@
   list-style: none;
 }
 
-.site-nav .nav-links a {
+/* Top-level items: plain links and the Games menu button look the same. */
+.site-nav .nav-links > li > a,
+.site-nav .nav-menu-toggle {
   position: relative;
   display: block;
   padding-bottom: 3px;
@@ -70,7 +72,19 @@
   transition: color 0.2s;
 }
 
-.site-nav .nav-links a::after {
+.site-nav .nav-menu-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  line-height: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.site-nav .nav-links > li > a::after,
+.site-nav .nav-menu-toggle::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -83,18 +97,78 @@
   transition: transform 0.25s;
 }
 
-.site-nav .nav-links a:hover { color: #e6e8ee; }
-.site-nav .nav-links a.active { color: #f5d76e; }
-.site-nav .nav-links a:hover::after,
-.site-nav .nav-links a.active::after { transform: scaleX(1); }
+.site-nav .nav-links > li > a:hover,
+.site-nav .nav-menu-toggle:hover,
+.site-nav .nav-menu.open .nav-menu-toggle { color: #e6e8ee; }
+.site-nav .nav-links > li > a.active,
+.site-nav .nav-menu-toggle.active { color: #f5d76e; }
+.site-nav .nav-links > li > a:hover::after,
+.site-nav .nav-links > li > a.active::after,
+.site-nav .nav-menu-toggle:hover::after,
+.site-nav .nav-menu-toggle.active::after { transform: scaleX(1); }
 
-.site-nav a:focus-visible {
+/* Small down-arrow that flips when the menu is open. */
+.site-nav .nav-caret {
+  width: 0;
+  height: 0;
+  border-left: 0.3em solid transparent;
+  border-right: 0.3em solid transparent;
+  border-top: 0.36em solid currentColor;
+  transition: transform 0.2s;
+}
+.site-nav .nav-menu.open .nav-caret { transform: rotate(180deg); }
+
+/* The drop-down hangs from the bottom-right of the nav bar (the nav is its
+   positioning box), so it lines up on every screen width. */
+.site-nav .nav-submenu {
+  position: absolute;
+  top: 100%;
+  right: max(clamp(0.9rem, 4vw, 2.5rem), env(safe-area-inset-right));
+  width: min(17rem, calc(100vw - 1.5rem));
+  list-style: none;
+  background: rgba(10, 7, 5, 0.97);
+  border: 1px solid #8c7425;
+  border-top: 0;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+.site-nav .nav-submenu[hidden] { display: none; }
+
+.site-nav .nav-submenu li + li { border-top: 1px solid rgba(140, 116, 37, 0.3); }
+
+.site-nav .nav-submenu a {
+  display: flex;
+  align-items: center;
+  min-height: 3.25rem;          /* comfortable thumb target */
+  padding: 0.75rem 1.25rem;
+  border-left: 3px solid transparent;
+  font-family: 'Oswald', 'Arial Narrow', sans-serif;
+  font-weight: 400;
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #aab0bd;
+  text-decoration: none;
+  transition: color 0.2s, background-color 0.2s;
+}
+.site-nav .nav-submenu a:hover,
+.site-nav .nav-submenu a:active {
+  color: #e6e8ee;
+  background: rgba(212, 175, 55, 0.08);
+}
+.site-nav .nav-submenu a.active {
+  color: #f5d76e;
+  border-left-color: #d4af37;
+}
+
+.site-nav a:focus-visible,
+.site-nav button:focus-visible {
   outline: 2px solid #f5d76e;
   outline-offset: 5px;
   border-radius: 2px;
 }
+.site-nav .nav-submenu a:focus-visible { outline-offset: -3px; }
 
-/* Keep all four menu items alongside the logo on small screens. */
+/* Keep the menu items alongside the logo on small screens. */
 @media (max-width: 640px) {
   .site-nav {
     gap: 0.5rem;
@@ -103,33 +177,42 @@
   }
   .site-nav .nav-logo { width: clamp(80px, 24vw, 140px); }
   .site-nav .nav-links { gap: clamp(0.9rem, 4vw, 1.25rem); }
-  .site-nav .nav-links a {
+  .site-nav .nav-links > li > a,
+  .site-nav .nav-menu-toggle {
     font-size: clamp(0.9rem, 3.4vw, 1.05rem);
     letter-spacing: 0.05em;
   }
+  .site-nav .nav-submenu { right: max(0.75rem, env(safe-area-inset-right)); }
 }
 
 /* Bigger tap targets on touch devices without changing the visual height */
 @media (hover: none) {
-  .site-nav .nav-links a {
+  .site-nav .nav-links > li > a,
+  .site-nav .nav-menu-toggle {
     padding-block: 0.75rem;
     padding-bottom: calc(0.75rem + 3px);
     margin-block: -0.75rem;
   }
-  .site-nav .nav-links a:hover { color: #aab0bd; }
-  .site-nav .nav-links a:hover::after { transform: scaleX(0); }
-  .site-nav .nav-links a.active { color: #f5d76e; }
-  .site-nav .nav-links a.active::after { transform: scaleX(1); }
+  .site-nav .nav-links > li > a:hover,
+  .site-nav .nav-menu-toggle:hover { color: #aab0bd; }
+  .site-nav .nav-links > li > a:hover::after,
+  .site-nav .nav-menu-toggle:hover::after { transform: scaleX(0); }
+  .site-nav .nav-menu.open .nav-menu-toggle { color: #e6e8ee; }
+  .site-nav .nav-links > li > a.active,
+  .site-nav .nav-menu-toggle.active { color: #f5d76e; }
+  .site-nav .nav-links > li > a.active::after,
+  .site-nav .nav-menu-toggle.active::after { transform: scaleX(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .site-nav .nav-links a,
-  .site-nav .nav-links a::after {
+  .site-nav .nav-links a::after,
+  .site-nav .nav-menu-toggle,
+  .site-nav .nav-menu-toggle::after,
+  .site-nav .nav-caret {
     transition: none;
   }
 }
-
-/* Skip link — pairs with the <a class="skip-link"> snippet in your page template */
 
 /* So sticky nav doesn't cover in-page anchor targets */
 html { scroll-padding-top: 80px; }
