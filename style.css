@@ -2067,21 +2067,7 @@ footer a:hover { color: var(--accent); }
 }
 .battleship-promo-keno .battleship-promo-logo { margin-bottom: 0.6rem; }
 
-/* Facebook and phone links share the sixth homepage card position. */
-.feature-tile-pair {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  min-width: 0;
-}
-.feature-tile-pair .feature-tile { min-width: 0; padding: 0.9rem 0.6rem; }
-.feature-tile-pair h3 { font-size: clamp(1.05rem, 2vw, 1.4rem); }
-.feature-tile-pair .feature-tile-go {
-  display: block;
-  font-size: 0.62rem;
-  letter-spacing: 0.04em;
-  overflow-wrap: anywhere;
-}
+.feature-tile-logo { display: block; width: 100%; height: auto; }
 .feature-tile:focus-visible {
   outline: 2px solid var(--accent-bright);
   outline-offset: 3px;

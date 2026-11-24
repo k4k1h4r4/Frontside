@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#101311">
   <title>Back to the Frontside</title>
   <link rel="icon" href="favicon.ico" sizes="32x32">
-  <link rel="stylesheet" href="timetravel/timetravel.css">
+  <link rel="stylesheet" href="timetravel/timetravel.css?v=2026-11-23-01">
   <link rel="stylesheet" href="nav.css">
   <script defer src="nav.js"></script>
   <script defer src="timetravel/timetravel-hunt-config.js"></script>
-  <script defer src="timetravel/timetravel.js"></script>
+  <script defer src="timetravel/timetravel.js?v=2026-11-23-01"></script>
 </head>
 <body>
   <nav class="site-nav" id="game-nav" data-site-nav aria-label="Main navigation" hidden></nav>
@@ -89,8 +89,13 @@
     <h2 id="completion-title">MISSION COMPLETE</h2>
     <div class="mission-rule" aria-hidden="true"></div>
     <p id="completion-message"></p>
-    <button type="button" id="close-completion">BACK TO THE FRONTSIDE</button>
+    <button type="button" id="close-completion" aria-haspopup="dialog" aria-controls="story-popup">READ THE COMPLETE STORY</button>
     <button type="button" id="restart-mission">RESTART THE MISSION</button>
+  </dialog>
+  <dialog class="hunt-popup story-popup" id="story-popup" aria-labelledby="story-title">
+    <div class="travel-popup-header story-header"><h2 id="story-title">THE COMPLETE STORY</h2><button type="button" id="close-story" aria-label="Back to mission complete" autofocus>×</button></div>
+    <div id="complete-story" class="complete-story"></div>
+    <button type="button" class="play-travel-video" id="close-story-bottom">BACK TO MISSION COMPLETE</button>
   </dialog>
   <dialog class="travel-popup" id="travel-popup" aria-labelledby="travel-title" aria-describedby="travel-caption">
     <div class="travel-popup-header" id="travel-header"><h2 id="travel-title">TIME TRAVEL IN PROGRESS</h2></div>

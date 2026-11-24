@@ -69,6 +69,7 @@
   const messagePopup = document.getElementById('message-popup');
   const failurePopup = document.getElementById('failure-popup');
   const completionPopup = document.getElementById('completion-popup');
+  const storyPopup = document.getElementById('story-popup');
   const completionMessage = huntConfig.completionMessage || 'Congratulations on completing your mission and making it Back to the Frontside. You deserve a beer.';
   document.getElementById('completion-message').textContent = completionMessage;
   function resolveDestinationKey(key) {
@@ -282,6 +283,7 @@
     reset: () => {
       huntIndex = initialIndex;
       huntCompleted = false;
+      if (storyPopup.open) storyPopup.close();
       messageRead = false;
       gameStarted = false;
       refreshStartScreen();
@@ -360,7 +362,28 @@
     if (huntCompleted) showCompletion();
     else if (!messagePopup.open) messagePopup.showModal();
   });
-  document.getElementById('close-completion').addEventListener('click', () => completionPopup.close());
+  document.getElementById('close-completion').addEventListener('click', () => {
+    if (!huntCompleted) return;
+    const sections = [];
+    huntSteps.forEach((step, index) => {
+      if (index) sections.push(document.createElement('hr'));
+      const paragraph = document.createElement('p');
+      paragraph.textContent = step.message;
+      sections.push(paragraph);
+    });
+    document.getElementById('complete-story').replaceChildren(...sections);
+    completionPopup.close();
+    if (!storyPopup.open) storyPopup.showModal();
+    storyPopup.scrollTop = 0;
+  });
+  document.getElementById('close-story').addEventListener('click', () => storyPopup.close());
+  document.getElementById('close-story-bottom').addEventListener('click', () => storyPopup.close());
+  storyPopup.addEventListener('close', () => {
+    if (huntCompleted) {
+      showCompletion();
+      document.getElementById('close-completion').focus();
+    }
+  });
   document.getElementById('restart-mission').addEventListener('click', () => {
     window.timeHunt.reset();
     window.timeHunt.setStep(1);

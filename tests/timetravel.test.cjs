@@ -16,11 +16,11 @@ function dashboard(search = '', options = {}) {
   let now = new Date(2026,9,2,13,45);
   class ClockDate extends Date { constructor(...args) { super(...(args.length ? args : [now.getTime()])); } }
   const elements = new Map();
-  let playFailure = null;
+  let playFailure = null, createdElements = 0;
   function element(key) {
     if (!elements.has(key)) {
       const classes = new Set();
-      elements.set(key, { textContent:'', innerHTML:'', attributes:{}, listeners:{}, dataset:{}, disabled:false, open:false,
+      elements.set(key, { textContent:'', innerHTML:'', children:[], replaceChildren(...items) { this.children=items; }, attributes:{}, listeners:{}, dataset:{}, disabled:false, open:false,
         currentTime:0, muted:true, paused:true, playCalls:0, loadCalls:0,
         load() { this.loadCalls++; },
         play() { this.playCalls++; if(playFailure) return Promise.reject(playFailure); this.paused=false; return Promise.resolve(); },
@@ -42,7 +42,7 @@ function dashboard(search = '', options = {}) {
   };
   const window = { localStorage, addEventListener:(name,fn)=>{ listeners[name]=fn; } };
   const context = vm.createContext({
-    window, Date:ClockDate, document:{ getElementById:element, querySelector:element, querySelectorAll:s=>s==='[data-key]'?buttons:slots },
+    window, Date:ClockDate, document:{ getElementById:element, createElement:tag=>Object.assign(element(`created-${createdElements++}`),{tagName:tag.toUpperCase()}), querySelector:element, querySelectorAll:s=>s==='[data-key]'?buttons:slots },
     location:{ search }, URLSearchParams, setInterval:fn=>{ window.tick=fn; }
   });
   if (options.usePublishedConfig) {
@@ -460,8 +460,8 @@ test('root timetravel page references existing assets after the move',()=>{
     if(/^(?:https?:|#)/.test(asset)) continue;
     assert.ok(fs.existsSync(path.resolve(path.dirname(page),asset.split('?')[0])),`Missing page asset: ${asset}`);
   }
-  assert.match(html,/src="timetravel\/timetravel.js"/);
-  assert.match(html,/href="timetravel\/timetravel.css"/);
+  assert.match(html,/src="timetravel\/timetravel.js(?:\?[^"]*)?"/);
+  assert.match(html,/href="timetravel\/timetravel.css(?:\?[^"]*)?"/);
   const assets=fs.readdirSync(path.dirname(require.resolve('../timetravel/timetravel.js')));
   assert.ok(assets.every(name=>name.startsWith('timetravel')),`Unexpected asset name: ${assets}`);
 });
@@ -601,3 +601,47 @@ test('malformed or out-of-range relative destinations are rejected',()=>{
 });
 
 
+
+function finishMission(game) {
+  while (!game.hunt.getState().completed) {
+    game.api.travel(game.hunt.getState().destinationkey);
+    game.element('travel-video').listeners.ended();
+  }
+}
+
+test('completed mission opens every configured message in order with dividers and preserves paragraph breaks',()=>{
+  const config={id:'story-reader',initialStep:1,steps:[
+    {step:2,message:'Middle message',destinationkey:'02022002'},
+    {step:1,message:'First paragraph\n\nSecond paragraph <img src=x onerror=alert(1)>',destinationkey:'01012000'},
+    {step:3,message:'The end',destinationkey:'03032003'}
+  ]};
+  const game=dashboard('',{config});finishMission(game);
+  const saved=[...game.storage.entries()];
+  game.element('close-completion').listeners.click();
+  assert.equal(game.element('completion-popup').open,false);
+  assert.equal(game.element('story-popup').open,true);
+  const content=game.element('complete-story').children;
+  assert.deepEqual(content.map(e=>e.tagName),['P','HR','P','HR','P']);
+  assert.deepEqual(content.filter(e=>e.tagName==='P').map(e=>e.textContent),[config.steps[1].message,config.steps[0].message,config.steps[2].message]);
+  assert.ok(content.every(e=>e.innerHTML===''),'Story must render literal text');
+  assert.deepEqual([...game.storage.entries()],saved,'Reading the story must not reset progress');
+  game.element('close-story').listeners.click();
+  assert.equal(game.element('story-popup').open,false);assert.equal(game.element('completion-popup').open,true);
+  assert.equal(game.element('close-completion').focused,true);
+  game.element('close-completion').listeners.click();assert.equal(game.element('complete-story').children.length,5);
+  game.element('close-story-bottom').listeners.click();
+  game.element('restart-mission').listeners.click();assert.equal(game.hunt.getState().completed,false);
+  assert.equal(game.element('story-popup').open,false);assert.equal(game.hunt.getState().step,1);
+});
+
+test('story can be reopened after reloading a completed mission and cannot be opened before completion',()=>{
+  const game=dashboard();game.element('close-completion').listeners.click();
+  assert.equal(game.element('story-popup').open,false);
+  finishMission(game);
+  const resumed=dashboard('',{storage:game.storage});resumed.element('open-message').listeners.click();
+  resumed.element('close-completion').listeners.click();
+  assert.equal(resumed.element('story-popup').open,true);
+  assert.deepEqual(resumed.element('complete-story').children.filter(e=>e.tagName==='P').map(e=>e.textContent),fixtureHunt.steps.map(s=>s.message));
+  resumed.hunt.reset();assert.equal(resumed.element('story-popup').open,false);
+  assert.equal(resumed.hunt.getState().completed,false);
+});

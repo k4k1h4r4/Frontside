@@ -139,3 +139,11 @@ button:focus-visible { outline: 2px solid #eff3cf; outline-offset: 4px; }
 #restart-mission { margin-top: 12px; border-color: #69dce6; background: linear-gradient(#213e46,#14282e); color: #a2eef3; box-shadow: 0 0 12px #21d5ed22; }
 @media (prefers-reduced-motion: no-preference) { .completion-popup[open] { animation: mission-arrival .45s ease-out; } @keyframes mission-arrival { from { opacity: 0; transform: translateY(12px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } } }
 @media (max-width: 540px) { .destination-actions h2 { padding-left: 5px; padding-right: 5px; letter-spacing: .8px; }.message-button { padding-left: 5px; padding-right: 5px; font-size: 10px; } }
+
+.story-popup { width: min(640px,calc(100% - 28px)); overflow-y: auto; overscroll-behavior: contain; }
+.story-header { position: sticky; top: -20px; z-index: 1; margin: -20px -20px 20px; padding: 16px 20px; background: #17201a; border-bottom: 1px solid #697169; }
+.story-header h2 { font-size: clamp(15px,4.5vw,20px); letter-spacing: 1px; }
+.story-header button { flex: 0 0 44px; width: 44px; height: 44px; }
+.complete-story p { margin: 0; font-size: 15px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+.complete-story hr { margin: 24px 0; border: 0; border-top: 1px solid #8cc7cb; }
+.story-popup #close-story-bottom { margin-top: 24px; min-height: 48px; }
