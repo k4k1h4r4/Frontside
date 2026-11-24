@@ -38,7 +38,7 @@ window.TIME_HUNT_CONFIG = {
     },
     {
       step: 4,
-      message: "The Ballsworth Rebellion, as it came to be known, inspired Keno Writers across the country to rise up. The resulting revolution destroyed every Keno parlor in the United States.\n\nThe ashes of the Frontside were never cleared. A chain-link fence still surrounds the lot, and every year on the anniversary, strangers leave crayons and little stubby pencils along its edge.\n\nBallsworth’s actions at the Frontside ultimately brought an end to Keno as we know it.\n\nYour actions can prevent this future from happening.\n\nCLUE: Walk over to the Jukebox, and notice the most Occupation Tax sticker.   Subtract 95,208 from the tax ID number, and don't forget a costume.",
+      message: "The Ballsworth Rebellion, as it came to be known, inspired Keno Writers across the country to rise up. The resulting revolution destroyed every Keno parlor in the United States.\n\nThe ashes of the Frontside were never cleared. A chain-link fence still surrounds the lot, and every year on the anniversary, strangers leave crayons and little stubby pencils along its edge.\n\nBallsworth’s actions at the Frontside ultimately brought an end to Keno as we know it.\n\nYour actions can prevent this future from happening.\n\nCLUE: Walk over to the Jukebox, and notice the most recent Occupation Tax sticker.   Subtract 95,208 from the tax ID number, and don't forget a costume.",
       destinationkey: '10312022', 
       clip: 'images/timecop.webm' 
     },
@@ -50,7 +50,7 @@ window.TIME_HUNT_CONFIG = {
     },
     {
       step: 6,
-      message: "You will see a young 21-year-old walk into the Frontside and order 3 pancakes, 2 sausage patties, and 1 egg.\n\nWhile eating, he’ll tell anyone who will listen about his recent trip to the Sturgis Rally.\n\nHe will then bet $5 on a 9-spot and hit 8 numbers, winning $22,500.\n\nHe’ll collect his winnings from Anna, walk over to the jukebox, play Steve Miller Band’s ‘Take the Money and Run’ and leave the bar laughing hysterically.\n\nYou must not change any of this.  Do not interfere with his meal, his bet, his winnings, or his song. The events must unfold exactly as history remembers them.\n\nOnce the winner has left, walk over to Anna at the Keno counter.  Hand her $100 and simply say,\n\n‘You deserve this.’\n\nThen walk away.\n\nCLUE: Place a call to the bar, while taking note of the final four.",
+      message: "You will see a young 21-year-old walk into the Frontside and order 3 pancakes, 2 sausage patties, and 1 egg.\n\nWhile eating, he’ll tell anyone who will listen about his recent trip to the Sturgis Rally.\n\nHe will then bet $5 on a 9-spot and hit 8 numbers, winning $22,500.\n\nHe’ll collect his winnings from Anna, walk over to the jukebox, play Steve Miller Band’s ‘Take the Money and Run’ and leave the bar laughing hysterically.\n\nYou must not change any of this.  Do not interfere with his meal, his bet, his winnings, or his song. The events must unfold exactly as history remembers them.\n\nOnce the winner has left, walk over to Anna at the Keno counter.  Hand her $100 and simply say,\n\n‘You deserve this.’\n\nThen walk away.\n\nCLUE: Place a call to the bar, while taking note of the final four digits.",
       destinationkey: '01032020',
       clip: 'images/groundhog.webm'
     },
