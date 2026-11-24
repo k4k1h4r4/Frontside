@@ -189,7 +189,7 @@ button {
   margin-bottom: 0.35rem;
   color: var(--accent-dim);
   font-size: 0.72rem;
-  letter-spacing: 0.34em;
+  letter-spacing: 0.22em;
 }
 
 .bingo-count {
@@ -219,7 +219,7 @@ button {
   font-family: 'Oswald', Arial, sans-serif;
   font-size: 0.76rem;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
   line-height: 1;
   text-transform: uppercase;
   transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
@@ -399,7 +399,6 @@ button {
 
   .section-label {
     font-size: 0.65rem;
-    letter-spacing: 0.25em;
   }
 
   .bingo-count {
@@ -415,7 +414,6 @@ button {
     min-height: 2.35rem;
     padding: 0.5rem 0.64rem;
     font-size: 0.66rem;
-    letter-spacing: 0.12em;
   }
 
   .bingo-board-wrap {

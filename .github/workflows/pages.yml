@@ -38,6 +38,7 @@ jobs:
           node --check site-update.js
           node --check keno-feed.js
           node --check live-feed-posts.js
+          node --check happening-now.js
           node --check battleship/live.js
           node --check battleship/ships.js
           node --check timetravel/timetravel.js
@@ -52,7 +53,7 @@ jobs:
       - name: Prepare public files
         run: |
           mkdir _site
-          cp *.html *.css nav.js bingo.js site-update.js keno-feed.js live-feed-posts.js version.json manifest.webmanifest favicon.ico CNAME _site/
+          cp *.html *.css nav.js bingo.js site-update.js keno-feed.js live-feed-posts.js happening-now.js version.json manifest.webmanifest favicon.ico CNAME _site/
           cp -R Arcade images timetravel _site/
           mkdir -p _site/battleship
           cp battleship/battleship.css battleship/live.js battleship/ships.js battleship/keno-battleship-fire.svg _site/battleship/

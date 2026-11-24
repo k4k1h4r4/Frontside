@@ -28,6 +28,7 @@
 
   <meta name="site-version" content="2026-09-15-02">
   <link rel="stylesheet" href="nav.css?v=2026-09-15-02">
+  <script defer src="happening-now.js?v=2026-09-15-02"></script>
   <script defer src="nav.js?v=2026-09-15-02"></script>
   <script defer src="site-update.js?v=2026-09-15-02"></script>
 </head>
@@ -47,60 +48,137 @@
 
   <p class="home-tagline">Get off your backside, <br>come to the Frontside.</p>
 
-  <!-- Quick links: whole tile is the tap target -->
+  <!-- Happening now: Live Keno is filled in by happening-now.js -->
+  <section class="now-strip" aria-label="Happening now">
+    <a class="now-item" href="keno.html">
+      <span class="now-dot" id="now-keno-dot"></span>
+      <span class="now-text">
+        <span class="now-label">Live Keno</span>
+        <span class="now-value" id="now-keno-value">Checking&hellip;</span>
+      </span>
+      <span class="now-arrow" aria-hidden="true">&rarr;</span>
+    </a>
+    <a class="now-item" href="battleship.html">
+      <svg class="now-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2"/><path d="M12 7v14M5 13H2a10 10 0 0 0 20 0h-3M8 10h8"/></svg>
+      <span class="now-text">
+        <span class="now-label">Battleship</span>
+        <span class="now-value">Captains wanted</span>
+      </span>
+      <span class="now-arrow" aria-hidden="true">&rarr;</span>
+    </a>
+  </section>
+
+  <!-- Shared gold gradient for the card logos -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="logo-gold" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fff0b8"/>
+        <stop offset="0.5" stop-color="#f5d76e"/>
+        <stop offset="1" stop-color="#b8862b"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- Game cards: the whole card is the tap target -->
   <section class="features">
     <div class="features-grid-tiles">
 
-      <a class="feature-tile" href="battleship.html">
-        <h3><img class="battleship-promo-logo" src="images/BattleshipKeno.webp" srcset="images/BattleshipKeno-512.webp 512w, images/BattleshipKeno.webp 1024w" sizes="(max-width: 700px) 40vw, 340px" alt="Battleship Keno" width="1024" height="352" loading="lazy" decoding="async"></h3>
-        <p class="feature-tile-line">Place your fleet. Last Captain standing wins.</p>
-        <span class="feature-tile-go">Deploy your fleet <span class="feature-tile-arrow">&rarr;</span></span>
+      <a class="feature-tile" href="timetravel.html">
+        <h3><img class="feature-tile-logo" src="images/backtothefrontside.webp" srcset="images/backtothefrontside-600.webp 600w, images/backtothefrontside.webp 1116w" sizes="(max-width: 700px) 40vw, 340px" alt="Back to the Frontside" width="1116" height="558" decoding="async"></h3>
+        <p class="feature-tile-line">Correct a wrong, and make it back in time for a beer.</p>
+        <span class="feature-tile-go">Start Mission <span class="feature-tile-arrow">&rarr;</span></span>
       </a>
 
-      <a class="feature-tile" href="timetravel.html">
-        <h3><img class="feature-tile-logo" src="images/backtothefrontside.webp" srcset="images/backtothefrontside-600.webp 600w, images/backtothefrontside.webp 1116w" sizes="(max-width: 700px) 40vw, 340px" alt="Back to the Frontside" width="1116" height="558" loading="lazy" decoding="async"></h3>
-        <p class="feature-tile-line">Correct a wrong, and make it back in time for a beer.</p>
-        <span class="feature-tile-go">Start your mission <span class="feature-tile-arrow">&rarr;</span></span>
+      <a class="feature-tile" href="battleship.html">
+        <h3><img class="battleship-promo-logo" src="images/BattleshipKeno.webp" srcset="images/BattleshipKeno-512.webp 512w, images/BattleshipKeno.webp 1024w" sizes="(max-width: 700px) 40vw, 340px" alt="Battleship Keno" width="1024" height="352" decoding="async"></h3>
+        <p class="feature-tile-line">Place your fleet. Last Captain standing wins.</p>
+        <span class="feature-tile-go">Deploy Fleet <span class="feature-tile-arrow">&rarr;</span></span>
       </a>
 
       <a class="feature-tile" href="Arcade/arcade.html">
-        <h3>Arcade</h3>
+        <h3>
+          <svg width="150" height="60" viewBox="0 0 300 120" role="img" aria-label="Arcade">
+            <rect x="14" y="78" width="76" height="26" rx="6" fill="#2a1a10" stroke="#d4af37" stroke-width="3"/>
+            <line x1="52" y1="78" x2="52" y2="38" stroke="#aab0bd" stroke-width="7" stroke-linecap="round"/>
+            <circle cx="52" cy="30" r="17" fill="#c44536" stroke="#ff9b8a" stroke-width="2"/>
+            <circle cx="46" cy="24" r="5" fill="#ffffff" opacity="0.45"/>
+            <circle cx="76" cy="91" r="5" fill="#f5d76e"/>
+            <text x="108" y="80" textLength="184" lengthAdjust="spacingAndGlyphs" font-family="'Bebas Neue', sans-serif" font-size="78" fill="url(#logo-gold)" stroke="#1a0f08" stroke-width="3" paint-order="stroke">ARCADE</text>
+            <text x="110" y="106" textLength="180" lengthAdjust="spacing" font-family="Oswald, sans-serif" font-size="16" fill="#c44536">FREE PLAY</text>
+          </svg>
+        </h3>
         <p class="feature-tile-line">Beer pongin', perfect pourin', and coaster stackin' fun.</p>
-        <span class="feature-tile-go">Free play <span class="feature-tile-arrow">&rarr;</span></span>
       </a>
 
       <a class="feature-tile" href="keno.html">
-        <h3>Keno</h3>
+        <h3>
+          <svg width="150" height="60" viewBox="0 0 300 120" role="img" aria-label="Keno">
+            <g stroke="#d4af37" stroke-width="2.5">
+              <circle cx="24" cy="40" r="13" fill="#f5d76e"/>
+              <circle cx="54" cy="40" r="13" fill="none"/>
+              <circle cx="84" cy="40" r="13" fill="#f5d76e"/>
+              <circle cx="24" cy="74" r="13" fill="none"/>
+              <circle cx="54" cy="74" r="13" fill="#f5d76e"/>
+              <circle cx="84" cy="74" r="13" fill="none"/>
+            </g>
+            <g font-family="Oswald, sans-serif" font-size="13" text-anchor="middle" fill="#1a0f08">
+              <text x="24" y="45">7</text><text x="84" y="45">23</text><text x="54" y="79">69</text>
+            </g>
+            <text x="108" y="80" textLength="184" lengthAdjust="spacingAndGlyphs" font-family="'Bebas Neue', sans-serif" font-size="80" fill="url(#logo-gold)" stroke="#1a0f08" stroke-width="3" paint-order="stroke">KENO</text>
+            <text x="110" y="106" textLength="180" lengthAdjust="spacing" font-family="Oswald, sans-serif" font-size="16" fill="#c44536">LIVE DRAWS</text>
+          </svg>
+        </h3>
         <p class="feature-tile-line">Check your numbers from the bar or the couch.</p>
-        <span class="feature-tile-go">Live draws <span class="feature-tile-arrow">&rarr;</span></span>
       </a>
 
       <a class="feature-tile" href="live-feed.html">
-        <h3>Live Feed</h3>
+        <h3>
+          <svg width="150" height="60" viewBox="0 0 300 120" role="img" aria-label="Live Feed">
+            <circle cx="54" cy="58" r="11" fill="#c44536" stroke="#ff9b8a" stroke-width="2"/>
+            <g fill="none" stroke="#d4af37" stroke-width="5" stroke-linecap="round">
+              <path d="M36 40a26 26 0 0 0 0 36"/><path d="M72 40a26 26 0 0 1 0 36"/>
+              <path d="M22 28a44 44 0 0 0 0 60"/><path d="M86 28a44 44 0 0 1 0 60"/>
+            </g>
+            <text x="108" y="80" textLength="184" lengthAdjust="spacingAndGlyphs" font-family="'Bebas Neue', sans-serif" font-size="74" fill="url(#logo-gold)" stroke="#1a0f08" stroke-width="3" paint-order="stroke">LIVE FEED</text>
+            <text x="110" y="106" textLength="180" lengthAdjust="spacing" font-family="Oswald, sans-serif" font-size="16" fill="#c44536">HOT NUMBERS</text>
+          </svg>
+        </h3>
         <p class="feature-tile-line">What's the vibe? <br>What numbers are hot?</p>
-        <span class="feature-tile-go">Feed <span class="feature-tile-arrow">&rarr;</span></span>
       </a>
 
       <a class="feature-tile" href="bingo.html">
-        <h3>Bingo</h3>
+        <h3>
+          <svg width="150" height="60" viewBox="0 0 300 120" role="img" aria-label="Bingo">
+            <rect x="16" y="16" width="78" height="90" rx="5" fill="#f4e3c7" stroke="#d4af37" stroke-width="3"/>
+            <rect x="16" y="16" width="78" height="20" rx="5" fill="#c44536"/>
+            <g stroke="#b39b72" stroke-width="1.5">
+              <line x1="42" y1="36" x2="42" y2="106"/><line x1="68" y1="36" x2="68" y2="106"/>
+              <line x1="16" y1="59" x2="94" y2="59"/><line x1="16" y1="83" x2="94" y2="83"/>
+            </g>
+            <circle cx="29" cy="48" r="8" fill="#c44536" opacity="0.85"/>
+            <circle cx="55" cy="71" r="8" fill="#c44536" opacity="0.85"/>
+            <circle cx="81" cy="95" r="8" fill="#c44536" opacity="0.85"/>
+            <text x="108" y="80" textLength="184" lengthAdjust="spacingAndGlyphs" font-family="'Bebas Neue', sans-serif" font-size="80" fill="url(#logo-gold)" stroke="#1a0f08" stroke-width="3" paint-order="stroke">BINGO</text>
+            <text x="110" y="106" textLength="180" lengthAdjust="spacing" font-family="Oswald, sans-serif" font-size="16" fill="#c44536">GET A CARD</text>
+          </svg>
+        </h3>
         <p class="feature-tile-line">Drink. Mark. Repeat. Play Bingo, like a badass.</p>
-        <span class="feature-tile-go">Get a card <span class="feature-tile-arrow">&rarr;</span></span>
-      </a>
-
-      <a class="feature-tile" href="https://www.facebook.com/Frontsidegrill">
-        <h3>Facebook</h3>
-        <p class="feature-tile-line">Like them online. Love them in person.</p>
-        <span class="feature-tile-go">Take a look <span class="feature-tile-arrow">&rarr;</span></span>
-      </a>
-
-      <a class="feature-tile" href="tel:+13086331320">
-        <h3>Call Em</h3>
-        <p class="feature-tile-line">Everybody needs someone to talk to.</p>
-        <span class="feature-tile-go">308-633-1320 <span class="feature-tile-arrow">&rarr;</span></span>
       </a>
 
     </div>
   </section>
+
+  <!-- Facebook / Call -->
+  <nav class="contact-tiles" aria-label="Contact">
+    <a href="https://www.facebook.com/Frontsidegrill">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8V6.5c0-.8.2-1.5 1.5-1.5H17V2h-2.6C11.6 2 11 4 11 6v2H9v3h2v11h3V11h2.4l.6-3z"/></svg>
+      <span class="contact-stack"><small>Like them on</small>Facebook</span>
+    </a>
+    <a href="tel:+13086331320">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
+      <span class="contact-stack"><small>Call Em</small>308-633-1320</span>
+    </a>
+  </nav>
 
  
     <!-- Customer of the Year -->
