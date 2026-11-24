@@ -122,6 +122,55 @@ export function gameState(state,mode) {
   state.games??={};
   return state.games[mode]??=(emptyState());
 }
+// Live feed wins. The server posts one row per finished match; the match id
+// doubles as the post id, so a retried post can never appear twice.
+const MODE_NAMES={'live-1':'Live Keno · 1 ship','live-2':'Live Keno · 2 ships','rng':'Simulated draws'};
+function allRecent(state){
+  return [...(state.recent||[]),...Object.values(state.games||{}).flatMap(lane=>lane.recent||[])];
+}
+export function recentIds(state){return new Set(allRecent(state).map(m=>m.id));}
+export function winMessage(match){
+  const names=(match.winners||[]).map(id=>match.players.find(p=>p.id===id)?.name).filter(Boolean);
+  if(!names.length)return '';
+  const list=names.length<3?names.join(' and '):`${names.slice(0,-1).join(', ')} and ${names.at(-1)}`;
+  const mode=MODE_NAMES[match.gameMode||'live-2']||MODE_NAMES['live-2'];
+  const text=names.length>1?`${list} share the Battleship Keno win! (${mode})`:`${list} won Battleship Keno! (${mode})`;
+  return text.length>280?`${text.slice(0,279)}…`:text;
+}
+export function newWins(beforeIds,state){
+  return allRecent(state)
+    .filter(m=>!beforeIds.has(m.id)&&m.status==='finished')
+    .map(m=>({id:m.id,message:winMessage(m)}))
+    .filter(w=>w.message);
+}
+
+// Modes where this captain has a fleet deployed: waiting in a lobby, or still
+// afloat in a running battle. Lets the page return a captain to their game.
+export function fleetModes(state,uid){
+  if(!uid)return [];
+  const out=[];
+  for(const mode of GAME_MODES){
+    const lane=gameState(state,mode);
+    if(lane.active?.players.some(p=>p.id===uid&&!p.eliminated))out.push({mode,where:'battle'});
+    else if(lane.lobby?.players.some(p=>p.id===uid))out.push({mode,where:'lobby'});
+  }
+  return out;
+}
+
+// Public homepage summary: counts and times only, never names or fleets.
+// Works on a copy, so expired entries are left out without changing saved state.
+export function lobbySummary(state,now) {
+  const modes={},copy=structuredClone(state);
+  for(const mode of GAME_MODES){
+    const lane=gameState(copy,mode);
+    pruneLobby(lane,now);
+    modes[mode]={
+      battle:lane.active?{captains:lane.active.players.filter(p=>!p.eliminated).length}:null,
+      lobby:lane.lobby?{captains:lane.lobby.players.length,startsAt:lane.lobby.countdownEndsAt||null,expectedGame:lane.lobby.expectedGame??null}:null
+    };
+  }
+  return modes;
+}
 export function pruneLobby(state,now) {
   if(!state.lobby)return false;
   const before=state.lobby.players.length;

@@ -7,7 +7,18 @@
   function sortEntries(entries) {
     return [...entries].sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp) || a.id.localeCompare(b.id));
   }
-  if (typeof module !== 'undefined' && module.exports) module.exports = { sortEntries };
+  // Wins are written by the database or the Battleship server, never by browsers.
+  const WIN_STYLES = {
+    'battleship-win': { icon: '⚓', label: 'Battleship Keno' },
+    'arcade-record': { icon: '\u{1F579}️', label: 'Arcade' },
+    'bingo-win': { icon: '\u{1F389}', label: 'Keno Bingo' }
+  };
+  function postView(post) {
+    if (!post.kind) return { icon: '\u{1F4E3}', className: 'live-event-message live-user-message', label: '' };
+    const style = WIN_STYLES[post.kind] || { icon: '\u{1F3C6}', label: 'Winner' };
+    return { icon: style.icon, className: 'live-event-message live-win-message', label: style.label };
+  }
+  if (typeof module !== 'undefined' && module.exports) module.exports = { sortEntries, postView };
   if (!root.document) return;
   const list = document.getElementById('live-feed-list');
   if (!list) return;
@@ -30,6 +41,8 @@
   const status = document.getElementById('posts-feed-status');
   const posts = new Map();
   let loading = false;
+  // Falls back to the old columns if the database has not been updated yet.
+  let columns = 'id,message,created_at,kind';
   function updateCounter() {
     const remaining = 280 - textarea.value.length;
     counter.textContent = `${remaining} character${remaining === 1 ? '' : 's'}`;
@@ -52,13 +65,23 @@
         month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
         timeZone: MOUNTAIN_TIME_ZONE
       });
+      const view = postView(post);
       const message = document.createElement('p');
-      message.className = 'live-event-message live-user-message';
+      message.className = view.className;
       const icon = document.createElement('span');
       icon.setAttribute('aria-hidden', 'true');
-      icon.textContent = '📣';
+      icon.textContent = view.icon;
       const text = document.createElement('span');
-      text.textContent = post.message;
+      if (view.label) {
+        const label = document.createElement('strong');
+        label.className = 'live-win-label';
+        label.textContent = view.label;
+        const words = document.createElement('span');
+        words.textContent = post.message;
+        text.append(label, document.createElement('br'), words);
+      } else {
+        text.textContent = post.message;
+      }
       message.append(icon, text);
       node.append(time, message);
       return { id: `post:${post.id}`, timestamp: post.created_at, node };
@@ -77,8 +100,16 @@
     loading = true;
     try {
       const since = new Date(Date.now() - POST_WINDOW_MS).toISOString();
-      const rows = await request('?select=id,message,created_at' +
-        `&created_at=gte.${encodeURIComponent(since)}&order=created_at.desc,id.desc&limit=100`);
+      const query = cols => `?select=${cols}` +
+        `&created_at=gte.${encodeURIComponent(since)}&order=created_at.desc,id.desc&limit=100`;
+      let rows;
+      try {
+        rows = await request(query(columns));
+      } catch (error) {
+        if (columns === 'id,message,created_at') throw error;
+        columns = 'id,message,created_at';
+        rows = await request(query(columns));
+      }
       // Keep posts saved while this request was in flight.
       rows.forEach(post => posts.set(post.id, post));
       render();

@@ -8,6 +8,16 @@ const storage={get(k){try{return localStorage.getItem('battleship:'+k);}catch{re
 const GAME_MODES={"live-1": {"limit": 1, "label": "Live Keno draws - 1 ship sinks, you lose."}, "live-2": {"limit": 2, "label": "Live Keno draws - 2 ships sink, you lose."}, "rng": {"limit": 5, "label": "Simulated draws every 30 seconds - All 5 ships sink, you lose."}};
 const requestedMode=new URLSearchParams(location.search).get('gameMode')||(resultsPage?'live-2':storage.get('gameMode'));
 let gameMode=Object.hasOwn(GAME_MODES,requestedMode)?requestedMode:'live-2',serverOffset=0;
+// A link that names a mode (e.g. the homepage strip) goes straight to it.
+const linkedMode=(m=>Object.hasOwn(GAME_MODES,m)?m:null)(new URLSearchParams(location.search).get('gameMode'));
+let fleets=null; // modes holding this captain's fleet, from the server (null: unknown)
+// Return a captain to their fleet: the mode they were viewing if it has one,
+// otherwise a running battle before a lobby.
+function fleetHome(list,current){
+  if(!Array.isArray(list)||!list.length)return null;
+  if(list.some(f=>f.mode===current))return current;
+  return (list.find(f=>f.where==='battle')||list[0]).mode;
+}
 function matchMode(m){return m?(Object.hasOwn(GAME_MODES,m.gameMode)?m.gameMode:'live-2'):gameMode;}
 function lossLimit(m){return GAME_MODES[matchMode(m)].limit;}
 function drawLabel(m){return matchMode(m)==='rng'?'Simulated draw':'Keno draw';}
@@ -58,6 +68,7 @@ async function refresh(){
     const data=await api('status',{},controller.signal);
     if(version!==modeVersion)return;
     uid=data.uid;snapshot=data.state;serverOffset=Date.parse(data.serverTime)-Date.now();
+    fleets=Array.isArray(data.fleets)?data.fleets.filter(f=>Object.hasOwn(GAME_MODES,f?.mode)):null;
     $('connection').textContent=gameMode==='rng'?(!data.caughtUp?'Catching up simulated draws…':'Connected to shared simulated draws · 20 balls every 30 seconds.'):data.warning||(!data.caughtUp?'Catching up missed Keno draws…':snapshot.last?`Latest: Game #${snapshot.last.racenumber} · ${time(snapshot.last.timestamp)}`:'Waiting for Keno results.');
     $('place').disabled=!data.caughtUp||!!data.warning;
     $('active-view').hidden=true;$('lobby-view').hidden=true;
@@ -335,9 +346,15 @@ async function init(){
     if(!session){const signed=await client.auth.signInAnonymously();if(signed.error)throw Error('Player sign-in is not available. Enable Anonymous Sign-Ins in Supabase Auth.');session=signed.data.session;}
     uid=session.user.id;viewed=uid;$('player-name').value=storage.get('name')||'';
     try{const saved=JSON.parse(storage.get('draft'));if(Array.isArray(saved)&&saved.length===5&&saved.every((s,i)=>s.name===SPECS[i][0]&&s.length===SPECS[i][1]&&Array.isArray(s.cells)&&s.cells.every(n=>Number.isInteger(n)&&n>=1&&n<=80)))draft=saved;}catch{}
-    await refresh();setInterval(refresh,5000);setInterval(updateCountdown,1000);updateCountdown();
+    await refresh();
+    // Picker only for captains without a deployed fleet who did not follow a mode link.
+    if($('mode-popup')&&!resultsPage&&!linkedMode){
+      const home=fleetHome(fleets,gameMode);
+      if(!home)openModePicker();
+      else if(home!==gameMode)await switchGameMode(home);
+    }
+    setInterval(refresh,5000);setInterval(updateCountdown,1000);updateCountdown();
   }catch(e){$('connection').textContent=e.message;}
 }
 render();
-openModePicker();
 init();

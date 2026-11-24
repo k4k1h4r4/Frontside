@@ -3,8 +3,9 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 
-async function page(search='',{legacy=false,beforeResponse=null,uid='me',sharedLanes=null,archivedMatches=new Map()}={}){
+async function page(search='',{legacy=false,beforeResponse=null,uid='me',sharedLanes=null,archivedMatches=new Map(),reportFleets=false,savedMode=null}={}){
   const nodes=new Map(),requests=[],saved=new Map(),lanes=sharedLanes||new Map(),timers=new Map();let nextTimer=1;
+  if(savedMode)saved.set('battleship:gameMode',savedMode);
   class Element{
     constructor(id=''){
       this.id=id;this.className='';this.dataset={};this.children=[];this.value='';this.hidden=false;
@@ -38,7 +39,13 @@ async function page(search='',{legacy=false,beforeResponse=null,uid='me',sharedL
     if(body.action==='extend')state.lobby.countdownEndsAt=new Date(Date.parse(state.lobby.countdownEndsAt)+60000).toISOString();
     const replyState=structuredClone(state);
     if(beforeResponse)await beforeResponse(body);
-    return {ok:true,json:async()=>({...(!legacy?{gameMode:body.gameMode,rulesVersion:2}:{}),uid,state:replyState,match:archivedMatches.get(body.matchId),caughtUp:true,warning:'',serverTime:new Date().toISOString()})};
+    // The updated server lists the modes holding this captain's fleet.
+    const fleets=[];
+    for(const [mode,lane] of lanes){
+      if(lane.active?.players.some(p=>p.id===uid&&!p.eliminated))fleets.push({mode,where:'battle'});
+      else if(lane.lobby?.players.some(p=>p.id===uid))fleets.push({mode,where:'lobby'});
+    }
+    return {ok:true,json:async()=>({...(!legacy?{gameMode:body.gameMode,rulesVersion:2}:{}),...(reportFleets?{fleets}:{}),uid,state:replyState,match:archivedMatches.get(body.matchId),caughtUp:true,warning:'',serverTime:new Date().toISOString()})};
   }});
   vm.runInContext(fs.readFileSync('battleship/ships.js','utf8'),context);
   vm.runInContext(fs.readFileSync('battleship/live.js','utf8'),context);
@@ -254,4 +261,53 @@ test('final RNG animation survives background polling and shows the winner befor
   nodes.get('result-popup').close();await refresh();
   assert.equal(nodes.get('phase').textContent,'Match finished');
   assert.equal(nodes.get('result-popup').open,false,'Outcome should appear once');
+});
+
+// Returning captains skip the mode picker.
+const lobbyWith=(mode,ids)=>({active:null,recent:[],last:{raceid:1,racenumber:1},lobby:{id:'lobby-'+mode,gameMode:mode,status:'lobby',
+  players:ids.map(id=>({id,name:id,fleet:[],hits:[],eliminated:null,joinedAt:new Date().toISOString()}))}});
+const settle=async()=>{for(let i=0;i<10;i++)await new Promise(setImmediate);};
+
+test('a captain with a fleet in a lobby goes straight back to that mode, no picker',async()=>{
+  const lanes=new Map([['rng',lobbyWith('rng',['me','other'])]]);
+  const {nodes,requests}=await page('',{reportFleets:true,sharedLanes:lanes,savedMode:'live-2'});await settle();
+  assert.ok(!nodes.get('mode-popup').open,'picker stays closed');
+  assert.equal(nodes.get('current-mode').textContent,'Simulated Draw');
+  assert.equal(requests.at(-1).gameMode,'rng');
+});
+
+test('a running battle is preferred over a lobby, and the viewed mode wins when it has a fleet',async()=>{
+  const battle={active:{id:'m1',gameMode:'live-1',status:'active',players:[{id:'me',name:'me',fleet:[],hits:[],eliminated:null}],history:[]},lobby:null,recent:[],last:{raceid:1,racenumber:1}};
+  let view=await page('',{reportFleets:true,sharedLanes:new Map([['rng',lobbyWith('rng',['me'])],['live-1',battle]]),savedMode:'live-2'});await settle();
+  assert.ok(!view.nodes.get('mode-popup').open,'picker stays closed');
+  assert.equal(view.nodes.get('current-mode').textContent,'Live Keno - 1 Ship');
+  view=await page('',{reportFleets:true,sharedLanes:new Map([['rng',lobbyWith('rng',['me'])],['live-1',battle]]),savedMode:'rng'});await settle();
+  assert.equal(view.nodes.get('current-mode').textContent,'Simulated Draw');
+});
+
+test('a captain sunk in a running battle has no deployed fleet, so the picker opens',async()=>{
+  const sunk={active:{id:'m1',gameMode:'live-2',status:'active',players:[{id:'me',name:'me',fleet:[],hits:[],eliminated:{raceid:2}}],history:[]},lobby:null,recent:[],last:{raceid:1,racenumber:1}};
+  const {nodes}=await page('',{reportFleets:true,sharedLanes:new Map([['live-2',sunk]])});await settle();
+  assert.equal(nodes.get('mode-popup').open,true);
+});
+
+test('no deployed fleet opens the picker',async()=>{
+  const {nodes}=await page('',{reportFleets:true});await settle();
+  assert.equal(nodes.get('mode-popup').open,true);
+});
+
+test('a mode link (homepage strip) goes straight to that mode, even with a fleet elsewhere',async()=>{
+  const lanes=new Map([['rng',lobbyWith('rng',['me'])],['live-1',lobbyWith('live-1',['someone'])]]);
+  const {nodes,requests}=await page('?gameMode=live-1',{reportFleets:true,sharedLanes:lanes});await settle();
+  assert.ok(!nodes.get('mode-popup').open,'picker stays closed');
+  assert.equal(nodes.get('current-mode').textContent,'Live Keno - 1 Ship');
+  assert.ok(requests.every(r=>r.gameMode==='live-1'));
+});
+
+test('before the server reports fleets, the picker still opens unless a mode link was followed',async()=>{
+  let view=await page('',{reportFleets:false});await settle();
+  assert.equal(view.nodes.get('mode-popup').open,true);
+  view=await page('?gameMode=rng',{reportFleets:false});await settle();
+  assert.ok(!view.nodes.get('mode-popup').open,'picker stays closed');
+  assert.equal(view.nodes.get('current-mode').textContent,'Simulated Draw');
 });

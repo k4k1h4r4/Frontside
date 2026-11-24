@@ -11,6 +11,11 @@ import {
   applyBall,
   emptyState,
   joinLobby,
+  lobbySummary,
+  fleetModes,
+  newWins,
+  recentIds,
+  winMessage,
   publicState,
   validateDraw,
   validateFleet
@@ -298,4 +303,65 @@ test('public recent results combine all modes, classify legacy games and retain 
   assert.deepEqual(recent.map(m=>m.id),['rng','one','legacy']);
   assert.equal(recent[0].drawCount,3);assert.equal(recent[2].gameMode,'live-2');
   assert.equal(recent[0].history,undefined);
+});
+
+test('public lobby summary reports counts per mode without names, fleets or changes to saved state',()=>{
+  const now=1800000000000,state=emptyState();state.last={raceid:1,racenumber:1};
+  // live-2: two current captains plus one expired entry
+  joinLobby(state,{id:'old-id',name:'Oldtimer',fleet:fleet()},now-3600001,'a');
+  joinLobby(state,{id:'ada-id',name:'Ada',fleet:fleet(5)},now,'a');
+  joinLobby(state,{id:'bo-id',name:'Bo',fleet:fleet(10)},now,'a');
+  // rng: two captains start the shared countdown
+  const rng=gameState(state,'rng');advanceSimulation(rng,now);
+  joinLobby(rng,{id:'cy-id',name:'Cy',fleet:fleet(),gameMode:'rng'},now,'r');
+  joinLobby(rng,{id:'di-id',name:'Di',fleet:fleet(5),gameMode:'rng'},now,'r');
+  // live-1: a running battle with one captain already eliminated
+  const one=gameState(state,'live-1');
+  one.active={id:'m',status:'active',gameMode:'live-1',players:[player('ed'),{...player('fay',5),eliminated:{raceid:2}},player('gus',10)]};
+  const before=JSON.stringify(state);
+  const summary=lobbySummary(state,now);
+  assert.deepEqual(summary['live-2'],{battle:null,lobby:{captains:2,startsAt:null,expectedGame:2}});
+  assert.equal(summary.rng.lobby.captains,2);
+  assert.equal(summary.rng.lobby.startsAt,new Date(now+60000).toISOString());
+  assert.deepEqual(summary['live-1'],{battle:{captains:2},lobby:null});
+  const text=JSON.stringify(summary);
+  for(const secret of ['Oldtimer','Ada','Bo','Cy','ada-id','fleet','cells','hits'])assert.ok(!text.includes(secret),`summary leaked ${secret}`);
+  assert.equal(JSON.stringify(state),before,'saved state must not change');
+});
+
+test('public lobby summary is empty when nothing is happening',()=>{
+  const summary=lobbySummary(emptyState(),1800000000000);
+  for(const mode of ['live-1','live-2','rng'])assert.deepEqual(summary[mode],{battle:null,lobby:null});
+});
+
+test('a finished match becomes exactly one Live feed win, worded for its mode',()=>{
+  const state=emptyState();state.last={raceid:1,racenumber:1,timestamp:'2026-09-30T10:00:00-06:00'};
+  state.active={id:'match-1',status:'active',gameMode:'live-2',startGame:2,history:[],
+    players:[{...player('a'),name:'Ann'},{...player('b',5),name:'Bo'}]};
+  const before=recentIds(state);
+  // Bo's carrier (6-10) and battleship (16-19) sink: two ships, so Ann wins.
+  advance(state,draw(2,2,[6,7,8,9,10,16,17,18,19]));
+  assert.equal(state.recent[0].status,'finished');
+  assert.deepEqual(newWins(before,state),[{id:'match-1',message:'Ann won Battleship Keno! (Live Keno · 2 ships)'}]);
+  assert.deepEqual(newWins(recentIds(state),state),[],'the same match is never posted twice');
+});
+
+test('shared wins name every winner',()=>{
+  const players=[{id:'a',name:'Ann'},{id:'b',name:'Bo'},{id:'c',name:'Cy'}];
+  assert.equal(winMessage({gameMode:'rng',players,winners:['a','b','c']}),'Ann, Bo and Cy share the Battleship Keno win! (Simulated draws)');
+  assert.equal(winMessage({gameMode:'live-1',players,winners:['a','c']}),'Ann and Cy share the Battleship Keno win! (Live Keno · 1 ship)');
+  assert.equal(winMessage({players,winners:[]}),'');
+});
+
+test('fleet lookup lists lobbies and running battles where this captain is still afloat',()=>{
+  const now=1800000000000,state=emptyState();state.last={raceid:1,racenumber:1};
+  joinLobby(state,{id:'me',name:'Me',fleet:fleet()},now,'a');
+  const one=gameState(state,'live-1');
+  one.active={id:'m',status:'active',gameMode:'live-1',players:[player('me'),player('you',5)]};
+  const rng=gameState(state,'rng');
+  rng.active={id:'r',status:'active',gameMode:'rng',players:[{...player('me'),eliminated:{raceid:3}},player('you',5)]};
+  assert.deepEqual(fleetModes(state,'me'),[{mode:'live-1',where:'battle'},{mode:'live-2',where:'lobby'}]);
+  assert.deepEqual(fleetModes(state,'you'),[{mode:'live-1',where:'battle'},{mode:'rng',where:'battle'}]);
+  assert.deepEqual(fleetModes(state,'nobody'),[]);
+  assert.deepEqual(fleetModes(state,''),[]);
 });

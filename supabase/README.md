@@ -4,11 +4,12 @@ The site and Supabase backend must be released together. Deploy the backend firs
 
 1. For a new project, run `migrations/202609300001_battleship.sql` in the Supabase SQL editor. Existing Battleship projects already have this schema.
 2. Run `migrations/202611180001_battleship_modes.sql`. It preserves the original live two-ship matches and archives results from all modes.
-3. Deploy the function: `supabase functions deploy battleship --project-ref znqnnaslskjewfxcswxw`. The included config disables gateway JWT verification because the function validates player sessions itself.
-4. Enable anonymous sign-ins if they are not already enabled.
-5. Set a strong, random `BATTLESHIP_CRON_SECRET` Edge Function secret. Store the same value in Supabase Vault under `battleship_cron_secret`. Never commit the secret.
-6. Enable Supabase Cron and pg_net, then run `schedule-battleship.sql` once. It creates or updates three independent named jobs: live-1 and live-2 poll every 5 seconds; RNG syncs every 30 seconds. Remove any older Battleship sync job to avoid duplicate traffic. Inspect Cron run history and pg_net responses after setup.
-7. Publish the frontend through the existing GitHub Pages workflow.
+3. Run `migrations/202611240001_live_feed_wins.sql`. It adds a `kind` column to `live_feed_posts` and posts Arcade all-time top-5 scores and Keno Bingo winners to the Live feed. Run it before deploying the function, which posts Battleship winners there. It reports whether the Arcade part was installed.
+4. Deploy the function: `supabase functions deploy battleship --project-ref znqnnaslskjewfxcswxw`. The included config disables gateway JWT verification because the function validates player sessions itself.
+5. Enable anonymous sign-ins if they are not already enabled.
+6. Set a strong, random `BATTLESHIP_CRON_SECRET` Edge Function secret. Store the same value in Supabase Vault under `battleship_cron_secret`. Never commit the secret.
+7. Enable Supabase Cron and pg_net, then run `schedule-battleship.sql` once. It creates or updates three independent named jobs: live-1 and live-2 poll every 5 seconds; RNG syncs every 30 seconds. Remove any older Battleship sync job to avoid duplicate traffic. Inspect Cron run history and pg_net responses after setup.
+8. Publish the frontend through the existing GitHub Pages workflow.
 
 See the official [Cron quickstart](https://supabase.com/docs/guides/cron/quickstart) and [scheduled Edge Functions guide](https://supabase.com/docs/guides/functions/schedule-functions) for Cron and Vault setup.
 

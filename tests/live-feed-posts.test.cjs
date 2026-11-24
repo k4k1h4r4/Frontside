@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
-const { sortEntries } = require('../live-feed-posts.js');
+const { sortEntries, postView } = require('../live-feed-posts.js');
 const NOW = '2026-09-22T18:30:00Z';
 function element() {
   return { children: [], value: '', disabled: false, classList: { add() {} }, handlers: {},
@@ -80,4 +80,35 @@ test('only posts from the last 24 hours are requested and shown', async () => {
   assert.equal(query.get('created_at'), 'gte.2026-09-21T18:30:00.000Z');
   const shown = nodes.get('live-feed-list').children.map(node => node.children[1].children[1].textContent);
   assert.deepEqual(shown, ['just now', 'exactly 24h']);
+});
+
+test('community posts keep the megaphone; wins get their own icon, label and gold style', () => {
+  assert.deepEqual(postView({ kind: null }), { icon: '\u{1F4E3}', className: 'live-event-message live-user-message', label: '' });
+  assert.deepEqual(postView({ kind: 'battleship-win' }), { icon: '⚓', className: 'live-event-message live-win-message', label: 'Battleship Keno' });
+  assert.equal(postView({ kind: 'arcade-record' }).label, 'Arcade');
+  assert.equal(postView({ kind: 'bingo-win' }).label, 'Keno Bingo');
+  assert.equal(postView({ kind: 'something-new' }).label, 'Winner');
+});
+
+test('win rows render with their label as plain text', async () => {
+  const { nodes, calls } = await load(() => ({ ok: true, json: async () => [
+    { id: 'w1', message: 'New Beer Pong high score! Ada scored 42.', created_at: '2026-09-22T18:10:00Z', kind: 'arcade-record' }
+  ] }));
+  assert.match(calls[0].url, /select=id,message,created_at,kind/);
+  const message = nodes.get('live-feed-list').children[0].children[1];
+  assert.equal(message.className, 'live-event-message live-win-message');
+  const [label, , words] = message.children[1].children;
+  assert.equal(label.textContent, 'Arcade');
+  assert.equal(words.textContent, 'New Beer Pong high score! Ada scored 42.');
+});
+
+test('posts still load before the database has the kind column', async () => {
+  const { nodes, calls } = await load(url => url.includes(',kind')
+    ? { ok: false, status: 400, json: async () => ({}) }
+    : { ok: true, json: async () => [{ id: 'p1', message: 'hello', created_at: '2026-09-22T18:10:00Z' }] });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(calls.length, 2);
+  assert.doesNotMatch(calls[1].url, /kind/);
+  assert.equal(nodes.get('live-feed-list').children.length, 1);
+  assert.equal(nodes.get('posts-feed-status').textContent, '');
 });

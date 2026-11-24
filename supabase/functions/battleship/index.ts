@@ -1,14 +1,23 @@
-import { advance, joinLobby, publicState, validateDraw, GAME_MODES, validateMode, gameState, pruneLobby, advanceSimulation, extendLobby } from './engine.mjs';
+import { advance, joinLobby, publicState, validateDraw, GAME_MODES, validateMode, gameState, pruneLobby, advanceSimulation, extendLobby, lobbySummary, recentIds, newWins, fleetModes } from './engine.mjs';
 const URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SECRET = Deno.env.get('BATTLESHIP_CRON_SECRET');
 
 const BASE = 'https://kenocloud.com/kenocloud/casino/41/game/1/balldraw';
-const cors = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, apikey, content-type, x-client-info, x-battleship-cron','Access-Control-Allow-Methods':'POST, OPTIONS'};
+const cors = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, apikey, content-type, x-client-info, x-battleship-cron','Access-Control-Allow-Methods':'GET, POST, OPTIONS'};
 async function rpc(name:string,args:Record<string,unknown>={}) {
   const r=await fetch(`${URL}/rest/v1/rpc/${name}`,{method:'POST',headers:{apikey:SERVICE,Authorization:`Bearer ${SERVICE}`,'Content-Type':'application/json'},body:JSON.stringify(args),signal:AbortSignal.timeout(15000)});
   if(!r.ok)throw Error('Game database unavailable. Check the Battleship migration.');
   return r.json();
+}
+// Post finished matches to the Live feed. Never blocks or fails the game:
+// a lost post is logged, and duplicates are ignored (post id = match id).
+async function postWins(wins:{id:string,message:string}[]){
+  if(!wins.length)return;
+  try{
+    const r=await fetch(`${URL}/rest/v1/live_feed_posts?on_conflict=id`,{method:'POST',headers:{apikey:SERVICE,Authorization:`Bearer ${SERVICE}`,'Content-Type':'application/json',Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(wins.map(w=>({id:w.id,message:w.message,kind:'battleship-win'}))),signal:AbortSignal.timeout(10000)});
+    if(!r.ok)console.error('Live feed post failed',r.status,await r.text());
+  }catch(e){console.error('Live feed post failed',e);}
 }
 async function fetchDraw(id:string|number){
   const r=await fetch(`${BASE}/${id}`,{signal:AbortSignal.timeout(10000),headers:{'Cache-Control':'no-cache'}});
@@ -28,8 +37,14 @@ async function synchronize(state:any,cache:Map<number,any>,latest:any){
 }
 Deno.serve(async req=>{
   if(req.method==='OPTIONS')return new Response(null,{headers:cors});
-  const respond=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,'Content-Type':'application/json','Cache-Control':'no-store'}});
+  const respond=(body:unknown,status=200,cache='no-store')=>new Response(JSON.stringify(body),{status,headers:{...cors,'Content-Type':'application/json','Cache-Control':cache}});
   try{
+    // Public, read-only lobby summary for the homepage. No sign-in, no names or fleets,
+    // and nothing is written. Cron keeps the saved state current.
+    if(req.method==='GET'&&new globalThis.URL(req.url).searchParams.get('action')==='summary'){
+      const saved=await rpc('battleship_read');const now=Date.now();
+      return respond({rulesVersion:2,serverTime:new Date(now).toISOString(),modes:lobbySummary(saved.state,now)},200,'public, max-age=10');
+    }
     if(req.method!=='POST')return respond({error:'POST required.'},405);
     if(Number(req.headers.get('content-length'))>12000)return respond({error:'Request too large.'},413);
     const raw=await req.text();if(raw.length>12000)return respond({error:'Request too large.'},413);
@@ -54,6 +69,7 @@ Deno.serve(async req=>{
     const cache=new Map();let latest:any=null,latestRequest:Promise<any>|null=null;
     for(let attempt=0;attempt<5;attempt++){
       const saved=await rpc('battleship_read');const state=saved.state;
+      const finishedBefore=recentIds(state);
       const now=Date.now();
       const readiness:Record<string,{caughtUp:boolean,warning:string}>={};
       // Expire every lobby, but synchronize only the requested mode.
@@ -88,8 +104,9 @@ Deno.serve(async req=>{
         catch(e){joinError=(e as Error).message;}
       }
       if(!await rpc('battleship_commit',{expected_version:saved.version,new_state:state}))continue;
+      await postWins(newWins(finishedBefore,state));
       if(joinError)return respond({error:joinError},409);
-      return respond({rulesVersion:2,state:publicState(gameState(state,selected),uid,state),uid,gameMode:selected,serverTime:new Date(now).toISOString(),caughtUp,warning,entriesEnabled:true});
+      return respond({rulesVersion:2,state:publicState(gameState(state,selected),uid,state),uid,fleets:fleetModes(state,uid),gameMode:selected,serverTime:new Date(now).toISOString(),caughtUp,warning,entriesEnabled:true});
     }
     return respond({error:'Another player updated the lobby. Please retry.'},409);
   }catch(e){console.error(e);return respond({error:(e as Error).message||'Could not update the game.'},503);}

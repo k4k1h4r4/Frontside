@@ -319,6 +319,26 @@
       overflow-wrap: anywhere;
       min-width: 0;
     }
+    /* Wins (Battleship, Arcade high scores, Keno Bingo): gold, unlike white community posts */
+    .live-win-message {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.7rem 0.8rem;
+      border-left: 3px solid var(--accent);
+      color: #f4e3c7;
+      background: rgba(212, 175, 55, 0.12);
+      overflow-wrap: anywhere;
+      min-width: 0;
+    }
+    .live-win-label {
+      font-family: "Oswald", sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-bright);
+    }
     .live-report-button:disabled { opacity: 0.6; cursor: wait; }
     .keno-draw {
       min-width: 0;

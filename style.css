@@ -1171,7 +1171,7 @@ footer a:hover { color: var(--accent); }
 }
 
 /* ── Homepage: Happening now strip ──
-   Live Keno is filled in by happening-now.js. */
+   Live Keno and Battleship are filled in by happening-now.js. */
 .now-strip {
   position: relative;
   z-index: 3;
@@ -1213,6 +1213,7 @@ footer a:hover { color: var(--accent); }
 .now-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: #555; }
 .now-dot.live { background: #7dc47d; box-shadow: 0 0 8px rgba(125, 196, 125, 0.8); animation: pulse 2s infinite; }
 .now-icon { width: 18px; height: 18px; flex-shrink: 0; color: var(--accent); }
+.now-icon.live { animation: pulse 2s infinite; }
 
 /* ── Homepage: small Facebook / Call tiles under the games ── */
 .contact-tiles {
