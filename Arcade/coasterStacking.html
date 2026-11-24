@@ -100,6 +100,7 @@ control.addEventListener('pointerdown',e=>{if(!e.isPrimary||e.button!==0)return;
 control.addEventListener('click',e=>{if(e.detail===0)activate();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){pausedAt=performance.now();cancelAnimationFrame(frame);frame=0;}else{const pause=performance.now()-pausedAt;started+=pause;settleAt+=pause;if(cut)cut.time+=pause;requestDraw();}});
 </script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d6990f441d364d14a474070de0eb6398"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
 

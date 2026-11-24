@@ -127,5 +127,6 @@ control.addEventListener('click',event=>{if(event.detail===0)activate();});
 // Switching apps cancels the attempt instead of making an unseen spill.
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='pouring'){cancelAnimationFrame(frame);state='ready';app.classList.remove('pouring');draw(0);control.textContent='START';title.textContent='READY WHEN YOU ARE';description.textContent='Pour paused while you were away. Start fresh.';mug.setAttribute('aria-label','Beer mug, empty.');}});
 </script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d6990f441d364d14a474070de0eb6398"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
