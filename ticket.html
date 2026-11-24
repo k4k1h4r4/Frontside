@@ -8,6 +8,9 @@
   <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#0b0705">		
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Special+Elite&amp;family=Oswald:wght@300;400;600;700&amp;display=swap">
   <link rel="stylesheet" href="style.css?v=2026-09-15-02">
   <style>
     .ticket-page {
@@ -47,19 +50,13 @@
 
     .ticket-form-wrap,
     .ticket-results,
-    .ticket-secondary-grid .ticket-detail-card,
-    .ticket-ocr-wrap,
-    .ticket-ocr-preview-wrap,
-    .ticket-ocr-debug {
+    .ticket-secondary-grid .ticket-detail-card {
       background: linear-gradient(180deg, rgba(26,19,14,0.96), rgba(18,13,9,0.98));
       border: 1px solid var(--border);
       box-shadow: var(--shadow-heavy);
     }
 
-    .ticket-form-wrap,
-    .ticket-ocr-wrap,
-    .ticket-ocr-preview-wrap,
-    .ticket-ocr-debug {
+    .ticket-form-wrap {
       padding: 1.5rem;
       margin-bottom: 1.5rem;
     }
@@ -77,9 +74,7 @@
       gap: 0.45rem;
     }
 
-    .ticket-field label,
-    .ticket-ocr-title,
-    .ticket-debug-title {
+    .ticket-field label {
       font-family: 'Oswald', sans-serif;
       font-size: 0.9rem;
       letter-spacing: 0.22em;
@@ -87,13 +82,7 @@
       color: var(--text-dim);
     }
 
-    .ticket-ocr-title,
-    .ticket-debug-title {
-      margin-bottom: 0.8rem;
-    }
-
-    .ticket-field input,
-    .ticket-file-input {
+    .ticket-field input {
       width: 100%;
       background: rgba(255,255,255,0.03);
       border: 1px solid var(--border-accent);
@@ -106,83 +95,15 @@
       transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
     }
 
-    .ticket-file-input {
-      padding: 0.7rem 0.8rem;
-    }
-
-    .ticket-field input:focus,
-    .ticket-file-input:focus {
+    .ticket-field input:focus {
       border-color: var(--accent-bright);
       box-shadow: 0 0 0 3px rgba(178,122,70,0.14);
       background: rgba(255,255,255,0.05);
     }
 
-    .ticket-submit,
-    .ticket-scan-btn {
+    .ticket-submit {
       min-width: 150px;
       height: 49px;
-    }
-
-    .ticket-hint,
-    .ticket-ocr-copy,
-    .ticket-ocr-status,
-    .ticket-debug-copy {
-      margin-top: 0.9rem;
-      font-family: 'Oswald', sans-serif;
-      font-size: 0.72rem;
-      letter-spacing: 0.12em;
-      color: var(--text-muted);
-      line-height: 1.6;
-    }
-
-    .ticket-ocr-grid {
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 1rem;
-      align-items: start;
-    }
-
-    .ticket-ocr-actions {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-top: 1rem;
-    }
-
-    .ticket-ocr-preview {
-      width: 100%;
-      display: none;
-      border: 1px solid var(--border-accent);
-      background: rgba(0,0,0,0.25);
-    }
-
-    .ticket-ocr-preview.visible {
-      display: block;
-    }
-
-    .ticket-ocr-crop-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .ticket-ocr-crop canvas {
-      width: 100%;
-      height: auto;
-      display: block;
-      border: 1px solid var(--border-accent);
-      background: #fff;
-    }
-
-    .ticket-ocr-crop-label {
-      font-family: 'Oswald', sans-serif;
-      font-size: 0.72rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-      margin-bottom: 0.55rem;
     }
 
     .ticket-results {
@@ -313,122 +234,12 @@
       margin-bottom: 1rem;
     }
 
-    .ticket-ocr-status.good { color: #b8d49a; }
-    .ticket-ocr-status.warn { color: #e9c38d; }
-    .ticket-ocr-status.bad { color: #d18d7d; }
-
-    .camera-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 2000;
-      background: #000;
-      display: none;
-    }
-
-    .camera-overlay.open {
-      display: block;
-    }
-
-    .camera-overlay video {
-      width: 100vw;
-      height: 100vh;
-      object-fit: contain;
-      display: block;
-      background: #000;
-    }
-
-    .camera-overlay-ui {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-
-    .camera-frame {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: min(92vw, 92vh * 1.55);
-      aspect-ratio: 1.55 / 1;
-      transform: translate(-50%, -50%);
-      border: 3px solid rgba(255,255,255,0.92);
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.40);
-      pointer-events: none;
-    }
-
-    .camera-frame::before,
-    .camera-frame::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      width: 33.333%;
-      left: 33.333%;
-      border-left: 1px dashed rgba(255,255,255,0.5);
-      border-right: 1px dashed rgba(255,255,255,0.5);
-    }
-
-    .camera-frame-grid {
-      position: absolute;
-      inset: 0;
-      height: 33.333%;
-      top: 33.333%;
-      border-top: 1px dashed rgba(255,255,255,0.5);
-      border-bottom: 1px dashed rgba(255,255,255,0.5);
-    }
-
-    .camera-overlay-topbar,
-    .camera-overlay-bottombar {
-      position: absolute;
-      left: 0;
-      right: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      padding: max(16px, env(safe-area-inset-top)) 16px 16px;
-      pointer-events: none;
-    }
-
-    .camera-overlay-bottombar {
-      top: auto;
-      bottom: 0;
-      padding: 16px 16px max(16px, env(safe-area-inset-bottom));
-      justify-content: center;
-    }
-
-    .camera-overlay-topbar .btn,
-    .camera-overlay-bottombar .btn {
-      pointer-events: auto;
-      min-width: 132px;
-      height: 52px;
-      background: rgba(18,13,9,0.92);
-      backdrop-filter: blur(6px);
-    }
-
-    .camera-overlay-label {
-      position: absolute;
-      left: 50%;
-      bottom: calc(max(86px, env(safe-area-inset-bottom) + 70px));
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.68);
-      color: #fff;
-      padding: 0.45rem 0.7rem;
-      font-family: 'Oswald', sans-serif;
-      font-size: 0.74rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      white-space: nowrap;
-      pointer-events: none;
-    }
-
     @media (max-width: 860px) {
-      .ticket-form,
-      .ticket-ocr-grid,
-      .ticket-ocr-crop-grid {
+      .ticket-form {
         grid-template-columns: 1fr;
       }
 
-      .ticket-submit,
-      .ticket-scan-btn {
+      .ticket-submit {
         width: 100%;
       }
 
@@ -438,18 +249,6 @@
       }
     }
 
-    @media (orientation: portrait) {
-      .camera-frame {
-        width: 94vw;
-      }
-    }
-
-    @media (orientation: landscape) {
-      .camera-frame {
-        height: 78vh;
-        width: auto;
-      }
-    }
   </style>
 
   <meta name="site-version" content="2026-09-15-02">
@@ -533,101 +332,15 @@
 
     </div>
 
-    <div class="ticket-ocr-wrap">
-      <div class="ticket-ocr-title">Scan ticket with Camera</div>
-      <div class="ticket-ocr-grid">
-        <div>
-          <div class="ticket-ocr-actions">
-            <button id="start-camera-btn" type="button" class="btn ticket-scan-btn">Start Camera</button>
-            <button id="clear-ticket-btn" type="button" class="btn btn-secondary ticket-scan-btn">Clear Image</button>
-          </div>
-
-          <div class="ticket-ocr-copy">
-            Start Camera to scan. Align the full ticket inside the frame, then tap Scan Ticket capture and scan in one step.
-          </div>
-		  <div id="ticket-ocr-status" class="ticket-ocr-status">Waiting for image or camera.</div>
-        </div>
-
-        <div class="ticket-ocr-preview-wrap">
-          <img id="ticket-preview" class="ticket-ocr-preview" alt="Ticket preview">
-          <div class="ticket-hint">Tip: Best results with camera in Landscape-mode, and your flashlight on.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="ticket-ocr-debug" style="display:none;">
-      <div class="ticket-debug-title">OCR crop preview</div>
-      <div class="ticket-debug-copy">These previews show the exact regions being read for SERIAL and PIN extraction.</div>
-      <div class="ticket-ocr-crop-grid">
-        <div class="ticket-ocr-crop">
-          <div class="ticket-ocr-crop-label">Serial crop</div>
-          <canvas id="serial-crop-canvas"></canvas>
-        </div>
-        <div class="ticket-ocr-crop">
-          <div class="ticket-ocr-crop-label">PIN line crop</div>
-          <canvas id="pin-line-crop-canvas"></canvas>
-        </div>
-      </div>
-    </div>
-
-
   </div>
 
-  <div id="camera-overlay" class="camera-overlay" aria-hidden="true">
-    <video id="camera-video" playsinline autoplay muted></video>
-    <div class="camera-overlay-ui">
-      <div class="camera-overlay-topbar">
-        <button id="camera-close-btn" type="button" class="btn btn-secondary">Close</button>
-        <button id="camera-torch-btn" type="button" class="btn btn-secondary">Torch On</button>
-      </div>
-
-      <div id="camera-frame" class="camera-frame">
-        <div class="camera-frame-grid"></div>
-      </div>
-
-      <div class="camera-overlay-label">Fit entire ticket inside frame</div>
-
-      <div class="camera-overlay-bottombar">
-        <button id="camera-scan-btn" type="button" class="btn">Scan Ticket</button>
-      </div>
-    </div>
-  </div>
-
-
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script>
     const TICKET_ENDPOINT = 'https://kenocloud.com/kenocloud/casino/41/game/1/ticket';
-
-    const OCR_REGIONS = {
-      serial: { x: 0.295, y: 0.100, w: 0.260, h: 0.120 },
-      pinLine: { x: 0.600, y: 0.255, w: 0.340, h: 0.220 }
-    };
 
     const form = document.getElementById('ticket-form');
     const results = document.getElementById('ticket-results');
     const errorEl = document.getElementById('error-msg');
     const loadingEl = document.getElementById('loading-msg');
-
-    const ticketPreview = document.getElementById('ticket-preview');
-    const ocrStatus = document.getElementById('ticket-ocr-status');
-    const serialInput = document.getElementById('serial');
-    const pinInput = document.getElementById('pin');
-    const serialCropCanvas = document.getElementById('serial-crop-canvas');
-    const pinLineCropCanvas = document.getElementById('pin-line-crop-canvas');
-
-    const startCameraBtn = document.getElementById('start-camera-btn');
-    const clearTicketBtn = document.getElementById('clear-ticket-btn');
-    const cameraOverlay = document.getElementById('camera-overlay');
-    const cameraVideo = document.getElementById('camera-video');
-    const cameraFrame = document.getElementById('camera-frame');
-    const cameraCloseBtn = document.getElementById('camera-close-btn');
-    const cameraTorchBtn = document.getElementById('camera-torch-btn');
-    const cameraScanBtn = document.getElementById('camera-scan-btn');
-
-    let loadedImage = null;
-    let loadedImageUrl = '';
-    let cameraStream = null;
-    let cameraTorchEnabled = false;
 
     function centsToCurrency(value) {
       const amount = Number(value || 0) / 100;
@@ -692,440 +405,6 @@
     function setLoading(isLoading) {
       loadingEl.style.display = isLoading ? 'block' : 'none';
     }
-
-    function setOcrStatus(message, type = '') {
-      ocrStatus.className = 'ticket-ocr-status';
-      if (type) ocrStatus.classList.add(type);
-      ocrStatus.textContent = message;
-    }
-
-    function revokeLoadedUrl() {
-      if (loadedImageUrl && loadedImageUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(loadedImageUrl);
-      }
-      loadedImageUrl = '';
-    }
-
-    function getPrimaryVideoTrack() {
-      return cameraStream?.getVideoTracks?.()[0] || null;
-    }
-
-    function isRearCameraTrack(track) {
-      const settings = track?.getSettings?.() || {};
-      const label = String(track?.label || '').toLowerCase();
-      const facingMode = String(settings.facingMode || '').toLowerCase();
-      return (
-        facingMode === 'environment' ||
-        label.includes('back') ||
-        label.includes('rear') ||
-        label.includes('environment')
-      );
-    }
-
-    function updateTorchButton({ supported = false } = {}) {
-      cameraTorchBtn.textContent = cameraTorchEnabled ? 'Torch Off' : 'Torch On';
-      cameraTorchBtn.disabled = !supported;
-      cameraTorchBtn.style.opacity = supported ? '1' : '0.65';
-    }
-
-    function torchIsSupported() {
-      const videoTrack = getPrimaryVideoTrack();
-      if (!videoTrack || !isRearCameraTrack(videoTrack)) return false;
-      return Boolean(videoTrack.getCapabilities?.().torch);
-    }
-
-    async function waitForCameraVideoReady() {
-      if (cameraVideo.readyState >= 2) return;
-
-      await new Promise((resolve, reject) => {
-        const onReady = () => {
-          cleanup();
-          resolve();
-        };
-        const onError = () => {
-          cleanup();
-          reject(new Error('Video preview did not become ready.'));
-        };
-        const cleanup = () => {
-          cameraVideo.removeEventListener('loadedmetadata', onReady);
-          cameraVideo.removeEventListener('canplay', onReady);
-          cameraVideo.removeEventListener('error', onError);
-        };
-
-        cameraVideo.addEventListener('loadedmetadata', onReady, { once: true });
-        cameraVideo.addEventListener('canplay', onReady, { once: true });
-        cameraVideo.addEventListener('error', onError, { once: true });
-      });
-    }
-
-    async function setTorchState(enabled) {
-      const videoTrack = getPrimaryVideoTrack();
-      if (!videoTrack || !isRearCameraTrack(videoTrack)) {
-        cameraTorchEnabled = false;
-        updateTorchButton({ supported: false });
-        return false;
-      }
-
-      const capabilities = videoTrack.getCapabilities?.() || {};
-      if (!capabilities.torch) {
-        cameraTorchEnabled = false;
-        updateTorchButton({ supported: false });
-        return false;
-      }
-
-      try {
-        await videoTrack.applyConstraints({ advanced: [{ torch: enabled }] });
-        cameraTorchEnabled = enabled;
-        updateTorchButton({ supported: true });
-        return true;
-      } catch (_) {
-        try {
-          await videoTrack.applyConstraints({ torch: enabled });
-          cameraTorchEnabled = enabled;
-          updateTorchButton({ supported: true });
-          return true;
-        } catch (_) {
-          cameraTorchEnabled = false;
-          updateTorchButton({ supported: true });
-          return false;
-        }
-      }
-    }
-
-    async function toggleTorch() {
-      if (!cameraStream) {
-        setOcrStatus('Start the camera before using the torch.', 'warn');
-        return;
-      }
-
-      if (!torchIsSupported()) {
-        updateTorchButton({ supported: false });
-        setOcrStatus('Torch control is not supported on this phone or browser.', 'warn');
-        return;
-      }
-
-      const enabled = await setTorchState(!cameraTorchEnabled);
-      setOcrStatus(
-        enabled
-          ? 'Torch is on. Align the ticket inside the frame, then tap Scan Ticket.'
-          : 'Torch is off. Align the ticket inside the frame, then tap Scan Ticket.',
-        enabled ? 'good' : 'warn'
-      );
-    }
-
-    async function startCamera() {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        setOcrStatus('Camera is not supported in this browser.', 'bad');
-        return;
-      }
-
-      try {
-        await stopCameraStreamOnly();
-
-        cameraStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: 'environment' },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            aspectRatio: { ideal: 16 / 9 }
-          },
-          audio: false
-        });
-
-        // Try to lock to landscape so the ticket frame stays wide
-        try {
-          if (screen.orientation?.lock) {
-            await screen.orientation.lock('landscape');
-          }
-        } catch (_) { /* silently ignore — not all browsers support this */ }
-
-        cameraVideo.srcObject = cameraStream;
-        cameraOverlay.classList.add('open');
-        document.body.style.overflow = 'hidden';
-        await cameraVideo.play().catch(() => {});
-        await waitForCameraVideoReady();
-        updateTorchButton({ supported: torchIsSupported() });
-
-        setOcrStatus(
-          torchIsSupported()
-            ? 'Camera started. Tap Torch On to turn the light on, then scan the ticket.'
-            : 'Camera started. Hold phone landscape, align ticket inside frame, then tap Scan Ticket.',
-          'good'
-        );
-      } catch (error) {
-        setOcrStatus(`Unable to start camera: ${error.message}`, 'bad');
-      }
-    }
-
-    async function stopCameraStreamOnly() {
-      if (cameraStream) {
-        await setTorchState(false).catch(() => {});
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
-      }
-      cameraTorchEnabled = false;
-      cameraVideo.srcObject = null;
-      updateTorchButton({ supported: false });
-    }
-
-    async function closeCameraOverlay() {
-      await stopCameraStreamOnly();
-      cameraOverlay.classList.remove('open');
-      document.body.style.overflow = '';
-      try { screen.orientation?.unlock?.(); } catch (_) {}
-    }
-
-    function showImageFromDataUrl(dataUrl) {
-      return new Promise((resolve, reject) => {
-        revokeLoadedUrl();
-        loadedImageUrl = dataUrl;
-
-        const img = new Image();
-        img.onload = () => {
-          loadedImage = img;
-          ticketPreview.src = dataUrl;
-          ticketPreview.classList.add('visible');
-          resolve();
-        };
-        img.onerror = reject;
-        img.src = dataUrl;
-      });
-    }
-
-    async function captureCurrentCameraFrame() {
-      if (!cameraStream || !cameraVideo.videoWidth || !cameraVideo.videoHeight) {
-        return false;
-      }
-
-      const vw = cameraVideo.videoWidth;
-      const vh = cameraVideo.videoHeight;
-
-      const videoRect = cameraVideo.getBoundingClientRect();
-      const frameRect = cameraFrame.getBoundingClientRect();
-      const videoAspect = vw / vh;
-      const elementAspect = videoRect.width / videoRect.height;
-
-      // Find the actual displayed video content inside the fullscreen video
-      // element after object-fit: contain letterboxing is applied.
-      let renderW;
-      let renderH;
-      let renderX;
-      let renderY;
-
-      if (videoAspect > elementAspect) {
-        renderW = videoRect.width;
-        renderH = renderW / videoAspect;
-        renderX = videoRect.left;
-        renderY = videoRect.top + ((videoRect.height - renderH) / 2);
-      } else {
-        renderH = videoRect.height;
-        renderW = renderH * videoAspect;
-        renderX = videoRect.left + ((videoRect.width - renderW) / 2);
-        renderY = videoRect.top;
-      }
-
-      const scaleX = vw / renderW;
-      const scaleY = vh / renderH;
-
-      const rawCropLeft = (frameRect.left - renderX) * scaleX;
-      const rawCropTop = (frameRect.top - renderY) * scaleY;
-      const rawCropRight = (frameRect.right - renderX) * scaleX;
-      const rawCropBottom = (frameRect.bottom - renderY) * scaleY;
-
-      const cropX = Math.max(0, Math.round(rawCropLeft));
-      const cropY = Math.max(0, Math.round(rawCropTop));
-      const cropRight = Math.min(vw, Math.round(rawCropRight));
-      const cropBottom = Math.min(vh, Math.round(rawCropBottom));
-      const cropW = Math.max(1, cropRight - cropX);
-      const cropH = Math.max(1, cropBottom - cropY);
-
-      // Draw only the frame region into the output canvas
-      const canvas = document.createElement('canvas');
-      canvas.width = cropW;
-      canvas.height = cropH;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(cameraVideo, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.97);
-      await showImageFromDataUrl(dataUrl);
-      closeCameraOverlay();
-      return true;
-    }
-
-    
-    function preprocessToCanvas(sourceImage, region, targetCanvas, options = {}) {
-      const { scale = 4 } = options;
-
-      const sx = Math.round(sourceImage.naturalWidth * region.x);
-      const sy = Math.round(sourceImage.naturalHeight * region.y);
-      const sw = Math.round(sourceImage.naturalWidth * region.w);
-      const sh = Math.round(sourceImage.naturalHeight * region.h);
-
-      const workCanvas = document.createElement('canvas');
-      workCanvas.width = sw * scale;
-      workCanvas.height = sh * scale;
-
-      const ctx = workCanvas.getContext('2d', { willReadFrequently: true });
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(sourceImage, sx, sy, sw, sh, 0, 0, workCanvas.width, workCanvas.height);
-
-      const imageData = ctx.getImageData(0, 0, workCanvas.width, workCanvas.height);
-      const data = imageData.data;
-      const pixelCount = data.length / 4;
-
-      // Step 1: Convert to grayscale
-      const grays = new Uint8ClampedArray(pixelCount);
-      for (let i = 0; i < pixelCount; i++) {
-        const base = i * 4;
-        grays[i] = Math.round(data[base] * 0.299 + data[base+1] * 0.587 + data[base+2] * 0.114);
-      }
-
-      // Step 2: Adaptive threshold — use mean of the crop to handle
-      // varying lighting. Tickets are light paper (~180-220) with dark
-      // ink (~30-90), so threshold = mean - 20 cleanly separates them.
-      let sum = 0;
-      for (let i = 0; i < pixelCount; i++) sum += grays[i];
-      const mean = sum / pixelCount;
-      const threshold = Math.max(100, Math.min(210, mean - 20));
-
-      // Step 3: Binarize — ink (below threshold) → black, background → white
-      for (let i = 0; i < pixelCount; i++) {
-        const base = i * 4;
-        const v = grays[i] < threshold ? 0 : 255;
-        data[base] = data[base+1] = data[base+2] = v;
-        data[base+3] = 255;
-      }
-
-      ctx.putImageData(imageData, 0, 0);
-
-      targetCanvas.width = workCanvas.width;
-      targetCanvas.height = workCanvas.height;
-      targetCanvas.getContext('2d').drawImage(workCanvas, 0, 0);
-
-      return targetCanvas;
-    }
-
-
-    function extractSerial(text) {
-      const cleaned = text.replace(/[—–−]/g, '-').replace(/\s+/g, ' ').trim();
-      const direct = cleaned.match(/\b\d{5}-\d-\d{3}\b/);
-      if (direct) return direct[0];
-
-      const compact = cleaned.replace(/[^0-9-]/g, '');
-      const fallback = compact.match(/(\d{5})-?(\d)-?(\d{3})/);
-      if (fallback) return `${fallback[1]}-${fallback[2]}-${fallback[3]}`;
-      return '';
-    }
-
-    function extractPin(text) {
-      const cleaned = text.replace(/\s+/g, ' ').trim();
-
-      const direct = cleaned.match(/PIN\s*(\d{4})\b/i);
-      if (direct) return direct[1];
-
-      const cloud = cleaned.match(/Cloud\s*PIN\s*(\d{4})\b/i);
-      if (cloud) return cloud[1];
-
-      const digitsAfterPin = cleaned.match(/PIN[^0-9]{0,8}([0-9]{4})/i);
-      if (digitsAfterPin) return digitsAfterPin[1];
-
-      return '';
-    }
-
-    async function recognizeCanvas(targetCanvas, whitelist, psm) {
-      return Tesseract.recognize(targetCanvas, 'eng', {
-        logger: () => {},
-        tessedit_pageseg_mode: psm,
-        tessedit_char_whitelist: whitelist
-      });
-    }
-
-    async function scanLoadedImage() {
-      clearError();
-
-      if (!loadedImage) {
-        setOcrStatus('Choose an image or start the camera before scanning.', 'warn');
-        return;
-      }
-
-      setOcrStatus('Scanning ticket image…', 'warn');
-
-      try {
-        const serialCanvas = preprocessToCanvas(loadedImage, OCR_REGIONS.serial, serialCropCanvas, {
-          scale: 5,
-          threshold: 172
-        });
-
-        const pinLineCanvas = preprocessToCanvas(loadedImage, OCR_REGIONS.pinLine, pinLineCropCanvas, {
-          scale: 6,
-          threshold: 180
-        });
-
-        const [serialResult, pinResult] = await Promise.all([
-          recognizeCanvas(serialCanvas, '0123456789-', '6'),
-          recognizeCanvas(pinLineCanvas, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ./', '6')
-        ]);
-
-        const serial = extractSerial(serialResult.data.text || '');
-        const pin = extractPin(pinResult.data.text || '');
-
-        if (serial) serialInput.value = serial;
-        if (pin) pinInput.value = pin;
-
-        if (serial && pin) {
-          setOcrStatus(`Scan complete. Found Serial ${serial} and PIN ${pin}.`, 'good');
-        } else if (serial || pin) {
-          const found = [serial ? `Serial ${serial}` : '', pin ? `PIN ${pin}` : ''].filter(Boolean).join(' and ');
-          setOcrStatus(`Partial scan complete. Found ${found}.`, 'warn');
-        } else {
-          setOcrStatus('No values were confidently detected. Keep the entire ticket inside the guide box and try again.', 'bad');
-        }
-      } catch (error) {
-        setOcrStatus(`OCR failed: ${error.message}`, 'bad');
-      } finally {
-      }
-    }
-
-    async function captureAndScanFromCamera() {
-      cameraScanBtn.textContent = 'Capturing…';
-
-      try {
-        const captured = await captureCurrentCameraFrame();
-        if (!captured) {
-          setOcrStatus('Camera is not ready yet. Give it a moment and try again.', 'warn');
-          return;
-        }
-
-        setOcrStatus('Picture captured. Scanning ticket image…', 'warn');
-        document.querySelector('.ticket-ocr-debug').style.display = 'block';
-      await scanLoadedImage();
-      } catch (error) {
-        setOcrStatus(`Unable to capture image: ${error.message}`, 'bad');
-      } finally {
-        cameraScanBtn.textContent = 'Scan Ticket';
-      }
-    }
-
-    function clearLoadedImage() {
-      closeCameraOverlay();
-      loadedImage = null;
-      ticketPreview.src = '';
-      ticketPreview.classList.remove('visible');
-      serialCropCanvas.width = 0;
-      serialCropCanvas.height = 0;
-      pinLineCropCanvas.width = 0;
-      pinLineCropCanvas.height = 0;
-      revokeLoadedUrl();
-      setOcrStatus('Waiting for image or camera.');
-    }
-
-    startCameraBtn.addEventListener('click', startCamera);
-    clearTicketBtn.addEventListener('click', clearLoadedImage);
-    cameraCloseBtn.addEventListener('click', closeCameraOverlay);
-    cameraTorchBtn.addEventListener('click', toggleTorch);
-    cameraScanBtn.addEventListener('click', captureAndScanFromCamera);
-    updateTorchButton({ supported: false });
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();

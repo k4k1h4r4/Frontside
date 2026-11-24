@@ -12,7 +12,7 @@
   const HOME = 'index.html';
   const LINKS = [
     { label: 'Live',   path: 'live-feed.html',     pages: ['live-feed.html'] },
-    { label: 'Keno',   path: 'keno.html',          pages: ['keno.html', 'ticket.html', 'ticket-test.html'] },
+    { label: 'Keno',   path: 'keno.html',          pages: ['keno.html', 'ticket.html'] },
     { label: 'Arcade', path: 'Arcade/arcade.html', pages: ['Arcade/arcade.html'] },
     { label: 'Bingo',  path: 'bingo.html',         pages: ['bingo.html', 'keno-bingo.html'] }
   ];

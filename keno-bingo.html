@@ -8,8 +8,10 @@
     <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
     <link rel="manifest" href="/manifest.webmanifest">
     <meta name="theme-color" content="#0b0705">	
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Special+Elite&amp;family=Oswald:wght@300;400;600;700&amp;display=swap">
     <link rel="stylesheet" href="bingo.css?v=2026-09-15-02">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       /* ── 5×5 Keno Bingo overrides & additions ── */
 
@@ -514,28 +516,6 @@
         margin-bottom: 0.5rem;
         margin-top: 0.85rem;
       }
-      .lr-board {
-        display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 0.22rem;
-        margin-bottom: 0.5rem;
-        opacity: 0.88;
-      }
-      .lr-cell {
-        aspect-ratio: 1;
-        border: 1px solid var(--border);
-        background: var(--bg-card);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Oswald', Arial, sans-serif;
-        font-size: clamp(0.48rem, 1.6vw, 0.7rem);
-        letter-spacing: 0.04em;
-        color: var(--text-muted);
-      }
-      .lr-cell.free-space   { border-color: var(--accent-dim); color: var(--accent-dim); font-size: clamp(0.38rem,1.2vw,0.56rem); }
-      .lr-cell.keno-hit     { border-color: #3ecf8e; background: linear-gradient(180deg,rgba(62,207,142,0.88),rgba(17,120,79,0.9)); color: rgba(8,30,20,0.95); }
-      .lr-cell.marked-manual{ border-color: var(--accent-dim); background: rgba(212,175,55,0.1); color: var(--accent-bright); }
 
       /* Standings */
       .lr-standings {
@@ -745,6 +725,8 @@
       </section>
     </main>
 
+    <!-- Loaded here (not in <head>) so the page paints before this library downloads. -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js"></script>
     <script>
       /* ─────────────────────────────────────────
          CONFIG

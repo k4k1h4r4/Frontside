@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Start the LCP image and imported font styles before the main CSS is parsed. -->
+  <!-- Start the LCP image and font styles early. -->
   <link rel="preload" as="image" href="images/BattleshipKeno.webp" fetchpriority="high">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Special+Elite&amp;family=Oswald:wght@300;400;600;700&amp;display=swap">
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400&amp;display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Special+Elite&amp;family=Oswald:wght@300;400;600;700&amp;display=swap">
   <title>Battleship Keno | Frontside Table Gang</title>
   <link rel="icon" href="/favicon.ico" sizes="32x32">
   <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
@@ -32,7 +31,7 @@
   <script defer src="nav.js?v=2026-09-15-02"></script>
   <script defer src="site-update.js?v=2026-09-15-02"></script>
   <link rel="stylesheet" href="battleship/battleship.css?v=2026-11-19-04">
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2/dist/umd/supabase.js"></script>
   <script defer src="battleship/ships.js?v=2026-10-01-01"></script>
   <script defer src="battleship/live.js?v=2026-11-19-04"></script>
 </head>

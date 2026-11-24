@@ -1,9 +1,4 @@
-/* Frontside site nav
-   Load the font from your page <head> instead of @import for faster paint:
-   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400&display=swap">
-   If you'd rather keep it here, the @import below still works. */
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400&display=swap');
+/* Frontside site nav. Pages load the Oswald font in their <head>. */
 
 .site-nav,
 .site-nav * {
@@ -135,21 +130,6 @@
 }
 
 /* Skip link — pairs with the <a class="skip-link"> snippet in your page template */
-.skip-link {
-  position: absolute;
-  left: -9999px;
-  top: 0;
-  z-index: 600;
-  padding: 0.6rem 1rem;
-  background: #0a0705;
-  color: #f5d76e;
-  font-family: 'Oswald', sans-serif;
-  text-decoration: none;
-}
-.skip-link:focus {
-  left: 0.5rem;
-  top: 0.5rem;
-}
 
 /* So sticky nav doesn't cover in-page anchor targets */
 html { scroll-padding-top: 80px; }

@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Special+Elite&family=Oswald:wght@300;400;600;700&display=swap');
-
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -10,7 +8,6 @@
   --bg-dark: #0a0c10;
   --bg-card: #171a21;
   --bg-card2: #1e222b;
-  --brown-deep: #1c2028;
   --brown-light: #3a4150;
   --sand: #e6e8ee;
   --sand-dim: #aab0bd;
