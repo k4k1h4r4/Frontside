@@ -41,10 +41,6 @@ function dashboard(search = '', options = {}) {
     setItem:(key,value)=>{ if(options.blockStorage) throw new Error('Storage disabled'); storage.set(key,value); }
   };
   const window = { localStorage, addEventListener:(name,fn)=>{ listeners[name]=fn; } };
-  if (options.speech) {
-    window.speechSynthesis = options.speech;
-    window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
-  }
   const context = vm.createContext({
     window, Date:ClockDate, document:{ getElementById:element, querySelector:element, querySelectorAll:s=>s==='[data-key]'?buttons:slots },
     location:{ search }, URLSearchParams, setInterval:fn=>{ window.tick=fn; }
@@ -57,11 +53,11 @@ function dashboard(search = '', options = {}) {
     clock:(y,m,d,h,min)=>{ now=new Date(y,m-1,d,h,min); window.tick(); },
     failPlayback:cause=>{ playFailure=cause; } };
 }
-test('destination starts fully blank, present is current, departed keeps 1985 default',()=>{
+test('destination starts fully blank, present is current, departed starts June 20, 2040',()=>{
   const {api,element}=dashboard();
   assert.equal(api.get('destination'),null);
   assert.equal(api.get('present'),'2026-10-02T13:45');
-  assert.equal(api.get('departed'),'1985-10-26T01:20');
+  assert.equal(api.get('departed'),'2040-06-20T00:00');
   assert.equal(element('travel-button').disabled,true);
   assert.equal(element('engage-control').classList.contains('ready'),false);
   assert.equal(element('input-popup').open,false);
@@ -116,7 +112,7 @@ test('destination uses the current time; departed stays static',()=>{
   assert.equal(api.get('destination'),'2015-10-21T13:45');
   clock(2026,10,2,14,0);
   assert.equal(api.get('destination'),'2015-10-21T14:00');
-  assert.equal(api.get('departed'),'1985-10-26T01:20');
+  assert.equal(api.get('departed'),'2040-06-20T00:00');
 });
 test('invalid and empty trips preserve present and departed; leap dates are validated',()=>{
   const {api,key,element}=dashboard();
@@ -127,7 +123,7 @@ test('invalid and empty trips preserve present and departed; leap dates are vali
   assert.match(element('input-error').textContent,/valid calendar date/);
   for(const d of ['02292025','13312026','00012026','01010000','2026-04-31']) assert.throws(()=>api.travel(d));
   assert.equal(api.get('present'),'2026-10-02T13:45');
-  assert.equal(api.get('departed'),'1985-10-26T01:20');
+  assert.equal(api.get('departed'),'2040-06-20T00:00');
   api.set('destination','02292024');
   assert.equal(api.get('destination'),'2024-02-29T13:45');
 });
@@ -318,67 +314,6 @@ test('Message shows the current clue and the hunt starts at step one',()=>{
   assert.equal(element('message-popup').open,false);
 });
 
-test('speech follows unread clues, persists across reload, and resets with the hunt',()=>{
-  const spoken=[];
-  const speech={speak:utterance=>spoken.push(utterance),cancel() {}};
-  const game=dashboard('',{speech});
-  assert.equal(spoken.length,0);
-  game.element('open-message').listeners.click();
-  assert.equal(spoken.length,1);
-  assert.equal(spoken[0].text,game.hunt.getState().message);
-  assert.equal(spoken[0].lang,'en-US');
-  game.element('close-message').listeners.click();
-  game.element('open-message').listeners.click();
-  assert.equal(spoken.length,1);
-  const resumed=dashboard('',{speech,storage:game.storage});
-  resumed.element('open-message').listeners.click();
-  assert.equal(spoken.length,1);
-  resumed.api.travel('10212015');
-  assert.equal(spoken.length,1);
-  resumed.element('open-message').listeners.click();
-  assert.equal(spoken.length,2);
-  assert.equal(spoken[1].text,'Second test clue');
-  resumed.hunt.reset();
-  resumed.element('open-message').listeners.click();
-  assert.equal(spoken.length,3);
-  resumed.hunt.setStep(3);
-  resumed.api.travel('10022026');
-  resumed.element('open-message').listeners.click();
-  assert.equal(spoken.length,3);
-});
-
-test('closing, dismissing, advancing, resetting, and leaving stop message speech',()=>{
-  let cancelled=0;
-  const speech={speak() {},cancel() { cancelled++; }};
-  const game=dashboard('',{speech});
-  const open=()=>game.element('open-message').listeners.click();
-  open();
-  game.element('close-message').listeners.click();
-  assert.equal(cancelled,1);
-  game.hunt.reset(); open();
-  game.element('message-popup').listeners.cancel();
-  game.element('message-popup').close();
-  assert.equal(cancelled,2);
-  game.hunt.reset(); open();
-  game.api.travel('10212015');
-  assert.equal(cancelled,3);
-  open(); game.hunt.setStep(3);
-  assert.equal(cancelled,4);
-  open(); game.hunt.reset();
-  assert.equal(cancelled,5);
-  open(); game.listeners.pagehide();
-  assert.equal(cancelled,6);
-});
-
-test('unavailable or failed speech leaves the message readable and stops blinking',()=>{
-  for (const speech of [undefined,{speak() { throw new Error('Speech unavailable'); },cancel() {}}]) {
-    const game=dashboard('',{speech});
-    assert.doesNotThrow(()=>game.element('open-message').listeners.click());
-    assert.equal(game.element('message-popup').open,true);
-    assert.equal(game.element('hunt-message').textContent,'First test clue');
-    assert.equal(game.element('open-message').classList.contains('unread'),false);
-  }
-});
 test('wrong destinations show failure, preserve the step and circuits, and can be corrected',()=>{
   const {api,hunt,element}=dashboard();
   api.set('destination','01012000');
@@ -440,7 +375,7 @@ test('last step completes the hunt, stays completed after reload, and supports r
   assert.equal(resumed.hunt.getState().step,1);
   assert.equal(resumed.hunt.getState().completed,false);
   assert.equal(resumed.api.get('present'),'2026-10-02T13:45');
-  assert.equal(resumed.api.get('departed'),'1985-10-26T01:20');
+  assert.equal(resumed.api.get('departed'),'2040-06-20T00:00');
 });
 test('final destination follows the local date across midnight and completion appears when the clip ends',()=>{
   const game=dashboard();
@@ -473,7 +408,7 @@ test('completion restart button restores step one and default circuits, includin
   assert.equal(game.hunt.getState().completed,false);
   assert.equal(game.api.get('destination'),null);
   assert.equal(game.api.get('present'),'2026-10-02T13:45');
-  assert.equal(game.api.get('departed'),'1985-10-26T01:20');
+  assert.equal(game.api.get('departed'),'2040-06-20T00:00');
   assert.equal(game.element('travel-button').disabled,true);
   const resumed=dashboard('',{storage:game.storage});
   assert.equal(resumed.hunt.getState().step,1);
