@@ -32,7 +32,7 @@ window.TIME_HUNT_CONFIG = {
     },
     {
       step: 3,
-      message: "The night the Frontside burned, Ballsworth stood in the parking lot and watched it with calm satisfaction.\n\nHe didn’t run, and he didn’t hide.  When the fire trucks arrived, he was still standing there, and he told the first officer his name and spelled it twice.\n\nAt his trial, he never gave a reason. He refused a lawyer and refused to speak, and the only thing he ever said in public was a single sentence: \n\n'The house always wins, so I took the house.'\n\nIt was printed on posters within a week. Within a month, Keno Writers in forty-one states had walked out of their parlors.  By the end of the year, nobody was left to call the numbers.\n\nCLUE:  Order 3 Pancakes, 2 sausage patties, and 1 egg.  No tax required.",
+      message: "The night the Frontside burned, Ballsworth stood in the parking lot and watched it with calm satisfaction.\n\nHe didn’t run, and he didn’t hide.  When the fire trucks arrived, he was still standing there, and he told the first officer his name and spelled it twice.\n\nAt his trial, he never gave a reason. He refused a lawyer and refused to speak, and the only thing he ever said in public was a single sentence: \n\n'The house always wins, so I took the house.'\n\nIt was printed on posters within a week. Within a month, Keno Writers in forty-one states had walked out of their parlors.  By the end of the year, nobody was left to call the numbers.\n\nCLUE:  Order 3 Pancakes, 2 sausage patties, and 1 egg.  No tax required. [Sorry, the Frontside changed their menu price to overcharge for breakfast a la carte items. The answer was $15.25 or 1/5/25]",
       destinationkey: '01052025',
       clip: 'images/t2.webm'
     },
